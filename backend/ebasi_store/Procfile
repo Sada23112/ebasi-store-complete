@@ -1,0 +1,1 @@
+web: gunicorn ebasi_store.wsgi --log-file -
