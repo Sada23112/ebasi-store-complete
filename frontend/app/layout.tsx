@@ -78,6 +78,13 @@ export const metadata: Metadata = {
   generator: "v0.app",
 }
 
+import { AuthProvider } from "@/lib/auth-context"
+import { CartProvider } from "@/lib/cart-context"
+import { WishlistProvider } from "@/lib/wishlist-context"
+import { Navbar } from "@/components/navigation"
+import { Footer } from "@/components/footer"
+import { Toaster } from "@/components/ui/toaster"
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -112,7 +119,16 @@ export default function RootLayout({
         />
       </head>
       <body className={`font-sans ${GeistSans.variable} ${GeistMono.variable} antialiased`}>
-        <Suspense fallback={null}>{children}</Suspense>
+        <AuthProvider>
+          <CartProvider>
+            <WishlistProvider>
+              <Navbar />
+              <Suspense fallback={null}>{children}</Suspense>
+              <Footer />
+              <Toaster />
+            </WishlistProvider>
+          </CartProvider>
+        </AuthProvider>
         <Analytics />
       </body>
     </html>
