@@ -80,7 +80,7 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Navigation />
+      
 
       <main className="pt-20">
         <div className="min-h-[calc(100vh-80px)] flex items-center justify-center px-4 py-8">
@@ -243,7 +243,7 @@ export default function LoginPage() {
         </div>
       </main>
 
-      <Footer />
+      
     </div>
   )
 }

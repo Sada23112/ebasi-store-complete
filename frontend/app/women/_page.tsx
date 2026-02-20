@@ -63,7 +63,7 @@ const trendingProducts = [
 export default function WomenPage() {
   return (
     <div className="min-h-screen bg-white">
-      <Navigation />
+      
 
       <main className="pt-20">
         {/* Hero Section */}
@@ -160,7 +160,7 @@ export default function WomenPage() {
         </section>
       </main>
 
-      <Footer />
+      
     </div>
   )
 }

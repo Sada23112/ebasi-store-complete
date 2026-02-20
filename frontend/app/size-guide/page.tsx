@@ -70,7 +70,7 @@ export default function SizeGuidePage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Navigation />
+      
 
       <main className="pt-20">
         <div className="container mx-auto px-4 py-8">
@@ -316,7 +316,7 @@ export default function SizeGuidePage() {
         </div>
       </main>
 
-      <Footer />
+      
     </div>
   )
 }

@@ -1,8 +1,6 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Navigation } from "@/components/navigation"
-import { Footer } from "@/components/footer"
 import { PaymentMethods } from "@/components/payment-methods"
 import { useCart } from "@/lib/cart-context"
 import { Button } from "@/components/ui/button"
@@ -146,7 +144,7 @@ export default function CheckoutPage() {
   if (cartState.items.length === 0) {
     return (
       <div className="min-h-screen bg-background">
-        <Navigation />
+        
         <main className="pt-20">
           <div className="max-w-4xl mx-auto px-4 py-16 text-center">
             <h1 className="text-2xl font-bold text-foreground mb-2">Your cart is empty</h1>
@@ -156,14 +154,14 @@ export default function CheckoutPage() {
             </Link>
           </div>
         </main>
-        <Footer />
+        
       </div>
     )
   }
 
   return (
     <div className="min-h-screen bg-background">
-      <Navigation />
+      
 
       <main className="pt-20">
         {/* Header */}
@@ -461,7 +459,7 @@ export default function CheckoutPage() {
         </div>
       </main>
 
-      <Footer />
+      
     </div>
   )
 }

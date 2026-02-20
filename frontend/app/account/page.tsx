@@ -64,19 +64,19 @@ export default function AccountPage() {
   if (!user) {
     return (
       <div className="min-h-screen bg-background">
-        <Navigation />
+        
         <div className="pt-32 flex flex-col items-center justify-center">
           <p className="mb-4">Please log in to view your account.</p>
           <Button onClick={() => window.location.href = '/login'}>Login</Button>
         </div>
-        <Footer />
+        
       </div>
     )
   }
 
   return (
     <div className="min-h-screen bg-background">
-      <Navigation />
+      
 
       <main className="pt-20">
         <div className="max-w-7xl mx-auto px-4 py-8">
@@ -281,7 +281,7 @@ export default function AccountPage() {
         </div>
       </main>
 
-      <Footer />
+      
     </div>
   )
 }

@@ -170,7 +170,7 @@ export default function ProductDetailPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Navigation />
+      
 
       <main className="pt-20">
         {/* Breadcrumb */}
@@ -459,7 +459,7 @@ export default function ProductDetailPage() {
         </div>
       </main>
 
-      <Footer />
+      
     </div>
   )
 }

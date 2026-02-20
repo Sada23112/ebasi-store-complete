@@ -49,7 +49,7 @@ const orderData = {
 export default function OrderConfirmationPage() {
   return (
     <div className="min-h-screen bg-background">
-      <Navigation />
+      
 
       <main className="pt-20">
         <div className="max-w-4xl mx-auto px-4 py-8">
@@ -266,7 +266,7 @@ export default function OrderConfirmationPage() {
         </div>
       </main>
 
-      <Footer />
+      
     </div>
   )
 }

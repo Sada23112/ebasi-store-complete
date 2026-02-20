@@ -149,7 +149,7 @@ export default function TrackOrderPage() {
   if (showGuestForm) {
     return (
       <div className="min-h-screen bg-background">
-        <Navigation />
+        
         <main className="pt-20">
           <div className="max-w-md mx-auto px-4 py-16">
             <Card>
@@ -198,7 +198,7 @@ export default function TrackOrderPage() {
             </Card>
           </div>
         </main>
-        <Footer />
+        
       </div>
     )
   }
@@ -206,7 +206,7 @@ export default function TrackOrderPage() {
   if (!orderData) {
     return (
       <div className="min-h-screen bg-background">
-        <Navigation />
+        
         <main className="pt-20">
           <div className="max-w-4xl mx-auto px-4 py-16 text-center">
             <Package className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
@@ -217,7 +217,7 @@ export default function TrackOrderPage() {
             <Button onClick={() => setShowGuestForm(true)}>Try Again</Button>
           </div>
         </main>
-        <Footer />
+        
       </div>
     )
   }
@@ -240,7 +240,7 @@ export default function TrackOrderPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Navigation />
+      
 
       <main className="pt-20">
         {/* Header */}
@@ -489,7 +489,7 @@ export default function TrackOrderPage() {
         </div>
       </main>
 
-      <Footer />
+      
     </div>
   )
 }

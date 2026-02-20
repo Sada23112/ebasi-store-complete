@@ -32,7 +32,7 @@ export default function ForgotPasswordPage() {
   if (isSubmitted) {
     return (
       <div className="min-h-screen bg-background">
-        <Navigation />
+        
         <main className="pt-20">
           <div className="min-h-[calc(100vh-80px)] flex items-center justify-center px-4 py-8">
             <div className="w-full max-w-md">
@@ -61,14 +61,14 @@ export default function ForgotPasswordPage() {
             </div>
           </div>
         </main>
-        <Footer />
+        
       </div>
     )
   }
 
   return (
     <div className="min-h-screen bg-background">
-      <Navigation />
+      
 
       <main className="pt-20">
         <div className="min-h-[calc(100vh-80px)] flex items-center justify-center px-4 py-8">
@@ -125,7 +125,7 @@ export default function ForgotPasswordPage() {
         </div>
       </main>
 
-      <Footer />
+      
     </div>
   )
 }

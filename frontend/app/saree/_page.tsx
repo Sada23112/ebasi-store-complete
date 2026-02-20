@@ -89,7 +89,7 @@ export default function SareePage() {
 
   return (
     <div className="min-h-screen bg-white">
-      <Navigation />
+      
 
       <main className="pt-20">
         {/* Hero Section */}
@@ -237,7 +237,7 @@ export default function SareePage() {
         </section>
       </main>
 
-      <Footer />
+      
     </div>
   )
 }

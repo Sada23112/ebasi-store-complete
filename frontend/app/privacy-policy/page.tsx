@@ -6,7 +6,7 @@ import { Shield, Globe, Mail } from "lucide-react"
 export default function PrivacyPolicyPage() {
   return (
     <div className="min-h-screen bg-background">
-      <Navigation />
+      
 
       <main className="pt-20">
         <div className="max-w-4xl mx-auto p-6">
@@ -162,7 +162,7 @@ export default function PrivacyPolicyPage() {
         </div>
       </main>
 
-      <Footer />
+      
     </div>
   )
 }

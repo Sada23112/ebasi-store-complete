@@ -94,7 +94,7 @@ export default function SearchPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Navigation />
+      
 
       <main className="pt-20">
         {/* Search Header */}
@@ -303,7 +303,7 @@ export default function SearchPage() {
         </div>
       </main>
 
-      <Footer />
+      
     </div>
   )
 }

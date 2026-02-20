@@ -194,7 +194,7 @@ export default function ShopPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Navigation />
+      
 
       <main className="pt-20">
         {/* Header */}
@@ -363,7 +363,7 @@ export default function ShopPage() {
         </div>
       </main>
 
-      <Footer />
+      
     </div>
   )
 }

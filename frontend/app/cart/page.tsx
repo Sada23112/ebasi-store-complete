@@ -37,14 +37,14 @@ export default function CartPage() {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background">
-        <Navigation />
+        
         <main className="pt-20">
           <div className="max-w-4xl mx-auto px-4 py-16 text-center">
             <Loader2 className="h-10 w-10 mx-auto text-primary animate-spin mb-4" />
             <p className="text-muted-foreground">Loading your cart...</p>
           </div>
         </main>
-        <Footer />
+        
       </div>
     )
   }
@@ -53,7 +53,7 @@ export default function CartPage() {
   if (cartItems.length === 0) {
     return (
       <div className="min-h-screen bg-background">
-        <Navigation />
+        
         <main className="pt-20">
           <div className="max-w-4xl mx-auto px-4 py-16 text-center">
             <ShoppingBag className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
@@ -64,14 +64,14 @@ export default function CartPage() {
             </Link>
           </div>
         </main>
-        <Footer />
+        
       </div>
     )
   }
 
   return (
     <div className="min-h-screen bg-background">
-      <Navigation />
+      
 
       <main className="pt-20">
         {/* Header */}
@@ -251,7 +251,7 @@ export default function CartPage() {
         </div>
       </main>
 
-      <Footer />
+      
     </div>
   )
 }

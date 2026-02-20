@@ -56,7 +56,7 @@ const categories = [
 export default function CollectionsPage() {
   return (
     <div className="min-h-screen bg-white">
-      <Navigation />
+      
 
       <main className="pt-20">
         {/* Header Section */}
@@ -115,7 +115,7 @@ export default function CollectionsPage() {
         </section>
       </main>
 
-      <Footer />
+      
     </div>
   )
 }

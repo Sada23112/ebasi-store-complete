@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 export default function AboutPage() {
   return (
     <div className="min-h-screen bg-white">
-      <Navigation />
+      
 
       <main className="pt-20">
         {/* Hero Section */}
@@ -180,7 +180,7 @@ export default function AboutPage() {
         </section>
       </main>
 
-      <Footer />
+      
     </div>
   )
 }

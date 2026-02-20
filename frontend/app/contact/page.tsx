@@ -62,7 +62,7 @@ export default function ContactPage() {
 
   return (
     <div className="min-h-screen bg-white">
-      <Navigation />
+      
 
       <main className="pt-20">
         {/* Hero Section */}
@@ -330,7 +330,7 @@ export default function ContactPage() {
         </section>
       </main>
 
-      <Footer />
+      
     </div>
   )
 }
