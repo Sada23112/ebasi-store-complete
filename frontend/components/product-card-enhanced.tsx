@@ -66,14 +66,14 @@ export function ProductCardEnhanced({
 
   return (
     <>
-      <Card className="group overflow-hidden border-0 shadow-sm hover:shadow-lg transition-all duration-300">
-        <div className="relative overflow-hidden">
+      <Card className="group overflow-hidden rounded-2xl border border-transparent hover:border-primary/20 premium-shadow hover:premium-shadow-hover transition-all duration-500 ease-out hover:-translate-y-1.5 focus-within:ring-2 focus-within:ring-primary focus-within:ring-offset-2 bg-card/50 backdrop-blur-sm">
+        <div className="relative overflow-hidden bg-muted">
           <Image
             src={product.images[0] || "/placeholder.svg"}
             alt={product.name}
             width={400}
             height={500}
-            className="w-full h-48 sm:h-80 object-cover group-hover:scale-105 transition-transform duration-300"
+            className="w-full h-48 sm:h-80 object-cover transition-transform duration-[1.2s] ease-[cubic-bezier(0.25,1,0.5,1)] group-hover:scale-[1.05]"
           />
 
           {/* Badges */}
@@ -118,10 +118,11 @@ export function ProductCardEnhanced({
             )}
           </div>
 
-          {/* Quick Actions Overlay */}
-          <div className="absolute bottom-3 left-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
+          {/* Quick Actions Overlay container */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+          <div className="absolute bottom-4 left-4 right-4 opacity-0 group-hover:opacity-100 transition-all duration-500 translate-y-4 group-hover:translate-y-0 ease-[cubic-bezier(0.25,1,0.5,1)]">
             <Button
-              className="w-full"
+              className="w-full premium-shadow"
               size="sm"
               onClick={() => onAddToCart?.(product.id, 1)}
               disabled={!product.inStock}
@@ -132,7 +133,7 @@ export function ProductCardEnhanced({
           </div>
         </div>
 
-        <CardContent className="p-4">
+        <CardContent className="p-5">
           <div className="flex items-center gap-1 mb-2">
             <div className="flex items-center">{renderStars(Math.round(product.rating))}</div>
             <span className="text-xs text-muted-foreground">({product.reviews})</span>

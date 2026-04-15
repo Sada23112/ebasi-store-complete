@@ -75,10 +75,10 @@ export function Navigation() {
   return (
     <nav
       className={cn(
-        "fixed top-0 left-0 right-0 z-50 transition-all duration-500",
+        "fixed top-0 left-0 right-0 z-50 transition-all duration-500 animate-in fade-in slide-in-from-top-4",
         isScrolled
-          ? "bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border border-border py-0 mt-2 mx-4 rounded-2xl shadow-sm"
-          : "bg-transparent border-b border-transparent"
+          ? "glass-header py-0 mt-3 mx-4 rounded-2xl shadow-sm premium-shadow"
+          : "bg-transparent py-2 border-b border-transparent"
       )}
     >
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -99,9 +99,10 @@ export function Navigation() {
                 <Link
                   key={item.name}
                   href={item.href}
-                  className="text-foreground hover:text-primary transition-colors duration-200 px-3 py-2 text-sm font-medium"
+                  className="relative group text-foreground/80 hover:text-foreground transition-colors duration-300 px-3 py-2 text-sm font-medium"
                 >
                   {item.name}
+                  <span className="absolute left-3 right-3 bottom-0 h-[2px] bg-primary scale-x-0 group-hover:scale-x-100 transition-transform duration-300 ease-out origin-left rounded-full" />
                 </Link>
               ))}
             </div>

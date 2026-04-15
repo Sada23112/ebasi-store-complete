@@ -30,7 +30,7 @@
   --chart-3: oklch(0.577 0.245 27.325); /* Red */
   --chart-4: oklch(0.35 0 0); /* Dark gray */
   --chart-5: oklch(0.9 0 0); /* Light gray */
-  --radius: 0.5rem;
+  --radius: 1rem; /* Standardized rounded-2xl (16px) for massive premium feel */
   --sidebar: oklch(1 0 0);
   --sidebar-foreground: oklch(0.35 0 0);
   --sidebar-primary: oklch(0.98 0 0);
@@ -156,4 +156,26 @@
   p {
     @apply text-pretty leading-relaxed;
   }
+}
+
+/* Base interactive defaults */
+@layer utilities {
+  .premium-shadow {
+    box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05), 0 0 3px rgba(0,0,0,0.02);
+  }
+  .premium-shadow-hover {
+    box-shadow: 0 12px 30px -4px rgba(0, 0, 0, 0.08), 0 0 5px rgba(0,0,0,0.03);
+  }
+  .animate-stagger-1 { animation-delay: 100ms; }
+  .animate-stagger-2 { animation-delay: 200ms; }
+  .animate-stagger-3 { animation-delay: 300ms; }
+  .animate-stagger-4 { animation-delay: 400ms; }
+  
+  .glass-header {
+    @apply bg-background/80 backdrop-blur-xl border-b border-white/10;
+  }
+}
+
+html {
+  scroll-behavior: smooth;
 }

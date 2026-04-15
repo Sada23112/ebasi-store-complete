@@ -8,15 +8,16 @@ const nextConfig = {
   },
   images: {
     unoptimized: true,
-  },
-
-  async rewrites() {
-    return [
+    remotePatterns: [
       {
-        source: "/api/:path*",
-        destination: "http://localhost:8000/:path*",
+        protocol: "https",
+        hostname: "ebasi-store.onrender.com",
       },
-    ];
+      {
+        protocol: "https",
+        hostname: "res.cloudinary.com",
+      },
+    ],
   },
 }
 

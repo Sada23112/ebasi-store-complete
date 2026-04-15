@@ -159,7 +159,7 @@ export default function ShopPage() {
       <div>
         <h3 className="font-semibold text-foreground mb-3">Price Range</h3>
         <div className="px-2">
-          <Slider value={priceRange} onValueChange={setPriceRange} max={10000} min={0} step={100} className="mb-4" />
+          <Slider value={priceRange} onValueChange={setPriceRange} max={100000} min={0} step={500} className="mb-4" />
           <div className="flex justify-between text-sm text-muted-foreground">
             <span>₹{priceRange[0]}</span>
             <span>₹{priceRange[1]}</span>

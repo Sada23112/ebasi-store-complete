@@ -57,32 +57,36 @@ export function FeaturedProducts() {
   }
 
   return (
-    <section className="py-16 px-4 bg-background">
+    <section className="py-20 lg:py-24 px-4 bg-background scroll-mt-24">
       <div className="max-w-7xl mx-auto">
-        <div className="text-center mb-12">
-          <h2 className="text-4xl font-serif font-bold text-foreground mb-4">Featured Products</h2>
+        <div className="text-center mb-16 animate-in fade-in slide-in-from-bottom-4 duration-700">
+          <h2 className="text-4xl lg:text-5xl font-serif font-bold text-foreground mb-4 tracking-tight">Featured Collection</h2>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Discover our handpicked collection of trending and bestselling pieces
+            Discover our handpicked collection of trending and bestselling pieces.
           </p>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 mb-12">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 lg:gap-8 mb-16 animate-in fade-in slide-in-from-bottom-8 duration-700 animate-stagger-2">
           {products.map((product) => (
             <Card
               key={product.id}
-              className="group overflow-hidden border-0 shadow-sm hover:shadow-lg transition-all duration-300"
+              className="group overflow-hidden rounded-2xl border border-transparent hover:border-primary/20 premium-shadow hover:premium-shadow-hover transition-all duration-500 ease-out hover:-translate-y-1.5 bg-card/50 backdrop-blur-sm"
             >
-              <div className="relative overflow-hidden">
+              <div className="relative overflow-hidden bg-muted">
                 <Image
                   src={getAbsoluteImageUrl(product.primary_image || (product.images && product.images.length > 0 ? product.images[0].image : null) || "/images/placeholders/placeholder.svg")}
                   alt={product.name}
                   width={400}
                   height={500}
-                  className="w-full h-48 sm:h-80 object-cover group-hover:scale-105 transition-transform duration-300"
+                  className="w-full h-48 sm:h-80 object-cover transition-transform duration-[1.2s] ease-[cubic-bezier(0.25,1,0.5,1)] group-hover:scale-[1.05]"
                 />
-                {product.is_featured && <Badge className="absolute top-3 left-3 bg-primary text-primary-foreground">Featured</Badge>}
+                
+                {/* Gradient overlay for text contrast if needed */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+
+                {product.is_featured && <Badge className="absolute top-3 left-3 bg-primary/95 backdrop-blur-sm text-primary-foreground premium-shadow">Featured</Badge>}
               </div>
-              <CardContent className="p-4">
+              <CardContent className="p-5">
                 <div className="flex items-center gap-1 mb-2">
                   <div className="flex items-center">
                     {[...Array(5)].map((_, i) => (

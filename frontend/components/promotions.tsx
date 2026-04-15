@@ -7,7 +7,7 @@ import Link from "next/link"
 
 export function Promotions() {
   return (
-    <section className="py-16 px-4 bg-primary/5">
+    <section className="py-20 lg:py-24 px-4 bg-primary/5">
       <div className="max-w-7xl mx-auto">
         <div className="text-center mb-12">
           <h2 className="text-4xl font-serif font-bold text-foreground mb-4">Current Offers</h2>

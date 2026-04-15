@@ -33,7 +33,7 @@ DEBUG = config('DEBUG', default=True, cast=bool)
 
 
 # ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'your-domain.com']
-ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='127.0.0.1,localhost', cast=Csv())
+ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='127.0.0.1,localhost,ebasi-store.onrender.com', cast=Csv())
 
 
 
@@ -189,12 +189,7 @@ REST_FRAMEWORK = {
     ],
 }
 
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",  # Your Vercel frontend URL
-    "http://127.0.0.1:3000",
-    "https://your-vercel-app.vercel.app",  # Your deployed frontend
-    "https://uncharily-nondigesting-louie.ngrok-free.dev",
-]
+# NOTE: The final CORS settings below override this block — see lines 230+
 
 
 # Default primary key field type
@@ -227,10 +222,23 @@ SOCIALACCOUNT_PROVIDERS = {
 
 
 
-# CORS settings
-CORS_ALLOW_ALL_ORIGINS = config('CORS_ALLOW_ALL_ORIGINS', default=False, cast=bool)
-CORS_ALLOWED_ORIGINS = config('CORS_ALLOWED_ORIGINS', default='http://localhost:3000,http://127.0.0.1:3000', cast=Csv())
-CSRF_TRUSTED_ORIGINS = config('CSRF_TRUSTED_ORIGINS', default='http://localhost:3000,http://127.0.0.1:3000', cast=Csv())
+# CORS settings — controlled via environment variables on Render
+# Set these in Render's Environment Variables dashboard:
+#   CORS_ALLOW_ALL_ORIGINS=True   (easiest — allows all frontends)
+#   OR
+#   CORS_ALLOWED_ORIGINS=https://your-vercel-app.vercel.app,http://localhost:3000
+#   CSRF_TRUSTED_ORIGINS=https://your-vercel-app.vercel.app
+CORS_ALLOW_ALL_ORIGINS = config('CORS_ALLOW_ALL_ORIGINS', default=True, cast=bool)
+CORS_ALLOWED_ORIGINS = config(
+    'CORS_ALLOWED_ORIGINS',
+    default='http://localhost:3000,http://127.0.0.1:3000',
+    cast=Csv()
+)
+CSRF_TRUSTED_ORIGINS = config(
+    'CSRF_TRUSTED_ORIGINS',
+    default='http://localhost:3000,http://127.0.0.1:3000',
+    cast=Csv()
+)
 
 CORS_ALLOW_CREDENTIALS = True
 

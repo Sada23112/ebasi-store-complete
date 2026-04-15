@@ -51,12 +51,12 @@ export function CollectionsSection() {
   }
 
   return (
-    <section id="collections" className="py-16 bg-background">
+    <section id="collections" className="py-20 lg:py-24 bg-background scroll-mt-24">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
-        <div className="text-center mb-12">
-          <h2 className="text-3xl sm:text-4xl font-serif font-bold text-foreground mb-4">Our Collections</h2>
-          <p className="text-muted-foreground max-w-2xl mx-auto text-pretty">
+        <div className="text-center mb-16 animate-in fade-in slide-in-from-bottom-4 duration-700">
+          <h2 className="text-4xl lg:text-5xl font-serif font-bold text-foreground mb-4 tracking-tight">Our Collections</h2>
+          <p className="text-lg text-muted-foreground max-w-2xl mx-auto text-pretty">
             Explore our carefully curated collection of traditional and contemporary fashion pieces, designed to
             celebrate your unique style.
           </p>
@@ -99,19 +99,21 @@ export function CollectionsSection() {
         </div>
 
         {/* Products Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 lg:gap-8 animate-in fade-in slide-in-from-bottom-8 duration-700 animate-stagger-2">
           {filteredProducts.map((product) => (
             <Link href={`/product/${product.slug || product.id}`} key={product.id} className="block group">
-              <Card className="cursor-pointer hover:shadow-lg transition-shadow duration-300 h-full">
+              <Card className="cursor-pointer overflow-hidden rounded-2xl border border-transparent hover:border-primary/20 premium-shadow hover:premium-shadow-hover transition-all duration-500 ease-out hover:-translate-y-1.5 focus-within:ring-2 focus-within:ring-primary focus-within:ring-offset-2 bg-card/50 backdrop-blur-sm h-full">
                 <CardContent className="p-0">
-                  <div className="relative overflow-hidden rounded-t-lg">
+                  <div className="relative overflow-hidden bg-muted">
                     <img
                       src={getAbsoluteImageUrl(product.images?.[0]?.image || product.image)}
                       alt={product.name}
-                      className="w-full h-48 sm:h-64 object-cover group-hover:scale-105 transition-transform duration-300"
+                      className="w-full h-48 sm:h-64 object-cover transition-transform duration-[1.2s] ease-[cubic-bezier(0.25,1,0.5,1)] group-hover:scale-[1.05]"
                     />
+                    {/* Gradient overlay for text contrast if needed */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
                   </div>
-                  <div className="p-4 space-y-2">
+                  <div className="p-5 space-y-2">
                     <h3 className="font-medium text-foreground group-hover:text-primary transition-colors line-clamp-1">
                       {product.name}
                     </h3>
