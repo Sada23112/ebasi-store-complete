@@ -44,9 +44,20 @@ class ProductListSerializer(serializers.ModelSerializer):
         ]
 
     def get_primary_image(self, obj):
+        # First try to get the image explicitly marked as primary
         primary_image = obj.images.filter(is_primary=True).first()
+        # Fall back to the first available image if none is marked primary
+        if not primary_image:
+            primary_image = obj.images.first()
         if primary_image:
-            return self.context['request'].build_absolute_uri(primary_image.image.url)
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(primary_image.image.url)
+            # Fallback: return the image URL directly (for Cloudinary or absolute URLs)
+            url = primary_image.image.url
+            if url.startswith('http'):
+                return url
+            return f"https://ebasi-store.onrender.com{url}"
         return None
 
     def get_average_rating(self, obj):
