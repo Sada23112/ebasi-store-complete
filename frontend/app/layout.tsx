@@ -77,9 +77,6 @@ export const metadata: Metadata = {
   category: "fashion",
   generator: "v0.app",
 }
-import { AuthProvider } from "@/lib/auth-context"
-import { CartProvider } from "@/lib/cart-context"
-import { WishlistProvider } from "@/lib/wishlist-context"
 import { Navigation } from "@/components/navigation"
 import { Footer } from "@/components/footer"
 import { Toaster } from "@/components/ui/toaster"
@@ -118,16 +115,10 @@ export default function RootLayout({
         />
       </head>
       <body className={`font-sans ${GeistSans.variable} ${GeistMono.variable} antialiased`}>
-        <AuthProvider>
-          <CartProvider>
-            <WishlistProvider>
-              <Navigation />
-              <Suspense fallback={null}>{children}</Suspense>
-              <Footer />
-              <Toaster />
-            </WishlistProvider>
-          </CartProvider>
-        </AuthProvider>
+        <Navigation />
+        <Suspense fallback={null}>{children}</Suspense>
+        <Footer />
+        <Toaster />
         <Analytics />
       </body>
     </html>

@@ -99,7 +99,7 @@ export function CollectionsSection() {
         </div>
 
         {/* Products Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
           {filteredProducts.map((product) => (
             <Link href={`/product/${product.slug || product.id}`} key={product.id} className="block group">
               <Card className="cursor-pointer hover:shadow-lg transition-shadow duration-300 h-full">
@@ -108,7 +108,7 @@ export function CollectionsSection() {
                     <img
                       src={getAbsoluteImageUrl(product.images?.[0]?.image || product.image)}
                       alt={product.name}
-                      className="w-full h-64 object-cover group-hover:scale-105 transition-transform duration-300"
+                      className="w-full h-48 sm:h-64 object-cover group-hover:scale-105 transition-transform duration-300"
                     />
                   </div>
                   <div className="p-4 space-y-2">

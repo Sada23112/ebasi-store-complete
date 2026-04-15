@@ -290,7 +290,7 @@ export default function ShopPage() {
                 <div
                   className={
                     viewMode === "grid"
-                      ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
+                      ? "grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6"
                       : "space-y-4"
                   }
                 >
@@ -307,7 +307,7 @@ export default function ShopPage() {
                           alt={product.name}
                           width={400}
                           height={viewMode === "list" ? 300 : 500}
-                          className={`w-full object-cover group-hover:scale-105 transition-transform duration-300 ${viewMode === "list" ? "h-full" : "h-80"
+                          className={`w-full object-cover group-hover:scale-105 transition-transform duration-300 ${viewMode === "list" ? "h-full" : "h-48 sm:h-80"
                             }`}
                         />
                         <div className="absolute top-3 left-3 flex flex-col gap-1">

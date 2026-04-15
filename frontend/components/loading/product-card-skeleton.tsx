@@ -5,7 +5,7 @@ export function ProductCardSkeleton() {
   return (
     <Card className="overflow-hidden border-0 shadow-sm">
       <div className="relative">
-        <Skeleton className="w-full h-80" />
+        <Skeleton className="w-full h-48 sm:h-80" />
         <Skeleton className="absolute top-3 left-3 h-6 w-16" />
         <Skeleton className="absolute top-3 right-3 h-8 w-8 rounded-full" />
       </div>
@@ -33,7 +33,7 @@ export function ProductCardSkeleton() {
 
 export function ProductGridSkeleton({ count = 8 }: { count?: number }) {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
       {[...Array(count)].map((_, i) => (
         <ProductCardSkeleton key={i} />
       ))}

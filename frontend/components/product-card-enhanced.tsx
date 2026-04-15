@@ -73,7 +73,7 @@ export function ProductCardEnhanced({
             alt={product.name}
             width={400}
             height={500}
-            className="w-full h-80 object-cover group-hover:scale-105 transition-transform duration-300"
+            className="w-full h-48 sm:h-80 object-cover group-hover:scale-105 transition-transform duration-300"
           />
 
           {/* Badges */}
