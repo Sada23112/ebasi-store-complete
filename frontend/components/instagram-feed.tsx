@@ -73,7 +73,7 @@ export function InstagramFeed() {
             target="_blank"
             rel="noopener noreferrer"
           >
-            <Button variant="outline" size="lg" className="px-8 bg-transparent hover:bg-muted">
+            <Button variant="outline" size="lg" className="px-8 bg-transparent hover:bg-primary hover:text-primary-foreground">
               <Instagram className="h-4 w-4 mr-2" />
               Follow @ebasistore_mekhelasador
             </Button>

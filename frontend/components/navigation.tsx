@@ -143,7 +143,7 @@ export function Navigation() {
                     variant="ghost"
                     size="icon"
                     onClick={handleSearchExpand}
-                    className="hover:bg-muted/50 transition-colors"
+                    className="text-foreground transition-colors"
                   >
                     <Search className="h-5 w-5" />
                     <span className="sr-only">Search</span>
@@ -151,7 +151,7 @@ export function Navigation() {
                 )}
               </div>
               {isSearchExpanded && (
-                <Button variant="ghost" size="icon" onClick={handleSearchCollapse} className="ml-2 hover:bg-muted/50">
+                <Button variant="ghost" size="icon" onClick={handleSearchCollapse} className="ml-2 text-foreground transition-colors">
                   <X className="h-4 w-4" />
                   <span className="sr-only">Close search</span>
                 </Button>

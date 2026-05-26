@@ -45,7 +45,7 @@ export function HeroSection() {
                 <Button
                   variant="outline"
                   size="lg"
-                  className="w-full border-primary/30 text-primary hover:bg-primary/5 bg-transparent backdrop-blur-sm transition-all duration-300 ease-out hover:-translate-y-1 hover:shadow-lg rounded-xl"
+                  className="w-full border-primary text-primary hover:bg-primary hover:text-primary-foreground backdrop-blur-sm transition-all duration-300 ease-out hover:-translate-y-1 hover:shadow-lg rounded-xl"
                 >
                   <Instagram className="w-4 h-4 mr-2" />
                   Follow Us
