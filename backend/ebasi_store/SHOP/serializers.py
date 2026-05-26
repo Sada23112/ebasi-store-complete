@@ -4,21 +4,73 @@ from django.db.models import Avg
 
 
 class ProductImageSerializer(serializers.ModelSerializer):
+    image = serializers.SerializerMethodField()
+
     class Meta:
         model = ProductImage
         fields = ['id', 'image', 'alt_text', 'is_primary', 'order']
 
+    def get_image(self, obj):
+        if obj.image:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.image.url)
+            # Fallback for Cloudinary or already-absolute URLs
+            url = obj.image.url
+            if url.startswith('http'):
+                return url
+            return url
+        return None
+
 
 class ProductVideoSerializer(serializers.ModelSerializer):
+    video = serializers.SerializerMethodField()
+    thumbnail = serializers.SerializerMethodField()
+
     class Meta:
         model = ProductVideo
         fields = ['id', 'video', 'thumbnail', 'title', 'order']
 
+    def get_video(self, obj):
+        if obj.video:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.video.url)
+            url = obj.video.url
+            if url.startswith('http'):
+                return url
+            return url
+        return None
+
+    def get_thumbnail(self, obj):
+        if obj.thumbnail:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.thumbnail.url)
+            url = obj.thumbnail.url
+            if url.startswith('http'):
+                return url
+            return url
+        return None
+
 
 class CategorySerializer(serializers.ModelSerializer):
+    image = serializers.SerializerMethodField()
+
     class Meta:
         model = Category
         fields = ['id', 'name', 'slug', 'description', 'image', 'is_active']
+
+    def get_image(self, obj):
+        if obj.image:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.image.url)
+            url = obj.image.url
+            if url.startswith('http'):
+                return url
+            return url
+        return None
 
 
 class ReviewSerializer(serializers.ModelSerializer):
