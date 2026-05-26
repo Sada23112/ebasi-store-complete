@@ -66,7 +66,7 @@ export function FeaturedProducts() {
           </p>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 lg:gap-8 mb-16 animate-in fade-in slide-in-from-bottom-8 duration-700 animate-stagger-2">
+        <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-6 lg:gap-8 mb-16 animate-in fade-in slide-in-from-bottom-8 duration-700 animate-stagger-2">
           {products.map((product) => (
             <Card
               key={product.id}
@@ -86,7 +86,7 @@ export function FeaturedProducts() {
 
                 {product.is_featured && <Badge className="absolute top-3 left-3 bg-primary/95 backdrop-blur-sm text-primary-foreground premium-shadow">Featured</Badge>}
               </div>
-              <CardContent className="p-5">
+              <CardContent className="p-3 sm:p-5">
                 <div className="flex items-center gap-1 mb-2">
                   <div className="flex items-center">
                     {[...Array(5)].map((_, i) => (
@@ -99,16 +99,16 @@ export function FeaturedProducts() {
                   </div>
                   <span className="text-xs text-muted-foreground">({product.reviews_count || 0})</span>
                 </div>
-                <h3 className="font-medium text-foreground mb-2 line-clamp-2">{product.name}</h3>
-                <div className="flex items-center gap-2 mb-3">
-                  <span className="text-lg font-bold text-foreground">₹{product.price}</span>
+                <h3 className="font-medium text-foreground mb-2 line-clamp-2 text-sm sm:text-base">{product.name}</h3>
+                <div className="flex flex-wrap items-baseline gap-1.5 mb-3 min-w-0">
+                  <span className="text-base sm:text-lg font-bold text-foreground shrink-0">₹{product.price}</span>
                   {product.compare_price && (
-                    <>
-                      <span className="text-sm text-muted-foreground line-through">₹{product.compare_price}</span>
-                      <Badge variant="secondary" className="text-xs">
+                    <div className="flex items-center gap-1 flex-wrap min-w-0">
+                      <span className="text-xs sm:text-sm text-muted-foreground line-through shrink-0">₹{product.compare_price}</span>
+                      <Badge variant="secondary" className="text-[10px] sm:text-xs px-1.5 py-0 h-4 sm:h-5">
                         {Math.round(((product.compare_price - product.price) / product.compare_price) * 100)}% OFF
                       </Badge>
-                    </>
+                    </div>
                   )}
                 </div>
                 <Link href={`/product/${product.slug}`}>

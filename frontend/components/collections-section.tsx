@@ -99,7 +99,7 @@ export function CollectionsSection() {
         </div>
 
         {/* Products Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 lg:gap-8 animate-in fade-in slide-in-from-bottom-8 duration-700 animate-stagger-2">
+        <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-6 lg:gap-8 animate-in fade-in slide-in-from-bottom-8 duration-700 animate-stagger-2">
           {filteredProducts.map((product) => (
             <Link href={`/product/${product.slug || product.id}`} key={product.id} className="block group">
               <Card className="cursor-pointer overflow-hidden rounded-2xl border border-transparent hover:border-primary/20 premium-shadow hover:premium-shadow-hover transition-all duration-500 ease-out hover:-translate-y-1.5 focus-within:ring-2 focus-within:ring-primary focus-within:ring-offset-2 bg-card/50 backdrop-blur-sm h-full">
@@ -113,16 +113,16 @@ export function CollectionsSection() {
                     {/* Gradient overlay for text contrast if needed */}
                     <div className="absolute inset-0 bg-gradient-to-t from-black/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
                   </div>
-                  <div className="p-5 space-y-2">
-                    <h3 className="font-medium text-foreground group-hover:text-primary transition-colors line-clamp-1">
+                  <div className="p-3 sm:p-5 space-y-2">
+                    <h3 className="font-medium text-foreground group-hover:text-primary transition-colors line-clamp-1 text-sm sm:text-base">
                       {product.name}
                     </h3>
-                    <div className="flex items-center space-x-2">
-                      <span className="text-lg font-bold text-primary">
+                    <div className="flex flex-wrap items-baseline gap-1.5 min-w-0">
+                      <span className="text-base sm:text-lg font-bold text-primary shrink-0">
                         ₹{parseFloat(product.price)?.toLocaleString?.() ?? product.price}
                       </span>
                       {product.compare_price && (
-                        <span className="text-sm text-muted-foreground line-through">
+                        <span className="text-xs sm:text-sm text-muted-foreground line-through shrink-0">
                           ₹{parseFloat(product.compare_price).toLocaleString()}
                         </span>
                       )}

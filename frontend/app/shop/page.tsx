@@ -346,7 +346,7 @@ export default function ShopPage() {
                 <div
                   className={
                     viewMode === "grid"
-                      ? "grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6"
+                      ? "grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-6"
                       : "space-y-4"
                   }
                 >
@@ -366,11 +366,11 @@ export default function ShopPage() {
                           className={`w-full object-cover group-hover:scale-105 transition-transform duration-300 ${viewMode === "list" ? "h-full" : "h-48 sm:h-80"
                             }`}
                         />
-                        <div className="absolute top-3 left-3 flex flex-col gap-1">
-                          {product.is_featured && <Badge className="bg-primary text-primary-foreground">Trending</Badge>}
-                          {product.stock_status !== 'in_stock' && <Badge variant="secondary">Out of Stock</Badge>}
+                        <div className="absolute top-2 left-2 sm:top-3 sm:left-3 flex flex-col gap-1 z-10">
+                          {product.is_featured && <Badge className="bg-primary text-primary-foreground text-[10px] sm:text-xs px-1.5 py-0 h-4 sm:h-5">Trending</Badge>}
+                          {product.stock_status !== 'in_stock' && <Badge variant="secondary" className="text-[10px] sm:text-xs px-1.5 py-0 h-4 sm:h-5">Out of Stock</Badge>}
                           {product.compare_price && (
-                            <Badge className="bg-red-500 text-white">
+                            <Badge className="bg-red-500 text-white text-[10px] sm:text-xs px-1.5 py-0 h-4 sm:h-5">
                               {Math.round(((parseFloat(product.compare_price) - parseFloat(product.price)) / parseFloat(product.compare_price)) * 100)}% OFF
                             </Badge>
                           )}
@@ -378,7 +378,7 @@ export default function ShopPage() {
                       </div>
 
                       {/* Content */}
-                      <CardContent className={`p-4 ${viewMode === "list" ? "flex-1" : ""}`}>
+                      <CardContent className={`p-3 sm:p-4 ${viewMode === "list" ? "flex-1" : ""}`}>
                         <div className="flex items-center gap-1 mb-2">
                           <div className="flex items-center">
                             {[...Array(5)].map((_, i) => (
@@ -391,14 +391,14 @@ export default function ShopPage() {
                           </div>
                           <span className="text-xs text-muted-foreground">({product.review_count || 0})</span>
                         </div>
-                        <h3 className="font-medium text-foreground mb-2 line-clamp-2">{product.name}</h3>
-                        <p className="text-sm text-muted-foreground mb-2">
+                        <h3 className="font-medium text-foreground mb-2 line-clamp-2 text-sm sm:text-base">{product.name}</h3>
+                        <p className="text-xs sm:text-sm text-muted-foreground mb-2">
                           {product.category?.name || "Uncategorized"}
                         </p>
-                        <div className="flex items-center gap-2 mb-3">
-                          <span className="text-lg font-bold text-foreground">₹{product.price}</span>
+                        <div className="flex flex-wrap items-baseline gap-1.5 mb-3 min-w-0">
+                          <span className="text-base sm:text-lg font-bold text-foreground shrink-0">₹{product.price}</span>
                           {product.compare_price && (
-                            <span className="text-sm text-muted-foreground line-through">₹{product.compare_price}</span>
+                            <span className="text-xs sm:text-sm text-muted-foreground line-through shrink-0">₹{product.compare_price}</span>
                           )}
                         </div>
 

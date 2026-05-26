@@ -26,7 +26,7 @@ export function SectionSkeleton() {
           <Skeleton className="h-10 w-64 mx-auto mb-4" />
           <Skeleton className="h-6 w-96 mx-auto" />
         </div>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-6">
           {[...Array(4)].map((_, i) => (
             <div key={i} className="space-y-4">
               <Skeleton className="h-64 w-full" />
