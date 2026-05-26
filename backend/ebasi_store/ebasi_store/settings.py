@@ -40,6 +40,10 @@ ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='127.0.0.1,localhost,ebasi-store
 # Application definition
 
 INSTALLED_APPS = [
+    # Storage backends must be loaded before staticfiles
+    'cloudinary_storage',
+    'cloudinary',
+
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -58,10 +62,7 @@ INSTALLED_APPS = [
     'allauth.socialaccount.providers.google',
     'dj_rest_auth',
     'dj_rest_auth.registration',
-    'cloudinary_storage',
-    'cloudinary',
 
-    
     # Local apps
     'SHOP',
     'accounts',
@@ -156,24 +157,30 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
-# STATICFILES_DIRS = [
-#     os.path.join(BASE_DIR, 'static'),
-# ]
+# Storage configuration (Django 4.2+ / 5.x unified)
+STORAGES = {
+    "default": {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+    },
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+    },
+}
 
-# Media files
-
-# Media files
-MEDIA_URL = '/media/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
-
+# Production storage configuration (Render)
 if not DEBUG:
     CLOUDINARY_STORAGE = {
         'CLOUD_NAME': config('CLOUDINARY_CLOUD_NAME', default=''),
         'API_KEY': config('CLOUDINARY_API_KEY', default=''),
         'API_SECRET': config('CLOUDINARY_API_SECRET', default=''),
     }
-    DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+    STORAGES["default"] = {
+        "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage",
+    }
+
+# Media files
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 
 
