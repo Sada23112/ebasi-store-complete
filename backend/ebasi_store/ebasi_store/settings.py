@@ -167,6 +167,9 @@ STORAGES = {
     },
 }
 
+# Compatibility bridge for django-cloudinary-storage (which internally references legacy setting in Django 5.x)
+STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+
 # Production storage configuration (Render)
 if not DEBUG:
     CLOUDINARY_STORAGE = {
