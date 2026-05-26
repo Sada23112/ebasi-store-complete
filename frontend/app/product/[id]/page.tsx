@@ -23,6 +23,7 @@ import {
 import Link from "next/link"
 import api from "@/lib/api"
 import { ProductGallery } from "@/components/product-gallery"
+import { getAbsoluteImageUrl } from "@/lib/utils"
 
 export default function ProductDetailPage() {
   const params = useParams()
@@ -75,12 +76,12 @@ export default function ProductDetailPage() {
   const mediaItems = product ? [
     ...(product.images || []).map((img: any) => ({
       type: "image",
-      url: img.image,
+      url: getAbsoluteImageUrl(img.image),
     })),
     ...(product.videos || []).map((vid: any) => ({
       type: "video",
-      url: vid.video_file, // Adjust based on your API response structure, usually 'video_file' or 'video'
-      thumbnail: vid.thumbnail,
+      url: getAbsoluteImageUrl(vid.video || vid.video_file),
+      thumbnail: vid.thumbnail ? getAbsoluteImageUrl(vid.thumbnail) : undefined,
     })),
   ] : []
 

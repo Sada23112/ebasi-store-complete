@@ -17,112 +17,36 @@ import Link from "next/link"
 import { API_BASE_URL } from "@/lib/constants"
 import { getAbsoluteImageUrl } from "@/lib/utils"
 
-export default function ShopPage() {
-  const [products, setProducts] = useState<any[]>([])
-  const [loading, setLoading] = useState(true)
-  const [searchQuery, setSearchQuery] = useState("")
-  const [selectedCategory, setSelectedCategory] = useState("All")
-  // For backend data, we might dynamically fetch categories/colors/fabrics or keep hardcoded for now
-  // Let's keep filters simple for now or extract unique values from fetched products
-  const [priceRange, setPriceRange] = useState([0, 100000]) // Increased max range
-  const [sortBy, setSortBy] = useState("featured")
-  const [viewMode, setViewMode] = useState<"grid" | "list">("grid")
-  const [showInStockOnly, setShowInStockOnly] = useState(false)
-  const [showOnSaleOnly, setShowOnSaleOnly] = useState(false)
+interface FilterSidebarProps {
+  searchQuery: string
+  setSearchQuery: (value: string) => void
+  categories: string[]
+  selectedCategory: string
+  setSelectedCategory: (value: string) => void
+  maxPrice: number[]
+  setMaxPrice: (value: number[]) => void
+  showInStockOnly: boolean
+  setShowInStockOnly: (value: boolean) => void
+  showOnSaleOnly: boolean
+  setShowOnSaleOnly: (value: boolean) => void
+  clearAllFilters: () => void
+}
 
-  // Derived state for filters
-  const [categories, setCategories] = useState<string[]>(["All"])
-
-  useEffect(() => {
-    async function fetchProducts() {
-      try {
-        setLoading(true)
-        const response = await fetch(`${API_BASE_URL}/products/`)
-        if (response.ok) {
-          const data = await response.json()
-          const list = Array.isArray(data) ? data : (data.results || [])
-          setProducts(list)
-
-          // Extract categories
-          const cats = new Set<string>(["All"])
-          list.forEach((p: any) => {
-            if (p.category?.name) cats.add(p.category.name)
-          })
-          setCategories(Array.from(cats))
-        }
-      } catch (error) {
-        console.error("Failed to fetch products", error)
-      } finally {
-        setLoading(false)
-      }
-    }
-    fetchProducts()
-  }, [])
-
-  const filteredProducts = useMemo(() => {
-    let filtered = [...products]
-
-    // Search filter
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase()
-      filtered = filtered.filter((product) =>
-        product.name.toLowerCase().includes(query) ||
-        product.description?.toLowerCase().includes(query)
-      )
-    }
-
-    // Category filter
-    if (selectedCategory !== "All") {
-      filtered = filtered.filter((product) => product.category?.name === selectedCategory)
-    }
-
-    // Price filter
-    filtered = filtered.filter((product) => {
-      const price = parseFloat(product.price)
-      return price >= priceRange[0] && price <= priceRange[1]
-    })
-
-    // Stock filter
-    if (showInStockOnly) {
-      filtered = filtered.filter((product) => product.stock_status === 'in_stock')
-    }
-
-    // On Sale filter
-    if (showOnSaleOnly) {
-      filtered = filtered.filter((product) => product.compare_price && parseFloat(product.compare_price) > parseFloat(product.price))
-    }
-
-    // Sort products
-    switch (sortBy) {
-      case "price-low":
-        filtered.sort((a, b) => parseFloat(a.price) - parseFloat(b.price))
-        break
-      case "price-high":
-        filtered.sort((a, b) => parseFloat(b.price) - parseFloat(a.price))
-        break
-      case "rating":
-        filtered.sort((a, b) => (b.average_rating || 0) - (a.average_rating || 0))
-        break
-      case "newest":
-        filtered.sort((a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime())
-        break
-      default:
-        // Featured or default order
-        break
-    }
-
-    return filtered
-  }, [products, searchQuery, selectedCategory, priceRange, sortBy, showInStockOnly, showOnSaleOnly])
-
-  const clearAllFilters = () => {
-    setSearchQuery("")
-    setSelectedCategory("All")
-    setPriceRange([0, 100000])
-    setShowInStockOnly(false)
-    setShowOnSaleOnly(false)
-  }
-
-  const FilterSidebar = () => (
+function FilterSidebar({
+  searchQuery,
+  setSearchQuery,
+  categories,
+  selectedCategory,
+  setSelectedCategory,
+  maxPrice,
+  setMaxPrice,
+  showInStockOnly,
+  setShowInStockOnly,
+  showOnSaleOnly,
+  setShowOnSaleOnly,
+  clearAllFilters,
+}: FilterSidebarProps) {
+  return (
     <div className="space-y-6">
       {/* Search */}
       <div>
@@ -157,12 +81,19 @@ export default function ShopPage() {
 
       {/* Price Range */}
       <div>
-        <h3 className="font-semibold text-foreground mb-3">Price Range</h3>
+        <h3 className="font-semibold text-foreground mb-3">Max Price</h3>
         <div className="px-2">
-          <Slider value={priceRange} onValueChange={setPriceRange} max={100000} min={0} step={500} className="mb-4" />
+          <Slider 
+            value={maxPrice} 
+            onValueChange={setMaxPrice} 
+            max={100000} 
+            min={0} 
+            step={500} 
+            className="mb-4" 
+          />
           <div className="flex justify-between text-sm text-muted-foreground">
-            <span>₹{priceRange[0]}</span>
-            <span>₹{priceRange[1]}</span>
+            <span>₹0</span>
+            <span>Up to ₹{maxPrice[0]}</span>
           </div>
         </div>
       </div>
@@ -191,6 +122,129 @@ export default function ShopPage() {
       </Button>
     </div>
   )
+}
+
+export default function ShopPage() {
+  const [products, setProducts] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+  const [searchQuery, setSearchQuery] = useState("")
+  const [selectedCategory, setSelectedCategory] = useState("All")
+  // For backend data, we might dynamically fetch categories/colors/fabrics or keep hardcoded for now
+  // Let's keep filters simple for now or extract unique values from fetched products
+  const [maxPrice, setMaxPrice] = useState([100000]) // Single max price value
+  const [sortBy, setSortBy] = useState("featured")
+  const [viewMode, setViewMode] = useState<"grid" | "list">("grid")
+  const [showInStockOnly, setShowInStockOnly] = useState(false)
+  const [showOnSaleOnly, setShowOnSaleOnly] = useState(false)
+  const [mounted, setMounted] = useState(false)
+
+  // Derived state for filters
+  const [categories, setCategories] = useState<string[]>(["All"])
+
+  useEffect(() => {
+    async function fetchProducts() {
+      try {
+        setLoading(true)
+        const response = await fetch(`${API_BASE_URL}/products/`)
+        if (response.ok) {
+          const data = await response.json()
+          const list = Array.isArray(data) ? data : (data.results || [])
+          setProducts(list)
+
+          // Extract categories
+          const cats = new Set<string>(["All"])
+          list.forEach((p: any) => {
+            if (p.category?.name) cats.add(p.category.name)
+          })
+          setCategories(Array.from(cats))
+        }
+      } catch (error) {
+        console.error("Failed to fetch products", error)
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchProducts()
+    setMounted(true)
+  }, [])
+
+  const filteredProducts = useMemo(() => {
+    let filtered = [...products]
+
+    // Search filter
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase()
+      filtered = filtered.filter((product) =>
+        product.name.toLowerCase().includes(query) ||
+        product.description?.toLowerCase().includes(query)
+      )
+    }
+
+    // Category filter
+    if (selectedCategory !== "All") {
+      filtered = filtered.filter((product) => product.category?.name === selectedCategory)
+    }
+
+    // Price filter
+    filtered = filtered.filter((product) => {
+      const price = parseFloat(product.price)
+      return price <= maxPrice[0]
+    })
+
+    // Stock filter
+    if (showInStockOnly) {
+      filtered = filtered.filter((product) => product.stock_status === 'in_stock')
+    }
+
+    // On Sale filter
+    if (showOnSaleOnly) {
+      filtered = filtered.filter((product) => product.compare_price && parseFloat(product.compare_price) > parseFloat(product.price))
+    }
+
+    // Sort products
+    switch (sortBy) {
+      case "price-low":
+        filtered.sort((a, b) => parseFloat(a.price) - parseFloat(b.price))
+        break
+      case "price-high":
+        filtered.sort((a, b) => parseFloat(b.price) - parseFloat(a.price))
+        break
+      case "rating":
+        filtered.sort((a, b) => (b.average_rating || 0) - (a.average_rating || 0))
+        break
+      case "newest":
+        filtered.sort((a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime())
+        break
+      default:
+        // Featured or default order
+        break
+    }
+
+    return filtered
+  }, [products, searchQuery, selectedCategory, maxPrice, sortBy, showInStockOnly, showOnSaleOnly])
+
+  const clearAllFilters = () => {
+    setSearchQuery("")
+    setSelectedCategory("All")
+    setMaxPrice([100000])
+    setShowInStockOnly(false)
+    setShowOnSaleOnly(false)
+  }
+
+  const filtersProps = {
+    searchQuery,
+    setSearchQuery,
+    categories,
+    selectedCategory,
+    setSelectedCategory,
+    maxPrice,
+    setMaxPrice,
+    showInStockOnly,
+    setShowInStockOnly,
+    showOnSaleOnly,
+    setShowOnSaleOnly,
+    clearAllFilters,
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -210,7 +264,7 @@ export default function ShopPage() {
             {/* Desktop Sidebar */}
             <aside className="hidden lg:block w-80 flex-shrink-0">
               <div className="sticky top-24">
-                <FilterSidebar />
+                <FilterSidebar {...filtersProps} />
               </div>
             </aside>
 
@@ -220,22 +274,24 @@ export default function ShopPage() {
               <div className="flex items-center justify-between mb-6 flex-wrap gap-4">
                 <div className="flex items-center gap-4">
                   {/* Mobile Filter */}
-                  <Sheet>
-                    <SheetTrigger asChild>
-                      <Button variant="outline" className="lg:hidden bg-transparent">
-                        <SlidersHorizontal className="h-4 w-4 mr-2" />
-                        Filters
-                      </Button>
-                    </SheetTrigger>
-                    <SheetContent side="left" className="w-80">
-                      <SheetHeader>
-                        <SheetTitle>Filters</SheetTitle>
-                      </SheetHeader>
-                      <div className="mt-6">
-                        <FilterSidebar />
-                      </div>
-                    </SheetContent>
-                  </Sheet>
+                  {mounted && (
+                    <Sheet>
+                      <SheetTrigger asChild>
+                        <Button variant="outline" className="lg:hidden bg-transparent">
+                          <SlidersHorizontal className="h-4 w-4 mr-2" />
+                          Filters
+                        </Button>
+                      </SheetTrigger>
+                      <SheetContent side="left" className="w-80">
+                        <SheetHeader>
+                          <SheetTitle>Filters</SheetTitle>
+                        </SheetHeader>
+                        <div className="mt-6">
+                          <FilterSidebar {...filtersProps} />
+                        </div>
+                      </SheetContent>
+                    </Sheet>
+                  )}
 
                   <span className="text-sm text-muted-foreground">{filteredProducts.length} products found</span>
                 </div>

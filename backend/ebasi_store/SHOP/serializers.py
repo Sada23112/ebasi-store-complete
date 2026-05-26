@@ -57,7 +57,7 @@ class ProductListSerializer(serializers.ModelSerializer):
             url = primary_image.image.url
             if url.startswith('http'):
                 return url
-            return f"https://ebasi-store.onrender.com{url}"
+            return url
         return None
 
     def get_average_rating(self, obj):
