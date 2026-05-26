@@ -3,9 +3,10 @@
 import { useState, useEffect, useMemo } from "react"
 import Navigation from "@/components/navigation"
 import Footer from "@/components/footer"
-import { Button } from "@/components/ui/button"
+import { Button, buttonVariants } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
+import { cn } from "@/lib/utils"
 import { Badge } from "@/components/ui/badge"
 import { Slider } from "@/components/ui/slider"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -351,66 +352,73 @@ export default function ShopPage() {
                   }
                 >
                   {filteredProducts.map((product) => (
-                    <Card
-                      key={product.id}
-                      className={`group overflow-hidden border-0 shadow-sm hover:shadow-lg transition-all duration-300 ${viewMode === "list" ? "flex" : ""
-                        }`}
-                    >
-                      {/* Image */}
-                      <div className={`relative overflow-hidden ${viewMode === "list" ? "w-48 flex-shrink-0" : ""}`}>
-                        <Image
-                          src={getAbsoluteImageUrl(product.primary_image || null)}
-                          alt={product.name}
-                          width={400}
-                          height={viewMode === "list" ? 300 : 500}
-                          className={`w-full object-cover group-hover:scale-105 transition-transform duration-300 ${viewMode === "list" ? "h-full" : "h-48 sm:h-80"
-                            }`}
-                        />
-                        <div className="absolute top-2 left-2 sm:top-3 sm:left-3 flex flex-col gap-1 z-10">
-                          {product.is_featured && <Badge className="bg-primary text-primary-foreground text-[10px] sm:text-xs px-1.5 py-0 h-4 sm:h-5">Trending</Badge>}
-                          {product.stock_status !== 'in_stock' && <Badge variant="secondary" className="text-[10px] sm:text-xs px-1.5 py-0 h-4 sm:h-5">Out of Stock</Badge>}
-                          {product.compare_price && (
-                            <Badge className="bg-red-500 text-white text-[10px] sm:text-xs px-1.5 py-0 h-4 sm:h-5">
-                              {Math.round(((parseFloat(product.compare_price) - parseFloat(product.price)) / parseFloat(product.compare_price)) * 100)}% OFF
-                            </Badge>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Content */}
-                      <CardContent className={`p-3 sm:p-4 ${viewMode === "list" ? "flex-1" : ""}`}>
-                        <div className="flex items-center gap-1 mb-2">
-                          <div className="flex items-center">
-                            {[...Array(5)].map((_, i) => (
-                              <Star
-                                key={i}
-                                className={`h-3 w-3 ${i < Math.floor(product.average_rating || 0) ? "fill-yellow-400 text-yellow-400" : "text-gray-300"
-                                  }`}
-                              />
-                            ))}
+                    <Link href={`/product/${product.slug || product.id}`} key={product.id} className="block group">
+                      <Card
+                        className={`cursor-pointer overflow-hidden border border-transparent hover:border-primary/20 shadow-sm hover:shadow-lg transition-all duration-300 h-full ${viewMode === "list" ? "flex" : ""
+                          }`}
+                      >
+                        {/* Image */}
+                        <div className={`relative overflow-hidden ${viewMode === "list" ? "w-48 flex-shrink-0" : ""}`}>
+                          <Image
+                            src={getAbsoluteImageUrl(product.primary_image || null)}
+                            alt={product.name}
+                            width={400}
+                            height={viewMode === "list" ? 300 : 500}
+                            className={`w-full object-cover group-hover:scale-105 transition-transform duration-300 ${viewMode === "list" ? "h-full" : "h-48 sm:h-80"
+                              }`}
+                          />
+                          <div className="absolute top-2 left-2 sm:top-3 sm:left-3 flex flex-col gap-1 z-10">
+                            {product.is_featured && <Badge className="bg-primary text-primary-foreground text-[10px] sm:text-xs px-1.5 py-0 h-4 sm:h-5">Trending</Badge>}
+                            {product.stock_status !== 'in_stock' && <Badge variant="secondary" className="text-[10px] sm:text-xs px-1.5 py-0 h-4 sm:h-5">Out of Stock</Badge>}
+                            {product.compare_price && (
+                              <Badge className="bg-red-500 text-white text-[10px] sm:text-xs px-1.5 py-0 h-4 sm:h-5">
+                                {Math.round(((parseFloat(product.compare_price) - parseFloat(product.price)) / parseFloat(product.compare_price)) * 100)}% OFF
+                              </Badge>
+                            )}
                           </div>
-                          <span className="text-xs text-muted-foreground">({product.review_count || 0})</span>
-                        </div>
-                        <h3 className="font-medium text-foreground mb-2 line-clamp-2 text-sm sm:text-base">{product.name}</h3>
-                        <p className="text-xs sm:text-sm text-muted-foreground mb-2">
-                          {product.category?.name || "Uncategorized"}
-                        </p>
-                        <div className="flex flex-wrap items-baseline gap-1.5 mb-3 min-w-0">
-                          <span className="text-base sm:text-lg font-bold text-foreground shrink-0">₹{product.price}</span>
-                          {product.compare_price && (
-                            <span className="text-xs sm:text-sm text-muted-foreground line-through shrink-0">₹{product.compare_price}</span>
-                          )}
                         </div>
 
-                        <div className="flex gap-2">
-                          <Link href={`/product/${product.slug || product.id}`} className="flex-1">
-                            <Button className="w-full" size="sm" disabled={product.stock_status !== 'in_stock'}>
+                        {/* Content */}
+                        <CardContent className={cn("p-3 sm:p-4 flex flex-col justify-between", viewMode === "list" ? "flex-1 h-auto" : "h-[calc(100%-192px)] sm:h-[calc(100%-320px)]")}>
+                          <div className="space-y-2">
+                            <div className="flex items-center gap-1 mb-2">
+                              <div className="flex items-center">
+                                {[...Array(5)].map((_, i) => (
+                                  <Star
+                                    key={i}
+                                    className={`h-3 w-3 ${i < Math.floor(product.average_rating || 0) ? "fill-yellow-400 text-yellow-400" : "text-gray-300"
+                                      }`}
+                                  />
+                                ))}
+                              </div>
+                              <span className="text-xs text-muted-foreground">({product.review_count || 0})</span>
+                            </div>
+                            <h3 className="font-medium text-foreground group-hover:text-primary transition-colors mb-2 line-clamp-2 text-sm sm:text-base">{product.name}</h3>
+                            <p className="text-xs sm:text-sm text-muted-foreground mb-2">
+                              {product.category?.name || "Uncategorized"}
+                            </p>
+                            <div className="flex flex-wrap items-baseline gap-1.5 mb-3 min-w-0">
+                              <span className="text-base sm:text-lg font-bold text-foreground shrink-0">₹{product.price}</span>
+                              {product.compare_price && (
+                                <span className="text-xs sm:text-sm text-muted-foreground line-through shrink-0">₹{product.compare_price}</span>
+                              )}
+                            </div>
+                          </div>
+
+                          <div className="flex gap-2 mt-4">
+                            <div 
+                              className={cn(
+                                buttonVariants({ size: "sm" }), 
+                                "w-full text-center",
+                                product.stock_status !== 'in_stock' && "opacity-50 pointer-events-none"
+                              )}
+                            >
                               {product.stock_status === 'in_stock' ? "View Details" : "Out of Stock"}
-                            </Button>
-                          </Link>
-                        </div>
-                      </CardContent>
-                    </Card>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </Link>
                   ))}
                 </div>
               )}
