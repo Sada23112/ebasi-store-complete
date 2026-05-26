@@ -1,6 +1,41 @@
 from rest_framework import serializers
 from .models import Category, Product, ProductImage, ProductVideo, Review
 from django.db.models import Avg
+from django.conf import settings
+
+
+def get_complete_url(field_file, request=None):
+    if not field_file:
+        return None
+
+    try:
+        url = field_file.url
+    except Exception as e:
+        print(f"ERROR: Failed to resolve URL for {field_file}: {e}", flush=True)
+        return None
+
+    # Print the raw image URL for debugging to Render's service logs
+    print(f"DEBUG: field_file.name = {field_file.name}, field_file.url = {url}", flush=True)
+
+    if url.startswith('http'):
+        return url
+
+    # If the URL is relative, but we have Cloudinary configured, construct the Cloudinary delivery URL
+    cloud_name = getattr(settings, 'CLOUDINARY_CLOUD_NAME', None)
+    if cloud_name and not settings.DEBUG:
+        path = field_file.name
+        if path.startswith('/'):
+            path = path[1:]
+        cloudinary_url = f"https://res.cloudinary.com/{cloud_name}/image/upload/{path}"
+        print(f"DEBUG: Constructed Cloudinary fallback URL = {cloudinary_url}", flush=True)
+        return cloudinary_url
+
+    if request:
+        absolute_url = request.build_absolute_uri(url)
+        print(f"DEBUG: Absolute Django URL = {absolute_url}", flush=True)
+        return absolute_url
+
+    return url
 
 
 class ProductImageSerializer(serializers.ModelSerializer):
@@ -11,16 +46,7 @@ class ProductImageSerializer(serializers.ModelSerializer):
         fields = ['id', 'image', 'alt_text', 'is_primary', 'order']
 
     def get_image(self, obj):
-        if obj.image:
-            request = self.context.get('request')
-            if request:
-                return request.build_absolute_uri(obj.image.url)
-            # Fallback for Cloudinary or already-absolute URLs
-            url = obj.image.url
-            if url.startswith('http'):
-                return url
-            return url
-        return None
+        return get_complete_url(obj.image, self.context.get('request'))
 
 
 class ProductVideoSerializer(serializers.ModelSerializer):
@@ -32,26 +58,10 @@ class ProductVideoSerializer(serializers.ModelSerializer):
         fields = ['id', 'video', 'thumbnail', 'title', 'order']
 
     def get_video(self, obj):
-        if obj.video:
-            request = self.context.get('request')
-            if request:
-                return request.build_absolute_uri(obj.video.url)
-            url = obj.video.url
-            if url.startswith('http'):
-                return url
-            return url
-        return None
+        return get_complete_url(obj.video, self.context.get('request'))
 
     def get_thumbnail(self, obj):
-        if obj.thumbnail:
-            request = self.context.get('request')
-            if request:
-                return request.build_absolute_uri(obj.thumbnail.url)
-            url = obj.thumbnail.url
-            if url.startswith('http'):
-                return url
-            return url
-        return None
+        return get_complete_url(obj.thumbnail, self.context.get('request'))
 
 
 class CategorySerializer(serializers.ModelSerializer):
@@ -62,15 +72,7 @@ class CategorySerializer(serializers.ModelSerializer):
         fields = ['id', 'name', 'slug', 'description', 'image', 'is_active']
 
     def get_image(self, obj):
-        if obj.image:
-            request = self.context.get('request')
-            if request:
-                return request.build_absolute_uri(obj.image.url)
-            url = obj.image.url
-            if url.startswith('http'):
-                return url
-            return url
-        return None
+        return get_complete_url(obj.image, self.context.get('request'))
 
 
 class ReviewSerializer(serializers.ModelSerializer):
@@ -102,14 +104,7 @@ class ProductListSerializer(serializers.ModelSerializer):
         if not primary_image:
             primary_image = obj.images.first()
         if primary_image:
-            request = self.context.get('request')
-            if request:
-                return request.build_absolute_uri(primary_image.image.url)
-            # Fallback: return the image URL directly (for Cloudinary or absolute URLs)
-            url = primary_image.image.url
-            if url.startswith('http'):
-                return url
-            return url
+            return get_complete_url(primary_image.image, self.context.get('request'))
         return None
 
     def get_average_rating(self, obj):
