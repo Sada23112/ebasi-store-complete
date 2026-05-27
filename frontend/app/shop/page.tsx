@@ -16,6 +16,7 @@ import { Search, Grid3X3, List, Star, SlidersHorizontal, Loader2 } from "lucide-
 import Image from "next/image"
 import Link from "next/link"
 import { getAbsoluteImageUrl, getBadgeInfo } from "@/lib/utils"
+import { API_BASE_URL } from "@/lib/constants"
 
 const BADGES = [
   { key: "All", label: "All Badges" },
@@ -37,6 +38,7 @@ interface FilterSidebarProps {
   setSelectedBadge: (value: string) => void
   maxPrice: number[]
   setMaxPrice: (value: number[]) => void
+  dbMaxPrice: number
   showInStockOnly: boolean
   setShowInStockOnly: (value: boolean) => void
   showOnSaleOnly: boolean
@@ -54,6 +56,7 @@ function FilterSidebar({
   setSelectedBadge,
   maxPrice,
   setMaxPrice,
+  dbMaxPrice,
   showInStockOnly,
   setShowInStockOnly,
   showOnSaleOnly,
@@ -118,7 +121,7 @@ function FilterSidebar({
           <Slider 
              value={maxPrice} 
              onValueChange={setMaxPrice} 
-             max={100000} 
+             max={dbMaxPrice} 
              min={0} 
              step={500} 
              className="mb-4" 
@@ -163,6 +166,7 @@ export default function ShopPage() {
   const [selectedCategory, setSelectedCategory] = useState("All")
   const [selectedBadge, setSelectedBadge] = useState("All")
   const [maxPrice, setMaxPrice] = useState([100000]) // Single max price value
+  const [dbMaxPrice, setDbMaxPrice] = useState(100000)
   const [sortBy, setSortBy] = useState("featured")
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid")
   const [showInStockOnly, setShowInStockOnly] = useState(false)
@@ -181,6 +185,11 @@ export default function ShopPage() {
           const data = await response.json()
           const list = Array.isArray(data) ? data : (data.results || [])
           setProducts(list)
+
+          if (data.max_price !== undefined) {
+            setDbMaxPrice(data.max_price)
+            setMaxPrice([data.max_price])
+          }
 
           // Extract categories
           const cats = new Set<string>(["All"])
@@ -263,7 +272,7 @@ export default function ShopPage() {
     setSearchQuery("")
     setSelectedCategory("All")
     setSelectedBadge("All")
-    setMaxPrice([100000])
+    setMaxPrice([dbMaxPrice])
     setShowInStockOnly(false)
     setShowOnSaleOnly(false)
   }
@@ -278,6 +287,7 @@ export default function ShopPage() {
     setSelectedBadge,
     maxPrice,
     setMaxPrice,
+    dbMaxPrice,
     showInStockOnly,
     setShowInStockOnly,
     showOnSaleOnly,

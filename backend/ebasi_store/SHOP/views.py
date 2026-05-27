@@ -40,6 +40,34 @@ class ProductListView(generics.ListAPIView):
 
         return queryset
 
+    def list(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+
+        # Calculate min and max price of all active products
+        from django.db.models import Max, Min
+        active_products = Product.objects.filter(is_active=True)
+        price_stats = active_products.aggregate(
+            min_price=Min('price'),
+            max_price=Max('price')
+        )
+        min_price = price_stats['min_price'] or 0
+        max_price = price_stats['max_price'] or 100000
+
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            response = self.get_paginated_response(serializer.data)
+            response.data['min_price'] = float(min_price)
+            response.data['max_price'] = float(max_price)
+            return response
+
+        serializer = self.get_serializer(queryset, many=True)
+        return Response({
+            'results': serializer.data,
+            'min_price': float(min_price),
+            'max_price': float(max_price)
+        })
+
 
 class ProductDetailView(generics.RetrieveAPIView):
     queryset = Product.objects.filter(is_active=True)
