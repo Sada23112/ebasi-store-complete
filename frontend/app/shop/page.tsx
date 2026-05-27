@@ -402,21 +402,23 @@ export default function ShopPage() {
                   {filteredProducts.map((product) => (
                     <Link href={`/product/${product.slug || product.id}`} key={product.id} className="block group">
                       <Card
-                        className={`cursor-pointer overflow-hidden border border-transparent hover:border-primary/20 shadow-sm hover:shadow-lg transition-all duration-300 h-full ${viewMode === "list" ? "flex" : ""
-                          }`}
+                        className={`cursor-pointer overflow-hidden border border-transparent hover:border-primary/20 shadow-sm hover:shadow-lg transition-all duration-300 h-full ${
+                          viewMode === "list" ? "flex flex-col sm:flex-row sm:items-stretch" : ""
+                        }`}
                       >
                         {/* Image */}
-                        <div className={`relative overflow-hidden ${viewMode === "list" ? "w-48 flex-shrink-0" : ""}`}>
+                        <div className={`relative overflow-hidden shrink-0 ${
+                          viewMode === "list" ? "w-full sm:w-56 md:w-64 h-48 sm:h-auto" : "h-48 sm:h-80"
+                        }`}>
                           <Image
                             src={getAbsoluteImageUrl(product.primary_image || null)}
                             alt={product.name}
                             width={400}
-                            height={viewMode === "list" ? 300 : 500}
-                            className={`w-full object-cover group-hover:scale-105 transition-transform duration-300 ${viewMode === "list" ? "h-full" : "h-48 sm:h-80"
-                              }`}
+                            height={500}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                           />
                           <div className="absolute top-2 left-2 sm:top-3 sm:left-3 flex flex-col gap-1 z-10">
-                            {product.stock_status !== 'in_stock' && <Badge variant="secondary" className="text-[10px] sm:text-xs px-1.5 py-0 h-4 sm:h-5">Out of Stock</Badge>}
+                            {product.stock_status !== 'in_stock' && <Badge variant="secondary" className="text-[10px] sm:text-xs px-1.5 py-0 h-4 sm:h-5 shadow-sm">Out of Stock</Badge>}
                             {product.compare_price && parseFloat(product.compare_price) > parseFloat(product.price) && (
                               <Badge className={getBadgeInfo('sale')?.className + " text-[10px] sm:text-xs px-1.5 py-0 h-4 sm:h-5 shadow-sm"}>
                                 Sale
@@ -439,9 +441,13 @@ export default function ShopPage() {
                         </div>
 
                         {/* Content */}
-                        <CardContent className={cn("p-3 sm:p-4 flex flex-col justify-between", viewMode === "list" ? "flex-1 h-auto" : "h-[calc(100%-192px)] sm:h-[calc(100%-320px)]")}>
-                          <div className="space-y-2">
-                            <div className="flex items-center gap-1 mb-2">
+                        <CardContent className={cn(
+                          "p-4 flex flex-1",
+                          viewMode === "list" ? "flex-col sm:flex-row sm:items-center sm:justify-between gap-4" : "flex-col justify-between"
+                        )}>
+                          {/* Product Info Section */}
+                          <div className="space-y-2 flex-1 min-w-0">
+                            <div className="flex items-center gap-1.5 mb-1">
                               <div className="flex items-center">
                                 {[...Array(5)].map((_, i) => (
                                   <Star
@@ -453,23 +459,39 @@ export default function ShopPage() {
                               </div>
                               <span className="text-xs text-muted-foreground">({product.review_count || 0})</span>
                             </div>
-                            <h3 className="font-medium text-foreground group-hover:text-primary transition-colors mb-2 line-clamp-2 text-sm sm:text-base">{product.name}</h3>
-                            <p className="text-xs sm:text-sm text-muted-foreground mb-2">
+
+                            <h3 className="font-serif font-bold text-foreground group-hover:text-primary transition-colors line-clamp-2 text-sm sm:text-base md:text-lg">
+                              {product.name}
+                            </h3>
+
+                            <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">
                               {product.category?.name || "Uncategorized"}
                             </p>
-                            <div className="flex flex-wrap items-baseline gap-1.5 mb-3 min-w-0">
-                              <span className="text-base sm:text-lg font-bold text-foreground shrink-0">₹{product.price}</span>
-                              {product.compare_price && (
-                                <span className="text-xs sm:text-sm text-muted-foreground line-through shrink-0">₹{product.compare_price}</span>
-                              )}
-                            </div>
+
+                            {viewMode === "list" && (
+                              <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2 mt-2 hidden md:block max-w-xl">
+                                {product.short_description || product.description}
+                              </p>
+                            )}
                           </div>
 
-                          <div className="flex gap-2 mt-4">
+                          {/* Price & Actions Section */}
+                          <div className={cn(
+                            "flex shrink-0",
+                            viewMode === "list" ? "flex-col sm:w-44 md:w-52 sm:border-l sm:pl-4 md:pl-6 sm:py-2 gap-3 justify-center" : "flex-col gap-2 mt-4"
+                          )}>
+                            <div className="flex flex-col">
+                              <span className="text-base sm:text-lg md:text-xl font-bold text-foreground">₹{product.price}</span>
+                              {product.compare_price && parseFloat(product.compare_price) > parseFloat(product.price) && (
+                                <span className="text-xs sm:text-sm text-muted-foreground line-through">₹{product.compare_price}</span>
+                              )}
+                            </div>
+
                             <div 
                               className={cn(
                                 buttonVariants({ size: "sm" }), 
-                                "w-full text-center",
+                                "w-full text-center font-medium",
+                                viewMode === "list" ? "max-w-[140px] sm:max-w-none" : "",
                                 product.stock_status !== 'in_stock' && "opacity-50 pointer-events-none"
                               )}
                             >
