@@ -147,7 +147,11 @@ class GoogleLogin(APIView):
 
         client_id = config('GOOGLE_CLIENT_ID', default='')
         client_secret = config('GOOGLE_CLIENT_SECRET', default='')
-        redirect_uri = request.data.get('redirect_uri', 'http://localhost:3000/auth/google/callback')
+        
+        from django.conf import settings
+        frontend_url = getattr(settings, 'FRONTEND_URL', 'http://localhost:3000').rstrip('/')
+        default_redirect_uri = f"{frontend_url}/auth/google/callback"
+        redirect_uri = request.data.get('redirect_uri', default_redirect_uri)
 
         if not client_id or not client_secret:
             return Response({'error': 'Google OAuth is not configured on the server'}, status=500)
