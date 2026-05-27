@@ -40,10 +40,6 @@ ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='127.0.0.1,localhost,ebasi-store
 # Application definition
 
 INSTALLED_APPS = [
-    # Storage backends must be loaded before staticfiles
-    'cloudinary_storage',
-    'cloudinary',
-
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -52,7 +48,11 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django.contrib.sites',
 
-     # Third party apps
+    # Cloudinary for media storage
+    'cloudinary_storage',
+    'cloudinary',
+
+    # Third party apps
     'rest_framework.authtoken',
     'rest_framework',
     'corsheaders',
