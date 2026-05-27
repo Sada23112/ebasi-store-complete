@@ -18,8 +18,8 @@ interface Product {
   compare_price: number | null
   images: { id: number; image: string; is_primary: boolean }[]
   primary_image?: string | null
-  rating?: number
-  reviews_count?: number
+  average_rating?: number
+  review_count?: number
   is_featured: boolean
   is_active: boolean
   stock_status: string
@@ -35,11 +35,11 @@ export function FeaturedProducts() {
   useEffect(() => {
     async function fetchProducts() {
       try {
-        const response = await fetch(`${API_BASE_URL}/products/`)
+        const response = await fetch(`${API_BASE_URL}/products/featured/`)
         if (response.ok) {
           const data = await response.json()
           const productList = Array.isArray(data) ? data : (data.results || [])
-          setProducts(productList.filter((p: any) => p.is_featured).slice(0, 4))
+          setProducts(productList.slice(0, 4))
         }
       } catch (error) {
         console.error("Failed to fetch products", error)
@@ -112,12 +112,12 @@ export function FeaturedProducts() {
                         {[...Array(5)].map((_, i) => (
                           <Star
                             key={i}
-                            className={`h-3 w-3 ${i < 4 ? "fill-yellow-400 text-yellow-400" : "text-gray-300"
+                            className={`h-3 w-3 ${i < Math.floor(product.average_rating || 0) ? "fill-yellow-400 text-yellow-400" : "text-gray-300"
                               }`}
                           />
                         ))}
                       </div>
-                      <span className="text-xs text-muted-foreground">({product.reviews_count || 0})</span>
+                      <span className="text-xs text-muted-foreground">({product.review_count || 0})</span>
                     </div>
                     <h3 className="font-medium text-foreground group-hover:text-primary transition-colors mb-2 line-clamp-2 text-sm sm:text-base">{product.name}</h3>
                     <div className="flex flex-wrap items-baseline gap-1.5 mb-3 min-w-0">
