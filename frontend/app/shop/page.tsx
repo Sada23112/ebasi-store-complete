@@ -15,8 +15,17 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/co
 import { Search, Grid3X3, List, Star, SlidersHorizontal, Loader2 } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
-import { API_BASE_URL } from "@/lib/constants"
-import { getAbsoluteImageUrl } from "@/lib/utils"
+import { getAbsoluteImageUrl, getBadgeInfo } from "@/lib/utils"
+
+const BADGES = [
+  { key: "All", label: "All Badges" },
+  { key: "trending", label: "Trending" },
+  { key: "new_arrival", label: "New Arrival" },
+  { key: "best_seller", label: "Best Seller" },
+  { key: "hot", label: "Hot" },
+  { key: "limited_edition", label: "Limited Edition" },
+  { key: "featured", label: "Featured" }
+]
 
 interface FilterSidebarProps {
   searchQuery: string
@@ -24,6 +33,8 @@ interface FilterSidebarProps {
   categories: string[]
   selectedCategory: string
   setSelectedCategory: (value: string) => void
+  selectedBadge: string
+  setSelectedBadge: (value: string) => void
   maxPrice: number[]
   setMaxPrice: (value: number[]) => void
   showInStockOnly: boolean
@@ -39,6 +50,8 @@ function FilterSidebar({
   categories,
   selectedCategory,
   setSelectedCategory,
+  selectedBadge,
+  setSelectedBadge,
   maxPrice,
   setMaxPrice,
   showInStockOnly,
@@ -80,17 +93,35 @@ function FilterSidebar({
         </div>
       </div>
 
+      {/* Badges */}
+      <div>
+        <h3 className="font-semibold text-foreground mb-3">Filter by Badge</h3>
+        <div className="space-y-1">
+          {BADGES.map((badgeItem) => (
+            <Button
+              key={badgeItem.key}
+              variant={selectedBadge === badgeItem.key ? "default" : "ghost"}
+              className="w-full justify-start text-xs font-normal"
+              onClick={() => setSelectedBadge(badgeItem.key)}
+              size="sm"
+            >
+              {badgeItem.label}
+            </Button>
+          ))}
+        </div>
+      </div>
+
       {/* Price Range */}
       <div>
         <h3 className="font-semibold text-foreground mb-3">Max Price</h3>
         <div className="px-2">
           <Slider 
-            value={maxPrice} 
-            onValueChange={setMaxPrice} 
-            max={100000} 
-            min={0} 
-            step={500} 
-            className="mb-4" 
+             value={maxPrice} 
+             onValueChange={setMaxPrice} 
+             max={100000} 
+             min={0} 
+             step={500} 
+             className="mb-4" 
           />
           <div className="flex justify-between text-sm text-muted-foreground">
             <span>₹0</span>
@@ -130,8 +161,7 @@ export default function ShopPage() {
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedCategory, setSelectedCategory] = useState("All")
-  // For backend data, we might dynamically fetch categories/colors/fabrics or keep hardcoded for now
-  // Let's keep filters simple for now or extract unique values from fetched products
+  const [selectedBadge, setSelectedBadge] = useState("All")
   const [maxPrice, setMaxPrice] = useState([100000]) // Single max price value
   const [sortBy, setSortBy] = useState("featured")
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid")
@@ -186,6 +216,11 @@ export default function ShopPage() {
       filtered = filtered.filter((product) => product.category?.name === selectedCategory)
     }
 
+    // Badge filter
+    if (selectedBadge !== "All") {
+      filtered = filtered.filter((product) => product.badge === selectedBadge)
+    }
+
     // Price filter
     filtered = filtered.filter((product) => {
       const price = parseFloat(product.price)
@@ -222,11 +257,12 @@ export default function ShopPage() {
     }
 
     return filtered
-  }, [products, searchQuery, selectedCategory, maxPrice, sortBy, showInStockOnly, showOnSaleOnly])
+  }, [products, searchQuery, selectedCategory, selectedBadge, maxPrice, sortBy, showInStockOnly, showOnSaleOnly])
 
   const clearAllFilters = () => {
     setSearchQuery("")
     setSelectedCategory("All")
+    setSelectedBadge("All")
     setMaxPrice([100000])
     setShowInStockOnly(false)
     setShowOnSaleOnly(false)
@@ -238,6 +274,8 @@ export default function ShopPage() {
     categories,
     selectedCategory,
     setSelectedCategory,
+    selectedBadge,
+    setSelectedBadge,
     maxPrice,
     setMaxPrice,
     showInStockOnly,
@@ -368,12 +406,24 @@ export default function ShopPage() {
                               }`}
                           />
                           <div className="absolute top-2 left-2 sm:top-3 sm:left-3 flex flex-col gap-1 z-10">
-                            {product.is_featured && <Badge className="bg-primary text-primary-foreground text-[10px] sm:text-xs px-1.5 py-0 h-4 sm:h-5">Trending</Badge>}
                             {product.stock_status !== 'in_stock' && <Badge variant="secondary" className="text-[10px] sm:text-xs px-1.5 py-0 h-4 sm:h-5">Out of Stock</Badge>}
-                            {product.compare_price && (
-                              <Badge className="bg-red-500 text-white text-[10px] sm:text-xs px-1.5 py-0 h-4 sm:h-5">
-                                {Math.round(((parseFloat(product.compare_price) - parseFloat(product.price)) / parseFloat(product.compare_price)) * 100)}% OFF
+                            {product.compare_price && parseFloat(product.compare_price) > parseFloat(product.price) && (
+                              <Badge className={getBadgeInfo('sale')?.className + " text-[10px] sm:text-xs px-1.5 py-0 h-4 sm:h-5 shadow-sm"}>
+                                Sale
                               </Badge>
+                            )}
+                            {product.badge ? (
+                              getBadgeInfo(product.badge) && (
+                                <Badge className={getBadgeInfo(product.badge)?.className + " text-[10px] sm:text-xs px-1.5 py-0 h-4 sm:h-5 shadow-sm"}>
+                                  {getBadgeInfo(product.badge)?.label}
+                                </Badge>
+                              )
+                            ) : (
+                              product.is_featured && (
+                                <Badge className={getBadgeInfo('trending')?.className + " text-[10px] sm:text-xs px-1.5 py-0 h-4 sm:h-5 shadow-sm"}>
+                                  Trending
+                                </Badge>
+                              )
                             )}
                           </div>
                         </div>

@@ -253,6 +253,8 @@ CSRF_TRUSTED_ORIGINS = config(
     cast=Csv()
 )
 
+FRONTEND_URL = config('FRONTEND_URL', default='http://localhost:3000')
+
 CORS_ALLOW_CREDENTIALS = True
 
 # Also add these headers

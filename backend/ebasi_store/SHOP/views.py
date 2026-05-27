@@ -34,6 +34,10 @@ class ProductListView(generics.ListAPIView):
         if max_price:
             queryset = queryset.filter(price__lte=max_price)
 
+        badge = self.request.query_params.get('badge', None)
+        if badge:
+            queryset = queryset.filter(badge=badge)
+
         return queryset
 
 

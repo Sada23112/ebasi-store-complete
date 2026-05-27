@@ -20,13 +20,24 @@ class Category(models.Model):
         return self.name
 
     def get_absolute_url(self):
-        return reverse('category_detail', args=[self.slug])
+        from django.conf import settings
+        frontend_url = getattr(settings, 'FRONTEND_URL', 'http://localhost:3000').rstrip('/')
+        return f"{frontend_url}/shop?category={self.slug}"
 
 class Product(models.Model):
     STOCK_STATUS = (
         ('in_stock', 'In Stock'),
         ('out_of_stock', 'Out of Stock'),
         ('limited_stock', 'Limited Stock'),
+    )
+
+    BADGE_CHOICES = (
+        ('trending', 'Trending'),
+        ('new_arrival', 'New Arrival'),
+        ('best_seller', 'Best Seller'),
+        ('hot', 'Hot'),
+        ('limited_edition', 'Limited Edition'),
+        ('featured', 'Featured'),
     )
 
     name = models.CharField(max_length=200)
@@ -43,6 +54,14 @@ class Product(models.Model):
     dimensions = models.CharField(max_length=100, blank=True)
     is_featured = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
+    badge = models.CharField(
+        max_length=50,
+        choices=BADGE_CHOICES,
+        blank=True,
+        null=True,
+        default=None,
+        help_text="Select a promotional badge to display on the website."
+    )
     meta_title = models.CharField(max_length=200, blank=True)
     meta_description = models.TextField(max_length=300, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -55,7 +74,9 @@ class Product(models.Model):
         return self.name
 
     def get_absolute_url(self):
-        return reverse('product_detail', args=[self.slug])
+        from django.conf import settings
+        frontend_url = getattr(settings, 'FRONTEND_URL', 'http://localhost:3000').rstrip('/')
+        return f"{frontend_url}/product/{self.slug}"
 
     @property
     def is_on_sale(self):

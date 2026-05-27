@@ -23,7 +23,7 @@ import {
 import Link from "next/link"
 import api from "@/lib/api"
 import { ProductGallery } from "@/components/product-gallery"
-import { getAbsoluteImageUrl } from "@/lib/utils"
+import { getAbsoluteImageUrl, getBadgeInfo } from "@/lib/utils"
 
 export default function ProductDetailPage() {
   const params = useParams()
@@ -203,8 +203,24 @@ export default function ProductDetailPage() {
               {/* Header */}
               <div>
                 <div className="flex items-center gap-2 mb-2">
-                  {product.is_on_sale && <Badge className="bg-red-500 text-white">Sale</Badge>}
-                  {product.is_featured && <Badge className="bg-primary text-primary-foreground">Trending</Badge>}
+                  {product.is_on_sale && (
+                    <Badge className={getBadgeInfo('sale')?.className}>
+                      Sale
+                    </Badge>
+                  )}
+                  {product.badge ? (
+                    getBadgeInfo(product.badge) && (
+                      <Badge className={getBadgeInfo(product.badge)?.className}>
+                        {getBadgeInfo(product.badge)?.label}
+                      </Badge>
+                    )
+                  ) : (
+                    product.is_featured && (
+                      <Badge className={getBadgeInfo('trending')?.className}>
+                        Trending
+                      </Badge>
+                    )
+                  )}
                 </div>
                 <h1 className="text-3xl font-serif font-bold text-foreground mb-2">{product.name}</h1>
                 <div className="flex items-center gap-2 mb-4">

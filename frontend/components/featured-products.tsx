@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { getAbsoluteImageUrl } from "@/lib/utils"
+import { getAbsoluteImageUrl, getBadgeInfo } from "@/lib/utils"
 import { Button, buttonVariants } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -23,6 +23,7 @@ interface Product {
   is_featured: boolean
   is_active: boolean
   stock_status: string
+  badge?: string | null
   slug: string
   category: { name: string; slug: string }
 }
@@ -83,7 +84,26 @@ export function FeaturedProducts() {
                   {/* Gradient overlay for text contrast if needed */}
                   <div className="absolute inset-0 bg-gradient-to-t from-black/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
 
-                  {product.is_featured && <Badge className="absolute top-3 left-3 bg-primary/95 backdrop-blur-sm text-primary-foreground premium-shadow">Featured</Badge>}
+                  <div className="absolute top-3 left-3 flex flex-col gap-1.5 z-10">
+                    {product.compare_price && product.compare_price > product.price && (
+                      <Badge className={getBadgeInfo('sale')?.className + " shadow-md"}>
+                        Sale
+                      </Badge>
+                    )}
+                    {product.badge ? (
+                      getBadgeInfo(product.badge) && (
+                        <Badge className={getBadgeInfo(product.badge)?.className + " shadow-md"}>
+                          {getBadgeInfo(product.badge)?.label}
+                        </Badge>
+                      )
+                    ) : (
+                      product.is_featured && (
+                        <Badge className={getBadgeInfo('featured')?.className + " shadow-md"}>
+                          Featured
+                        </Badge>
+                      )
+                    )}
+                  </div>
                 </div>
                 <CardContent className="p-3 sm:p-5 flex flex-col justify-between h-[calc(100%-192px)] sm:h-[calc(100%-320px)]">
                   <div className="space-y-2">

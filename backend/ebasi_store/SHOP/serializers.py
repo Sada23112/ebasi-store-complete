@@ -93,7 +93,7 @@ class ProductListSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'name', 'slug', 'short_description', 'category',
             'price', 'compare_price', 'is_on_sale', 'discount_percentage',
-            'stock_status', 'is_featured', 'primary_image',
+            'stock_status', 'is_featured', 'badge', 'primary_image',
             'average_rating', 'review_count'
         ]
 
@@ -129,7 +129,7 @@ class ProductDetailSerializer(serializers.ModelSerializer):
             'id', 'name', 'slug', 'description', 'short_description',
             'category', 'price', 'compare_price', 'is_on_sale',
             'discount_percentage', 'sku', 'stock_quantity', 'stock_status',
-            'weight', 'dimensions', 'is_featured', 'meta_title',
+            'weight', 'dimensions', 'is_featured', 'badge', 'meta_title',
             'meta_description', 'images', 'videos', 'reviews', 'average_rating',
             'review_count', 'created_at', 'updated_at'
         ]

@@ -49,8 +49,8 @@ class CategoryAdmin(admin.ModelAdmin):
 
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
-    list_display = ['name', 'category', 'price', 'stock_status', 'stock_quantity', 'is_featured', 'primary_image_preview', 'media_count', 'created_at']
-    list_filter = ['category', 'stock_status', 'is_featured', 'is_active', 'created_at']
+    list_display = ['name', 'category', 'price', 'stock_status', 'stock_quantity', 'badge', 'is_featured', 'primary_image_preview', 'media_count', 'created_at']
+    list_filter = ['category', 'stock_status', 'badge', 'is_featured', 'is_active', 'created_at']
     search_fields = ['name', 'description', 'sku']
     prepopulated_fields = {'slug': ('name',)}
     inlines = [ProductImageInline, ProductVideoInline, ReviewInline]
@@ -75,7 +75,7 @@ class ProductAdmin(admin.ModelAdmin):
             'classes': ('collapse',),
         }),
         ('Status', {
-            'fields': ('is_featured', 'is_active')
+            'fields': ('is_featured', 'is_active', 'badge')
         }),
     )
 
