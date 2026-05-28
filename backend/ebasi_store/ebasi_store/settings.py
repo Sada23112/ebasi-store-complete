@@ -29,7 +29,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY =  config('SECRET_KEY', default='django-insecure-ay4zqq_t=#7x^xdv09$2zc*gc(7d)%(sqbjq-o4vup=_6ls)e&'
 ) 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = config('DEBUG', default=True, cast=bool)
+DEBUG = config('DEBUG', default=False, cast=bool)
 
 
 # ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'your-domain.com']
@@ -158,6 +158,11 @@ USE_TZ = True
 STATIC_URL = 'static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 # Storage configuration (Django 4.2+ / 5.x unified)
+# Compatibility bridge for django-cloudinary-storage (which internally references legacy setting in Django 5.x)
+STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+DEFAULT_FILE_STORAGE = "django.core.files.storage.FileSystemStorage"
+CLOUDINARY_CLOUD_NAME = config('CLOUDINARY_CLOUD_NAME', default='')
+
 STORAGES = {
     "default": {
         "BACKEND": "django.core.files.storage.FileSystemStorage",
@@ -166,11 +171,6 @@ STORAGES = {
         "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
     },
 }
-
-# Compatibility bridge for django-cloudinary-storage (which internally references legacy setting in Django 5.x)
-STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
-DEFAULT_FILE_STORAGE = "django.core.files.storage.FileSystemStorage"
-CLOUDINARY_CLOUD_NAME = config('CLOUDINARY_CLOUD_NAME', default='')
 
 # Production storage configuration (Render)
 if not DEBUG:
@@ -200,6 +200,16 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticatedOrReadOnly',
     ],
+    'DEFAULT_THROTTLE_CLASSES': [
+        'rest_framework.throttling.AnonRateThrottle',
+        'rest_framework.throttling.UserRateThrottle'
+    ],
+    'DEFAULT_THROTTLE_RATES': {
+        'anon': '60/minute',
+        'user': '1000/minute',
+        'sensitive_anon': '5/minute',
+        'sensitive_user': '20/minute',
+    }
 }
 
 # NOTE: The final CORS settings below override this block — see lines 230+
@@ -241,7 +251,7 @@ SOCIALACCOUNT_PROVIDERS = {
 #   OR
 #   CORS_ALLOWED_ORIGINS=https://your-vercel-app.vercel.app,http://localhost:3000
 #   CSRF_TRUSTED_ORIGINS=https://your-vercel-app.vercel.app
-CORS_ALLOW_ALL_ORIGINS = config('CORS_ALLOW_ALL_ORIGINS', default=True, cast=bool)
+CORS_ALLOW_ALL_ORIGINS = config('CORS_ALLOW_ALL_ORIGINS', default=False, cast=bool)
 CORS_ALLOWED_ORIGINS = config(
     'CORS_ALLOWED_ORIGINS',
     default='http://localhost:3000,http://127.0.0.1:3000',

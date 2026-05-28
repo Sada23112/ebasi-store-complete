@@ -169,16 +169,24 @@ class EbasiAPI {
   }
 
   // Products
-  async getProducts() {
+  async getProducts(params = {}) {
     try {
-      console.log('Fetching products from:', `${API_BASE_URL}/products/`);
-      const response = await fetch(`${API_BASE_URL}/products/`);
+      const queryParams = new URLSearchParams();
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined && value !== null && value !== '' && value !== 'All') {
+          queryParams.append(key, value);
+        }
+      });
+      const queryString = queryParams.toString();
+      const url = `${API_BASE_URL}/products/${queryString ? `?${queryString}` : ''}`;
+      console.log('Fetching products from:', url);
+      const response = await fetch(url);
       const data = await response.json();
       console.log('Products data:', data);
       return data;
     } catch (error) {
       console.error('API Error:', error);
-      return { results: [] };
+      return { results: [], count: 0 };
     }
   }
 

@@ -1,9 +1,10 @@
 from rest_framework import generics, filters, permissions, status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-from .models import Category, Product, Review
+from .models import Category, Product, Review, ProductImage
 from .serializers import CategorySerializer, ProductListSerializer, ProductDetailSerializer, ReviewSerializer
-from django.db.models import Q
+from django.db.models import Q, Count, Avg, Prefetch
+from accounts.views import SensitiveAnonThrottle, SensitiveUserThrottle
 
 
 class CategoryListView(generics.ListAPIView):
@@ -15,11 +16,16 @@ class ProductListView(generics.ListAPIView):
     serializer_class = ProductListSerializer
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['name', 'description', 'short_description', 'sku']
-    ordering_fields = ['price', 'created_at', 'name']
+    ordering_fields = ['price', 'created_at', 'name', 'annotated_avg_rating']
     ordering = ['-created_at']
 
     def get_queryset(self):
-        queryset = Product.objects.filter(is_active=True)
+        queryset = Product.objects.filter(is_active=True).select_related('category').annotate(
+            annotated_review_count=Count('reviews', distinct=True),
+            annotated_avg_rating=Avg('reviews__rating')
+        ).prefetch_related(
+            Prefetch('images', queryset=ProductImage.objects.order_by('-is_primary', 'order'))
+        )
 
         # Custom filtering for category, price range, etc.
         category_slug = self.request.query_params.get('category', None)
@@ -37,6 +43,15 @@ class ProductListView(generics.ListAPIView):
         badge = self.request.query_params.get('badge', None)
         if badge:
             queryset = queryset.filter(badge=badge)
+
+        in_stock = self.request.query_params.get('in_stock', None)
+        if in_stock == 'true':
+            queryset = queryset.filter(stock_status='in_stock')
+
+        on_sale = self.request.query_params.get('on_sale', None)
+        if on_sale == 'true':
+            from django.db.models import F
+            queryset = queryset.filter(compare_price__gt=F('price'))
 
         return queryset
 
@@ -99,6 +114,7 @@ class ReviewListCreateView(generics.ListCreateAPIView):
     """
     serializer_class = ReviewSerializer
     permission_classes = [permissions.AllowAny]
+    throttle_classes = [SensitiveAnonThrottle, SensitiveUserThrottle]
 
     def get_queryset(self):
         slug = self.kwargs['slug']

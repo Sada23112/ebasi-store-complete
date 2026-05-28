@@ -8,11 +8,22 @@ from .serializers import UserSerializer, RegisterSerializer, AddressSerializer, 
 from .models import Address
 import requests
 from decouple import config
+import logging
+from rest_framework.throttling import AnonRateThrottle, UserRateThrottle
+
+logger = logging.getLogger(__name__)
+
+class SensitiveAnonThrottle(AnonRateThrottle):
+    scope = 'sensitive_anon'
+
+class SensitiveUserThrottle(UserRateThrottle):
+    scope = 'sensitive_user'
 
 class RegisterView(generics.CreateAPIView):
     queryset = User.objects.all()
     permission_classes = (permissions.AllowAny,)
     serializer_class = RegisterSerializer
+    throttle_classes = [SensitiveAnonThrottle, SensitiveUserThrottle]
 
 class CustomAuthToken(APIView):
     """
@@ -20,6 +31,7 @@ class CustomAuthToken(APIView):
     This allows the frontend to send email in the login form.
     """
     permission_classes = (permissions.AllowAny,)
+    throttle_classes = [SensitiveAnonThrottle, SensitiveUserThrottle]
 
     def post(self, request, *args, **kwargs):
         # Accept either 'username' or 'email' field
@@ -67,6 +79,7 @@ class AdminLoginView(APIView):
     Only allows login if user.is_staff is True.
     """
     permission_classes = (permissions.AllowAny,)
+    throttle_classes = [SensitiveAnonThrottle, SensitiveUserThrottle]
 
     def post(self, request, *args, **kwargs):
         username = request.data.get('username', '')
@@ -131,6 +144,7 @@ class AddressViewSet(viewsets.ModelViewSet):
 class ContactMessageView(generics.CreateAPIView):
     serializer_class = ContactMessageSerializer
     permission_classes = (permissions.AllowAny,)
+    throttle_classes = [SensitiveAnonThrottle, SensitiveUserThrottle]
 
 class GoogleLogin(APIView):
     """
@@ -139,6 +153,7 @@ class GoogleLogin(APIView):
     for user info, creates or finds the user, and returns an auth token.
     """
     permission_classes = (permissions.AllowAny,)
+    throttle_classes = [SensitiveAnonThrottle, SensitiveUserThrottle]
 
     def post(self, request, *args, **kwargs):
         code = request.data.get('code')
@@ -158,7 +173,7 @@ class GoogleLogin(APIView):
 
         # Step 1: Exchange authorization code for access token
         try:
-            print(f"[GoogleLogin] Exchanging code with redirect_uri: {redirect_uri}")
+            logger.debug(f"[GoogleLogin] Exchanging code with redirect_uri: {redirect_uri}")
             token_response = requests.post('https://oauth2.googleapis.com/token', data={
                 'code': code,
                 'client_id': client_id,
@@ -167,7 +182,7 @@ class GoogleLogin(APIView):
                 'grant_type': 'authorization_code',
             })
             token_data = token_response.json()
-            print(f"[GoogleLogin] Google token response: {token_data}")
+            logger.debug(f"[GoogleLogin] Google token response received successfully")
 
             if 'error' in token_data:
                 return Response({
@@ -176,7 +191,7 @@ class GoogleLogin(APIView):
 
             access_token = token_data.get('access_token')
         except Exception as e:
-            print(f"[GoogleLogin] Exception during token exchange: {e}")
+            logger.error(f"[GoogleLogin] Exception during token exchange: {e}")
             return Response({'error': f'Failed to exchange code for token: {str(e)}'}, status=500)
 
         # Step 2: Get user info from Google

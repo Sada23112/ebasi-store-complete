@@ -2,6 +2,9 @@ from rest_framework import serializers
 from .models import Category, Product, ProductImage, ProductVideo, Review
 from django.db.models import Avg
 from django.conf import settings
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def get_complete_url(field_file, request=None):
@@ -11,11 +14,8 @@ def get_complete_url(field_file, request=None):
     try:
         url = field_file.url
     except Exception as e:
-        print(f"ERROR: Failed to resolve URL for {field_file}: {e}", flush=True)
+        logger.error(f"ERROR: Failed to resolve URL for {field_file}: {e}")
         return None
-
-    # Print the raw image URL for debugging to Render's service logs
-    print(f"DEBUG: field_file.name = {field_file.name}, field_file.url = {url}", flush=True)
 
     if url.startswith('http'):
         return url
@@ -27,12 +27,11 @@ def get_complete_url(field_file, request=None):
         if path.startswith('/'):
             path = path[1:]
         cloudinary_url = f"https://res.cloudinary.com/{cloud_name}/image/upload/{path}"
-        print(f"DEBUG: Constructed Cloudinary fallback URL = {cloudinary_url}", flush=True)
+        logger.debug(f"Constructed Cloudinary fallback URL = {cloudinary_url}")
         return cloudinary_url
 
     if request:
         absolute_url = request.build_absolute_uri(url)
-        print(f"DEBUG: Absolute Django URL = {absolute_url}", flush=True)
         return absolute_url
 
     return url
@@ -98,21 +97,29 @@ class ProductListSerializer(serializers.ModelSerializer):
         ]
 
     def get_primary_image(self, obj):
-        # First try to get the image explicitly marked as primary
-        primary_image = obj.images.filter(is_primary=True).first()
-        # Fall back to the first available image if none is marked primary
-        if not primary_image:
-            primary_image = obj.images.first()
-        if primary_image:
-            return get_complete_url(primary_image.image, self.context.get('request'))
+        # Fast list look up on prefetched images to eliminate N+1 queries.
+        # Images are prefetched and sorted by (-is_primary, order), so first is primary.
+        try:
+            images = list(obj.images.all())
+            if images:
+                return get_complete_url(images[0].image, self.context.get('request'))
+        except Exception as e:
+            logger.error(f"Failed to resolve primary image: {e}")
         return None
 
     def get_average_rating(self, obj):
-        avg = obj.reviews.aggregate(Avg('rating'))['rating__avg']
+        # Use annotated rating if available
+        avg = getattr(obj, 'annotated_avg_rating', None)
+        if avg is None:
+            avg = obj.reviews.aggregate(Avg('rating'))['rating__avg']
         return round(avg, 1) if avg else 0
 
     def get_review_count(self, obj):
-        return obj.reviews.count()
+        # Use annotated count if available
+        count = getattr(obj, 'annotated_review_count', None)
+        if count is None:
+            count = obj.reviews.count()
+        return count
 
 
 class ProductDetailSerializer(serializers.ModelSerializer):
@@ -135,8 +142,13 @@ class ProductDetailSerializer(serializers.ModelSerializer):
         ]
 
     def get_average_rating(self, obj):
-        avg = obj.reviews.aggregate(Avg('rating'))['rating__avg']
+        avg = getattr(obj, 'annotated_avg_rating', None)
+        if avg is None:
+            avg = obj.reviews.aggregate(Avg('rating'))['rating__avg']
         return round(avg, 1) if avg else 0
 
     def get_review_count(self, obj):
-        return obj.reviews.count()
+        count = getattr(obj, 'annotated_review_count', None)
+        if count is None:
+            count = obj.reviews.count()
+        return count

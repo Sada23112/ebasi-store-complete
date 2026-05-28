@@ -80,6 +80,9 @@ class CartItemViewSet(viewsets.ViewSet):
         return Response(serializer.data)
 
 
+from django.db import transaction
+from rest_framework.exceptions import ValidationError
+
 class OrderViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
     serializer_class = OrderSerializer
@@ -88,20 +91,43 @@ class OrderViewSet(viewsets.ModelViewSet):
         return Order.objects.filter(user=self.request.user)
 
     def perform_create(self, serializer):
-        cart = get_object_or_404(Cart, user=self.request.user)
-        total_amount = sum(item.total_price for item in cart.items.all())
-        
-        order = serializer.save(user=self.request.user, total_amount=total_amount)
-        
-        for item in cart.items.all():
-            OrderItem.objects.create(
-                order=order,
-                product=item.product,
-                price=item.product.price,
-                quantity=item.quantity
-            )
-        
-        cart.items.all().delete() # Clear cart after order
+        with transaction.atomic():
+            cart = get_object_or_404(Cart, user=self.request.user)
+            cart_items = list(cart.items.all())
+            if not cart_items:
+                raise ValidationError("Your cart is empty.")
+                
+            total_amount = sum(item.total_price for item in cart_items)
+            order = serializer.save(user=self.request.user, total_amount=total_amount)
+            
+            for item in cart_items:
+                # Lock the product row atomically in the database
+                product = Product.objects.select_for_update().get(id=item.product.id)
+                
+                if not product.is_active:
+                    raise ValidationError(f"Product '{product.name}' is no longer active.")
+                
+                if product.stock_status == 'out_of_stock' or product.stock_quantity < item.quantity:
+                    raise ValidationError(
+                        f"Product '{product.name}' is out of stock or has insufficient quantity (Available: {product.stock_quantity})."
+                    )
+                
+                OrderItem.objects.create(
+                    order=order,
+                    product=product,
+                    price=product.price,
+                    quantity=item.quantity
+                )
+                
+                product.stock_quantity -= item.quantity
+                if product.stock_quantity == 0:
+                    product.stock_status = 'out_of_stock'
+                elif product.stock_quantity <= 5:
+                    product.stock_status = 'limited_stock'
+                product.save()
+            
+            # Clear all cart items
+            cart.items.all().delete()
 
 from .models import Wishlist
 from .serializers import WishlistSerializer

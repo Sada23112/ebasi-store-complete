@@ -31,7 +31,7 @@ const BADGES = [
 interface FilterSidebarProps {
   searchQuery: string
   setSearchQuery: (value: string) => void
-  categories: string[]
+  categories: any[]
   selectedCategory: string
   setSelectedCategory: (value: string) => void
   selectedBadge: string
@@ -85,12 +85,12 @@ function FilterSidebar({
         <div className="space-y-2">
           {categories.map((category) => (
             <Button
-              key={category}
-              variant={selectedCategory === category ? "default" : "ghost"}
+              key={category.slug}
+              variant={selectedCategory === category.slug ? "default" : "ghost"}
               className="w-full justify-start"
-              onClick={() => setSelectedCategory(category)}
+              onClick={() => setSelectedCategory(category.slug)}
             >
-              {category}
+              {category.name}
             </Button>
           ))}
         </div>
@@ -173,30 +173,78 @@ export default function ShopPage() {
   const [showOnSaleOnly, setShowOnSaleOnly] = useState(false)
   const [mounted, setMounted] = useState(false)
 
-  // Derived state for filters
-  const [categories, setCategories] = useState<string[]>(["All"])
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(1)
+  const [totalCount, setTotalCount] = useState(0)
 
+  // Categories states
+  const [categories, setCategories] = useState<any[]>([{ name: "All", slug: "All" }])
+
+  // Fetch categories on mount
   useEffect(() => {
-    async function fetchProducts() {
+    async function fetchCategories() {
       try {
-        setLoading(true)
-        const response = await fetch(`${API_BASE_URL}/products/`)
+        const response = await fetch(`${API_BASE_URL}/categories/`)
         if (response.ok) {
           const data = await response.json()
-          const list = Array.isArray(data) ? data : (data.results || [])
-          setProducts(list)
+          setCategories([{ name: "All", slug: "All" }, ...data])
+        }
+      } catch (error) {
+        console.error("Failed to fetch categories", error)
+      }
+    }
+    fetchCategories()
+    setMounted(true)
+  }, [])
 
-          if (data.max_price !== undefined) {
+  // Fetch products with backend filters and pagination
+  useEffect(() => {
+    async function loadProducts() {
+      try {
+        setLoading(true)
+
+        let ordering = "-created_at"
+        if (sortBy === "price-low") ordering = "price"
+        if (sortBy === "price-high") ordering = "-price"
+        if (sortBy === "rating") ordering = "-annotated_avg_rating"
+        if (sortBy === "newest") ordering = "-created_at"
+
+        const params: any = {
+          page: currentPage,
+          ordering: ordering,
+        }
+
+        if (searchQuery) params.search = searchQuery
+        if (selectedCategory && selectedCategory !== "All") params.category = selectedCategory
+        if (selectedBadge && selectedBadge !== "All") params.badge = selectedBadge
+        if (maxPrice[0] < dbMaxPrice) params.max_price = maxPrice[0]
+        if (showInStockOnly) params.in_stock = "true"
+        if (showOnSaleOnly) params.on_sale = "true"
+
+        const queryParams = new URLSearchParams()
+        Object.entries(params).forEach(([key, value]) => {
+          if (value !== undefined && value !== null && value !== "") {
+            queryParams.append(key, String(value))
+          }
+        })
+
+        const response = await fetch(`${API_BASE_URL}/products/?${queryParams.toString()}`)
+        if (response.ok) {
+          const data = await response.json()
+          const list = data.results || []
+          setProducts(list)
+          setTotalCount(data.count || list.length)
+
+          // Calculate total pages based on page size of 20
+          const pageSize = 20
+          setTotalPages(Math.ceil((data.count || list.length) / pageSize))
+
+          // Initialize max price configuration if returned
+          if (data.max_price !== undefined && dbMaxPrice === 100000) {
             setDbMaxPrice(data.max_price)
             setMaxPrice([data.max_price])
           }
-
-          // Extract categories
-          const cats = new Set<string>(["All"])
-          list.forEach((p: any) => {
-            if (p.category?.name) cats.add(p.category.name)
-          })
-          setCategories(Array.from(cats))
         }
       } catch (error) {
         console.error("Failed to fetch products", error)
@@ -204,69 +252,37 @@ export default function ShopPage() {
         setLoading(false)
       }
     }
-    fetchProducts()
-    setMounted(true)
-  }, [])
+    loadProducts()
+  }, [currentPage, searchQuery, selectedCategory, selectedBadge, maxPrice, sortBy, showInStockOnly, showOnSaleOnly, dbMaxPrice])
 
-  const filteredProducts = useMemo(() => {
-    let filtered = [...products]
-
-    // Search filter
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase()
-      filtered = filtered.filter((product) =>
-        product.name.toLowerCase().includes(query) ||
-        product.description?.toLowerCase().includes(query)
-      )
-    }
-
-    // Category filter
-    if (selectedCategory !== "All") {
-      filtered = filtered.filter((product) => product.category?.name === selectedCategory)
-    }
-
-    // Badge filter
-    if (selectedBadge !== "All") {
-      filtered = filtered.filter((product) => product.badge === selectedBadge)
-    }
-
-    // Price filter
-    filtered = filtered.filter((product) => {
-      const price = parseFloat(product.price)
-      return price <= maxPrice[0]
-    })
-
-    // Stock filter
-    if (showInStockOnly) {
-      filtered = filtered.filter((product) => product.stock_status === 'in_stock')
-    }
-
-    // On Sale filter
-    if (showOnSaleOnly) {
-      filtered = filtered.filter((product) => product.compare_price && parseFloat(product.compare_price) > parseFloat(product.price))
-    }
-
-    // Sort products
-    switch (sortBy) {
-      case "price-low":
-        filtered.sort((a, b) => parseFloat(a.price) - parseFloat(b.price))
-        break
-      case "price-high":
-        filtered.sort((a, b) => parseFloat(b.price) - parseFloat(a.price))
-        break
-      case "rating":
-        filtered.sort((a, b) => (b.average_rating || 0) - (a.average_rating || 0))
-        break
-      case "newest":
-        filtered.sort((a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime())
-        break
-      default:
-        // Featured or default order
-        break
-    }
-
-    return filtered
-  }, [products, searchQuery, selectedCategory, selectedBadge, maxPrice, sortBy, showInStockOnly, showOnSaleOnly])
+  const handleSetSearchQuery = (val: string) => {
+    setSearchQuery(val)
+    setCurrentPage(1)
+  }
+  const handleSetSelectedCategory = (val: string) => {
+    setSelectedCategory(val)
+    setCurrentPage(1)
+  }
+  const handleSetSelectedBadge = (val: string) => {
+    setSelectedBadge(val)
+    setCurrentPage(1)
+  }
+  const handleSetMaxPrice = (val: number[]) => {
+    setMaxPrice(val)
+    setCurrentPage(1)
+  }
+  const handleSetShowInStockOnly = (val: boolean) => {
+    setShowInStockOnly(val)
+    setCurrentPage(1)
+  }
+  const handleSetShowOnSaleOnly = (val: boolean) => {
+    setShowOnSaleOnly(val)
+    setCurrentPage(1)
+  }
+  const handleSetSortBy = (val: string) => {
+    setSortBy(val)
+    setCurrentPage(1)
+  }
 
   const clearAllFilters = () => {
     setSearchQuery("")
@@ -275,23 +291,26 @@ export default function ShopPage() {
     setMaxPrice([dbMaxPrice])
     setShowInStockOnly(false)
     setShowOnSaleOnly(false)
+    setCurrentPage(1)
   }
+
+  const filteredProducts = products
 
   const filtersProps = {
     searchQuery,
-    setSearchQuery,
+    setSearchQuery: handleSetSearchQuery,
     categories,
     selectedCategory,
-    setSelectedCategory,
+    setSelectedCategory: handleSetSelectedCategory,
     selectedBadge,
-    setSelectedBadge,
+    setSelectedBadge: handleSetSelectedBadge,
     maxPrice,
-    setMaxPrice,
+    setMaxPrice: handleSetMaxPrice,
     dbMaxPrice,
     showInStockOnly,
-    setShowInStockOnly,
+    setShowInStockOnly: handleSetShowInStockOnly,
     showOnSaleOnly,
-    setShowOnSaleOnly,
+    setShowOnSaleOnly: handleSetShowOnSaleOnly,
     clearAllFilters,
   }
 
@@ -392,117 +411,152 @@ export default function ShopPage() {
                   <Button onClick={clearAllFilters}>Clear All Filters</Button>
                 </div>
               ) : (
-                <div
-                  className={
-                    viewMode === "grid"
-                      ? "grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-6"
-                      : "space-y-4"
-                  }
-                >
-                  {filteredProducts.map((product) => (
-                    <Link href={`/product/${product.slug || product.id}`} key={product.id} className="block group">
-                      <Card
-                        className={`cursor-pointer overflow-hidden border border-transparent hover:border-primary/20 shadow-sm hover:shadow-lg transition-all duration-300 h-full ${
-                          viewMode === "list" ? "flex flex-col sm:flex-row sm:items-stretch" : ""
-                        }`}
-                      >
-                        {/* Image */}
-                        <div className={`relative overflow-hidden shrink-0 ${
-                          viewMode === "list" ? "w-full sm:w-56 md:w-64 h-48 sm:h-auto" : "h-48 sm:h-80"
-                        }`}>
-                          <Image
-                            src={getAbsoluteImageUrl(product.primary_image || null)}
-                            alt={product.name}
-                            width={400}
-                            height={500}
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                          />
-                          <div className="absolute top-2 left-2 sm:top-3 sm:left-3 flex flex-col gap-1 z-10">
-                            {product.stock_status !== 'in_stock' && <Badge variant="secondary" className="text-[10px] sm:text-xs px-1.5 py-0 h-4 sm:h-5 shadow-sm">Out of Stock</Badge>}
-                            {product.compare_price && parseFloat(product.compare_price) > parseFloat(product.price) && (
-                              <Badge className={getBadgeInfo('sale')?.className + " text-[10px] sm:text-xs px-1.5 py-0 h-4 sm:h-5 shadow-sm"}>
-                                Sale
-                              </Badge>
-                            )}
-                            {product.badge ? (
-                              getBadgeInfo(product.badge) && (
-                                <Badge className={getBadgeInfo(product.badge)?.className + " text-[10px] sm:text-xs px-1.5 py-0 h-4 sm:h-5 shadow-sm"}>
-                                  {getBadgeInfo(product.badge)?.label}
-                                </Badge>
-                              )
-                            ) : (
-                              product.is_featured && (
-                                <Badge className={getBadgeInfo('trending')?.className + " text-[10px] sm:text-xs px-1.5 py-0 h-4 sm:h-5 shadow-sm"}>
-                                  Trending
-                                </Badge>
-                              )
-                            )}
-                          </div>
-                        </div>
-
-                        {/* Content */}
-                        <CardContent className={cn(
-                          "p-4 flex flex-1",
-                          viewMode === "list" ? "flex-col sm:flex-row sm:items-center sm:justify-between gap-4" : "flex-col justify-between"
-                        )}>
-                          {/* Product Info Section */}
-                          <div className="space-y-2 flex-1 min-w-0">
-                            <div className="flex items-center gap-1.5 mb-1">
-                              <div className="flex items-center">
-                                {[...Array(5)].map((_, i) => (
-                                  <Star
-                                    key={i}
-                                    className={`h-3 w-3 ${i < Math.floor(product.average_rating || 0) ? "fill-yellow-400 text-yellow-400" : "text-gray-300"
-                                      }`}
-                                  />
-                                ))}
-                              </div>
-                              <span className="text-xs text-muted-foreground">({product.review_count || 0})</span>
-                            </div>
-
-                            <h3 className="font-serif font-bold text-foreground group-hover:text-primary transition-colors line-clamp-2 text-sm sm:text-base md:text-lg">
-                              {product.name}
-                            </h3>
-
-                            <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">
-                              {product.category?.name || "Uncategorized"}
-                            </p>
-
-                            {viewMode === "list" && (
-                              <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2 mt-2 hidden md:block max-w-xl">
-                                {product.short_description || product.description}
-                              </p>
-                            )}
-                          </div>
-
-                          {/* Price & Actions Section */}
-                          <div className={cn(
-                            "flex shrink-0",
-                            viewMode === "list" ? "flex-col sm:w-44 md:w-52 sm:border-l sm:pl-4 md:pl-6 sm:py-2 gap-3 justify-center" : "flex-col gap-2 mt-4"
-                          )}>
-                            <div className="flex flex-col">
-                              <span className="text-base sm:text-lg md:text-xl font-bold text-foreground">₹{product.price}</span>
+                <>
+                  <div
+                    className={
+                      viewMode === "grid"
+                        ? "grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-6"
+                        : "space-y-4"
+                    }
+                  >
+                    {filteredProducts.map((product) => (
+                      <Link href={`/product/${product.slug || product.id}`} key={product.id} className="block group">
+                        <Card
+                          className={`cursor-pointer overflow-hidden border border-transparent hover:border-primary/20 shadow-sm hover:shadow-lg transition-all duration-300 h-full ${
+                            viewMode === "list" ? "flex flex-col sm:flex-row sm:items-stretch" : ""
+                          }`}
+                        >
+                          {/* Image */}
+                          <div className={`relative overflow-hidden shrink-0 ${
+                            viewMode === "list" ? "w-full sm:w-56 md:w-64 h-48 sm:h-auto" : "h-48 sm:h-80"
+                          }`}>
+                            <Image
+                              src={getAbsoluteImageUrl(product.primary_image || null)}
+                              alt={product.name}
+                              width={400}
+                              height={500}
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                            />
+                            <div className="absolute top-2 left-2 sm:top-3 sm:left-3 flex flex-col gap-1 z-10">
+                              {product.stock_status !== 'in_stock' && <Badge variant="secondary" className="text-[10px] sm:text-xs px-1.5 py-0 h-4 sm:h-5 shadow-sm">Out of Stock</Badge>}
                               {product.compare_price && parseFloat(product.compare_price) > parseFloat(product.price) && (
-                                <span className="text-xs sm:text-sm text-muted-foreground line-through">₹{product.compare_price}</span>
+                                <Badge className={getBadgeInfo('sale')?.className + " text-[10px] sm:text-xs px-1.5 py-0 h-4 sm:h-5 shadow-sm"}>
+                                  Sale
+                                </Badge>
                               )}
-                            </div>
-
-                            <div 
-                              className={cn(
-                                buttonVariants({ size: "sm" }), 
-                                "w-full text-center font-medium",
-                                viewMode === "list" ? "max-w-[140px] sm:max-w-none" : "",
-                                product.stock_status !== 'in_stock' && "opacity-50 pointer-events-none"
+                              {product.badge ? (
+                                getBadgeInfo(product.badge) && (
+                                  <Badge className={getBadgeInfo(product.badge)?.className + " text-[10px] sm:text-xs px-1.5 py-0 h-4 sm:h-5 shadow-sm"}>
+                                    {getBadgeInfo(product.badge)?.label}
+                                  </Badge>
+                                )
+                              ) : (
+                                product.is_featured && (
+                                  <Badge className={getBadgeInfo('trending')?.className + " text-[10px] sm:text-xs px-1.5 py-0 h-4 sm:h-5 shadow-sm"}>
+                                    Trending
+                                  </Badge>
+                                )
                               )}
-                            >
-                              {product.stock_status === 'in_stock' ? "View Details" : "Out of Stock"}
                             </div>
                           </div>
-                        </CardContent>
-                      </Card>
-                    </Link>
-                  ))}
-                </div>
+  
+                          {/* Content */}
+                          <CardContent className={cn(
+                            "p-4 flex flex-1",
+                            viewMode === "list" ? "flex-col sm:flex-row sm:items-center sm:justify-between gap-4" : "flex-col justify-between"
+                          )}>
+                            {/* Product Info Section */}
+                            <div className="space-y-2 flex-1 min-w-0">
+                              <div className="flex items-center gap-1.5 mb-1">
+                                <div className="flex items-center">
+                                  {[...Array(5)].map((_, i) => (
+                                    <Star
+                                      key={i}
+                                      className={`h-3 w-3 ${i < Math.floor(product.average_rating || 0) ? "fill-yellow-400 text-yellow-400" : "text-gray-300"
+                                        }`}
+                                    />
+                                  ))}
+                                </div>
+                                <span className="text-xs text-muted-foreground">({product.review_count || 0})</span>
+                              </div>
+  
+                              <h3 className="font-serif font-bold text-foreground group-hover:text-primary transition-colors line-clamp-2 text-sm sm:text-base md:text-lg">
+                                {product.name}
+                              </h3>
+  
+                              <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">
+                                {product.category?.name || "Uncategorized"}
+                              </p>
+  
+                              {viewMode === "list" && (
+                                <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2 mt-2 hidden md:block max-w-xl">
+                                  {product.short_description || product.description}
+                                </p>
+                              )}
+                            </div>
+  
+                            {/* Price & Actions Section */}
+                            <div className={cn(
+                              "flex shrink-0",
+                              viewMode === "list" ? "flex-col sm:w-44 md:w-52 sm:border-l sm:pl-4 md:pl-6 sm:py-2 gap-3 justify-center" : "flex-col gap-2 mt-4"
+                            )}>
+                              <div className="flex flex-col">
+                                <span className="text-base sm:text-lg md:text-xl font-bold text-foreground">₹{product.price}</span>
+                                {product.compare_price && parseFloat(product.compare_price) > parseFloat(product.price) && (
+                                  <span className="text-xs sm:text-sm text-muted-foreground line-through">₹{product.compare_price}</span>
+                                )}
+                              </div>
+  
+                              <div 
+                                className={cn(
+                                  buttonVariants({ size: "sm" }), 
+                                  "w-full text-center font-medium",
+                                  viewMode === "list" ? "max-w-[140px] sm:max-w-none" : "",
+                                  product.stock_status !== 'in_stock' && "opacity-50 pointer-events-none"
+                                )}
+                              >
+                                {product.stock_status === 'in_stock' ? "View Details" : "Out of Stock"}
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      </Link>
+                    ))}
+                  </div>
+  
+                  {/* Pagination Controls */}
+                  {totalPages > 1 && (
+                    <div className="flex justify-center items-center gap-2 mt-12 pt-6 border-t">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={currentPage === 1}
+                        onClick={() => {
+                          setCurrentPage((prev) => Math.max(prev - 1, 1))
+                          window.scrollTo({ top: 0, behavior: "smooth" })
+                        }}
+                        className="bg-transparent text-foreground hover:bg-muted"
+                      >
+                        Previous
+                      </Button>
+                      <span className="text-sm text-muted-foreground px-4 font-medium">
+                        Page {currentPage} of {totalPages}
+                      </span>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={currentPage === totalPages}
+                        onClick={() => {
+                          setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+                          window.scrollTo({ top: 0, behavior: "smooth" })
+                        }}
+                        className="bg-transparent text-foreground hover:bg-muted"
+                      >
+                        Next
+                      </Button>
+                    </div>
+                  )}
+                </>
               )}
             </div>
           </div>

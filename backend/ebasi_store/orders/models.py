@@ -61,7 +61,8 @@ class OrderItem(models.Model):
     quantity = models.PositiveIntegerField(default=1)
 
     def __str__(self):
-        return f"{self.quantity} x {self.product.name}"
+        product_name = self.product.name if self.product else "Deleted Product"
+        return f"{self.quantity} x {product_name}"
 
     @property
     def total_price(self):

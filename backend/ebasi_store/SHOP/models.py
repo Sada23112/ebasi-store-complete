@@ -22,7 +22,6 @@ class Category(models.Model):
     def get_absolute_url(self):
         from django.conf import settings
         frontend_url = getattr(settings, 'FRONTEND_URL', 'http://localhost:3000').rstrip('/')
-        print(f"[DEBUG get_absolute_url Category] settings.FRONTEND_URL={getattr(settings, 'FRONTEND_URL', None)}, evaluated={frontend_url}", flush=True)
         return f"{frontend_url}/shop?category={self.slug}"
 
 class Product(models.Model):
@@ -77,7 +76,6 @@ class Product(models.Model):
     def get_absolute_url(self):
         from django.conf import settings
         frontend_url = getattr(settings, 'FRONTEND_URL', 'http://localhost:3000').rstrip('/')
-        print(f"[DEBUG get_absolute_url Product] settings.FRONTEND_URL={getattr(settings, 'FRONTEND_URL', None)}, evaluated={frontend_url}", flush=True)
         return f"{frontend_url}/product/{self.slug}"
 
     @property
