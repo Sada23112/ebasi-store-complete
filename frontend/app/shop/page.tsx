@@ -180,9 +180,9 @@ function ShopContent() {
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedCategory, setSelectedCategory] = useState("All")
   const [selectedBadge, setSelectedBadge] = useState("All")
-  const [maxPrice, setMaxPrice] = useState([100000])
-  const [dbMaxPrice, setDbMaxPrice] = useState(100000)
-  const [sortBy, setSortBy] = useState("featured")
+  const [maxPrice, setMaxPrice] = useState<number[]>([1000000])
+  const [dbMaxPrice, setDbMaxPrice] = useState<number>(1000000)
+  const [sortBy, setSortBy] = useState("default")
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid")
   const [showInStockOnly, setShowInStockOnly] = useState(false)
   const [showOnSaleOnly, setShowOnSaleOnly] = useState(false)
@@ -248,10 +248,14 @@ function ShopContent() {
           ordering: ordering,
         }
 
+        if (sortBy === "featured") {
+          params.is_featured = "true"
+        }
+
         if (searchQuery) params.search = searchQuery
         if (selectedCategory && selectedCategory !== "All") params.category = selectedCategory
         if (selectedBadge && selectedBadge !== "All") params.badge = selectedBadge
-        if (maxPrice[0] < dbMaxPrice) params.max_price = maxPrice[0]
+        if (maxPrice[0] < dbMaxPrice - 1) params.max_price = maxPrice[0]
         if (showInStockOnly) params.in_stock = "true"
         if (showOnSaleOnly) params.on_sale = "true"
 
@@ -271,9 +275,10 @@ function ShopContent() {
           const pageSize = 20
           setTotalPages(Math.ceil((data.count || list.length) / pageSize))
 
-          if (data.max_price !== undefined && dbMaxPrice === 100000) {
-            setDbMaxPrice(data.max_price)
-            setMaxPrice([data.max_price])
+          if (data.max_price !== undefined && dbMaxPrice === 1000000) {
+            const roundedMax = Math.ceil(parseFloat(data.max_price)) || 100000
+            setDbMaxPrice(roundedMax)
+            setMaxPrice([roundedMax])
           }
         }
       } catch (error) {
@@ -413,12 +418,13 @@ function ShopContent() {
               <div className="flex items-center gap-4">
                 {/* Sort */}
                 <Select value={sortBy} onValueChange={handleSetSortBy}>
-                  <SelectTrigger className="w-48 transition-all">
+                  <SelectTrigger className="w-52 transition-all">
                     <SelectValue placeholder="Sort by" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="featured">Featured</SelectItem>
-                    <SelectItem value="newest">Newest</SelectItem>
+                    <SelectItem value="default">All Products (Default)</SelectItem>
+                    <SelectItem value="newest">Newest Arrivals</SelectItem>
+                    <SelectItem value="featured">Featured Items Only</SelectItem>
                     <SelectItem value="price-low">Price: Low to High</SelectItem>
                     <SelectItem value="price-high">Price: High to Low</SelectItem>
                     <SelectItem value="rating">Highest Rated</SelectItem>

@@ -53,6 +53,10 @@ class ProductListView(generics.ListAPIView):
             from django.db.models import F
             queryset = queryset.filter(compare_price__gt=F('price'))
 
+        is_featured = self.request.query_params.get('is_featured', None)
+        if is_featured == 'true':
+            queryset = queryset.filter(is_featured=True)
+
         return queryset
 
     def list(self, request, *args, **kwargs):
