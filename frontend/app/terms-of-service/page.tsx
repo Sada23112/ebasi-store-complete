@@ -1,8 +1,6 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
-import { FileText, ShoppingCart, CreditCard, Truck, RotateCcw, AlertTriangle } from "lucide-react"
-import Navigation from "@/components/navigation"
-import Footer from "@/components/footer"
+import { FileText, Truck, RotateCcw, AlertTriangle } from "lucide-react"
 
 export default function TermsOfServicePage() {
   return (
@@ -35,69 +33,15 @@ export default function TermsOfServicePage() {
             </CardContent>
           </Card>
 
-          {/* Account Terms */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Account Registration and Security</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <h3 className="text-lg font-semibold mb-3">Account Creation</h3>
-                <ul className="space-y-2 text-muted-foreground">
-                  <li className="flex items-start space-x-2">
-                    <span className="w-2 h-2 bg-primary rounded-full mt-2 flex-shrink-0"></span>
-                    <span>You must be at least 18 years old to create an account</span>
-                  </li>
-                  <li className="flex items-start space-x-2">
-                    <span className="w-2 h-2 bg-primary rounded-full mt-2 flex-shrink-0"></span>
-                    <span>You must provide accurate and complete information during registration</span>
-                  </li>
-                  <li className="flex items-start space-x-2">
-                    <span className="w-2 h-2 bg-primary rounded-full mt-2 flex-shrink-0"></span>
-                    <span>You are responsible for maintaining the confidentiality of your account credentials</span>
-                  </li>
-                  <li className="flex items-start space-x-2">
-                    <span className="w-2 h-2 bg-primary rounded-full mt-2 flex-shrink-0"></span>
-                    <span>You are responsible for all activities that occur under your account</span>
-                  </li>
-                </ul>
-              </div>
-
-              <Separator />
-
-              <div>
-                <h3 className="text-lg font-semibold mb-3">Account Responsibilities</h3>
-                <p className="text-muted-foreground mb-3">You agree to:</p>
-                <ul className="space-y-2 text-muted-foreground">
-                  <li className="flex items-start space-x-2">
-                    <span className="w-2 h-2 bg-primary rounded-full mt-2 flex-shrink-0"></span>
-                    <span>Keep your account information up to date</span>
-                  </li>
-                  <li className="flex items-start space-x-2">
-                    <span className="w-2 h-2 bg-primary rounded-full mt-2 flex-shrink-0"></span>
-                    <span>Notify us immediately of any unauthorized use of your account</span>
-                  </li>
-                  <li className="flex items-start space-x-2">
-                    <span className="w-2 h-2 bg-primary rounded-full mt-2 flex-shrink-0"></span>
-                    <span>Use your account only for lawful purposes</span>
-                  </li>
-                  <li className="flex items-start space-x-2">
-                    <span className="w-2 h-2 bg-primary rounded-full mt-2 flex-shrink-0"></span>
-                    <span>Not share your account with others</span>
-                  </li>
-                </ul>
-              </div>
-            </CardContent>
-          </Card>
-
           {/* Shopping and Orders */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
-                <ShoppingCart className="w-5 h-5 text-primary" />
-                <span>Shopping and Orders</span>
+                <FileText className="w-5 h-5 text-primary" />
+                <span>Browsing and Inquiries</span>
               </CardTitle>
             </CardHeader>
+
             <CardContent className="space-y-6">
               <div>
                 <h3 className="text-lg font-semibold mb-3">Product Information</h3>
@@ -161,8 +105,8 @@ export default function TermsOfServicePage() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
-                <CreditCard className="w-5 h-5 text-primary" />
-                <span>Payment Terms</span>
+                <FileText className="w-5 h-5 text-primary" />
+                <span>Payment & Pricing Terms</span>
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">

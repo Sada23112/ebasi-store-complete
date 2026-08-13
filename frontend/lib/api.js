@@ -235,101 +235,6 @@ class EbasiAPI {
     }
   }
 
-  // Cart operations
-  async getCart() {
-    try {
-      const response = await fetch(`${API_BASE_URL}/orders/cart/`, {
-        headers: this.getHeaders(),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch cart');
-      }
-
-      return await response.json();
-    } catch (error) {
-      console.error('Cart Error:', error);
-      return { items: [], total_price: '0.00' };
-    }
-  }
-
-  async addToCart(productId, quantity = 1) {
-    try {
-      const response = await fetch(`${API_BASE_URL}/orders/cart/`, {
-        method: 'POST',
-        headers: this.getHeaders(),
-        body: JSON.stringify({
-          product_id: productId,
-          quantity,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to add to cart');
-      }
-
-      return await response.json();
-    } catch (error) {
-      console.error('Add to Cart Error:', error);
-      throw error;
-    }
-  }
-
-  async clearCart() {
-    try {
-      const response = await fetch(`${API_BASE_URL}/orders/cart/`, {
-        method: 'DELETE',
-        headers: this.getHeaders(),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to clear cart');
-      }
-
-      return true;
-    } catch (error) {
-      console.error('Clear Cart Error:', error);
-      throw error;
-    }
-  }
-
-  async removeCartItem(productId) {
-    try {
-      const response = await fetch(`${API_BASE_URL}/orders/cart/item/${productId}/`, {
-        method: 'DELETE',
-        headers: this.getHeaders(),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to remove cart item');
-      }
-
-      return true;
-    } catch (error) {
-      console.error('Remove Cart Item Error:', error);
-      throw error;
-    }
-  }
-
-  async updateCartItem(productId, quantity) {
-    try {
-      const response = await fetch(`${API_BASE_URL}/orders/cart/item/${productId}/`, {
-        method: 'PATCH',
-        headers: this.getHeaders(),
-        body: JSON.stringify({ quantity }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to update cart item');
-      }
-
-      return await response.json();
-    } catch (error) {
-      console.error('Update Cart Item Error:', error);
-      throw error;
-    }
-  }
-
   // Wishlist
   async getWishlist() {
     try {
@@ -369,43 +274,6 @@ class EbasiAPI {
     }
   }
 
-  // Orders
-  async createOrder(orderData) {
-    try {
-      const response = await fetch(`${API_BASE_URL}/orders/checkout/`, {
-        method: 'POST',
-        headers: this.getHeaders(),
-        body: JSON.stringify(orderData),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to create order');
-      }
-
-      return await response.json();
-    } catch (error) {
-      console.error('Create Order Error:', error);
-      throw error;
-    }
-  }
-
-  async getOrders() {
-    try {
-      const response = await fetch(`${API_BASE_URL}/orders/orders/`, {
-        headers: this.getHeaders(),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch orders');
-      }
-
-      return await response.json();
-    } catch (error) {
-      console.error('Get Orders Error:', error); // Corrected error message for getOrders
-      throw error;
-    }
-  }
-
   async deleteProduct(id) {
     try {
       const response = await fetch(`${API_BASE_URL}/admin/products/${id}/`, {
@@ -418,18 +286,6 @@ class EbasiAPI {
       console.error('Delete Product Error:', error);
       throw error;
     }
-  }
-
-  // Admin Order Management
-  async getAdminOrders() {
-    return this.request('/admin/orders/');
-  }
-
-  async updateOrderStatus(id, status) {
-    return this.request(`/admin/orders/${id}/update_status/`, {
-      method: 'PATCH',
-      body: JSON.stringify({ status })
-    });
   }
 
   // Admin User Management
@@ -504,7 +360,7 @@ class EbasiAPI {
     try {
       const response = await fetch(`${API_BASE_URL}/products/${slug}/reviews/`, {
         method: 'POST',
-        headers: this.getHeaders(false), // Public endpoint, but let's see if we need auth. View says AllowAny.
+        headers: this.getHeaders(false),
         body: JSON.stringify(data)
       });
 
@@ -521,3 +377,4 @@ class EbasiAPI {
 
 export const api = new EbasiAPI();
 export default api;
+

@@ -22,12 +22,18 @@ def reset_superusers():
     else:
         print("No existing superusers found.")
 
-    # 2. Create new superuser
-    target_username = "The Ebasi Store Admin Panel"
-    target_password = "TESAPanel_12"
-    target_email = "admin@ebasistore.com"
+    # 2. Create new superuser from environment variables
+    from decouple import config
+    target_username = config("DJANGO_SUPERUSER_USERNAME", default="admin")
+    target_password = config("DJANGO_SUPERUSER_PASSWORD", default=None)
+    target_email = config("DJANGO_SUPERUSER_EMAIL", default="admin@ebasistore.com")
+
+    if not target_password:
+        print("ERROR: DJANGO_SUPERUSER_PASSWORD environment variable is required to create a superuser.")
+        return
 
     print(f"Attempting to create new superuser: '{target_username}'")
+
     
     try:
         User.objects.create_superuser(username=target_username, email=target_email, password=target_password)

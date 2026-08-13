@@ -134,3 +134,18 @@ class ReviewAdmin(admin.ModelAdmin):
     def display_name(self, obj):
         return obj.user_name or 'Anonymous'
     display_name.short_description = 'Reviewer'
+
+
+# Unregister technical framework models from Django Admin interface for store owner cleanliness
+from django.contrib.auth.models import Group
+from django.contrib.sites.models import Site
+from rest_framework.authtoken.models import TokenProxy
+from allauth.account.models import EmailAddress
+from allauth.socialaccount.models import SocialApp, SocialToken, SocialAccount
+
+for technical_model in [Group, Site, TokenProxy, EmailAddress, SocialApp, SocialToken, SocialAccount]:
+    try:
+        admin.site.unregister(technical_model)
+    except admin.sites.NotRegistered:
+        pass
+

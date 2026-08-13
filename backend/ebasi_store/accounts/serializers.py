@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
-from .models import Address, ContactMessage
+from .models import ContactMessage
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
@@ -24,14 +24,9 @@ class RegisterSerializer(serializers.ModelSerializer):
         )
         return user
 
-class AddressSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Address
-        fields = '__all__'
-        read_only_fields = ('user',)
-
 class ContactMessageSerializer(serializers.ModelSerializer):
     class Meta:
         model = ContactMessage
         fields = '__all__'
         read_only_fields = ('is_read', 'created_at')
+

@@ -8,11 +8,16 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         User = get_user_model()
         
-        # Hardcoding user-requested credentials explicitly (no spaces in username allowed by Django)
-        # We will use "TheEbasiStoreAdminPanel" instead of "The Ebasi Store Admin Panel"
-        superuser_username = "TheEbasiStoreAdminPanel"
-        superuser_email = "admin@ebasistore.com"
-        superuser_password = "TESAP_ebasistore12"
+        from decouple import config
+
+        superuser_username = config("DJANGO_SUPERUSER_USERNAME", default="TheEbasiStoreAdminPanel")
+        superuser_email = config("DJANGO_SUPERUSER_EMAIL", default="admin@ebasistore.com")
+        superuser_password = config("DJANGO_SUPERUSER_PASSWORD", default=None)
+
+        if not superuser_password:
+            self.stdout.write(self.style.ERROR('DJANGO_SUPERUSER_PASSWORD environment variable is required to auto-create a superuser.'))
+            return
+
 
         # Check if the user exists
         if User.objects.filter(username=superuser_username).exists() or User.objects.filter(email=superuser_email).exists():

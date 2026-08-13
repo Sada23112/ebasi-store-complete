@@ -25,11 +25,19 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY =  config('SECRET_KEY', default='django-insecure-ay4zqq_t=#7x^xdv09$2zc*gc(7d)%(sqbjq-o4vup=_6ls)e&'
-) 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = config('DEBUG', default=False, cast=bool)
+DEBUG = config('DEBUG', default=True, cast=bool)
+
+# SECURITY WARNING: keep the secret key used in production secret!
+SECRET_KEY = config('SECRET_KEY', default=None)
+if not SECRET_KEY:
+    if DEBUG:
+        SECRET_KEY = 'django-insecure-local-dev-key-change-in-production'
+    else:
+        from django.core.exceptions import ImproperlyConfigured
+        raise ImproperlyConfigured("SECRET_KEY environment variable is required in production.")
+
+
 
 
 # ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'your-domain.com']
@@ -245,18 +253,15 @@ SOCIALACCOUNT_PROVIDERS = {
 
 
 
-# CORS settings — controlled via environment variables on Render
-# Set these in Render's Environment Variables dashboard:
-#   CORS_ALLOW_ALL_ORIGINS=True   (easiest — allows all frontends)
-#   OR
-#   CORS_ALLOWED_ORIGINS=https://your-vercel-app.vercel.app,http://localhost:3000
-#   CSRF_TRUSTED_ORIGINS=https://your-vercel-app.vercel.app
-CORS_ALLOW_ALL_ORIGINS = config('CORS_ALLOW_ALL_ORIGINS', default=False, cast=bool)
+# CORS settings - strictly controlled via explicit domain allowlist
+# Set CORS_ALLOWED_ORIGINS and CSRF_TRUSTED_ORIGINS via environment variables
+CORS_ALLOW_ALL_ORIGINS = False
 CORS_ALLOWED_ORIGINS = config(
     'CORS_ALLOWED_ORIGINS',
     default='http://localhost:3000,http://127.0.0.1:3000',
     cast=Csv()
 )
+
 CSRF_TRUSTED_ORIGINS = config(
     'CSRF_TRUSTED_ORIGINS',
     default='http://localhost:3000,http://127.0.0.1:3000',

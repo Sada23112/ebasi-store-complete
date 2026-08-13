@@ -4,14 +4,11 @@ from rest_framework.response import Response
 from rest_framework.decorators import action
 from django.contrib.auth.models import User
 from django.utils import timezone
-from django.db.models import Sum, Count
 from datetime import timedelta
 
-from SHOP.models import Product, Category, ProductImage
-from orders.models import Order
+from SHOP.models import Product, Category, Review
 from accounts.models import ContactMessage
 from SHOP.serializers import ProductDetailSerializer, ProductListSerializer
-from orders.serializers import OrderSerializer
 from accounts.serializers import UserSerializer, ContactMessageSerializer
 
 class IsAdminUser(permissions.BasePermission):
@@ -25,35 +22,28 @@ class AdminDashboardView(APIView):
     permission_classes = [permissions.IsAuthenticated, IsAdminUser]
 
     def get(self, request):
-        # Key Metrics
-        total_revenue = Order.objects.filter(status='delivered').aggregate(Sum('total_amount'))['total_amount__sum'] or 0
-        total_orders = Order.objects.count()
+        total_products = Product.objects.count()
+        active_products = Product.objects.filter(is_active=True).count()
+        total_categories = Category.objects.count()
         total_users = User.objects.count()
-        
-        # Calculate conversion rate (orders / users * 100) - simplified
-        conversion_rate = 0
-        if total_users > 0:
-            conversion_rate = (total_orders / total_users) * 100
+        unread_messages = ContactMessage.objects.filter(is_read=False).count()
 
-        # Recent Activity (Last 5 orders)
-        recent_orders = Order.objects.order_by('-created_at')[:5]
+        recent_messages = ContactMessage.objects.order_by('-created_at')[:5]
         recent_activity = []
-        for order in recent_orders:
+        for msg in recent_messages:
             recent_activity.append({
-                'type': 'order',
-                'message': f"New order #{order.id} received",
-                'time': order.created_at,
-                'user': order.user.username
+                'type': 'contact',
+                'message': f"Message from {msg.name}: {msg.subject}",
+                'time': msg.created_at,
+                'user': msg.email
             })
-            
-        # Sales Data (Mock for now, or aggregate by month if enough data)
-        # For simplicity, we'll return some real aggregates if possible, else structured data
         
         return Response({
-            'total_revenue': total_revenue,
-            'total_orders': total_orders,
+            'total_products': total_products,
+            'active_products': active_products,
+            'total_categories': total_categories,
             'total_users': total_users,
-            'conversion_rate': round(conversion_rate, 2),
+            'unread_messages': unread_messages,
             'recent_activity': recent_activity
         })
 
@@ -63,24 +53,7 @@ class AdminProductViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated, IsAdminUser]
     
     def perform_create(self, serializer):
-        # Handle category assignment by ID if needed, or slug
-        # For now, standard save
         serializer.save()
-
-class AdminOrderViewSet(viewsets.ModelViewSet):
-    queryset = Order.objects.all()
-    serializer_class = OrderSerializer
-    permission_classes = [permissions.IsAuthenticated, IsAdminUser]
-
-    @action(detail=True, methods=['patch'])
-    def update_status(self, request, pk=None):
-        order = self.get_object()
-        status = request.data.get('status')
-        if status:
-            order.status = status
-            order.save()
-            return Response({'status': 'success', 'new_status': order.status})
-        return Response({'status': 'error', 'message': 'Status not provided'}, status=400)
 
 class AdminUserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
@@ -105,3 +78,4 @@ class AdminContactMessageViewSet(viewsets.ReadOnlyModelViewSet):
         message.is_read = True
         message.save()
         return Response({'status': 'success', 'is_read': True})
+
