@@ -128,19 +128,19 @@ function FilterSidebar({
 
       {/* Price Range */}
       <div>
-        <h3 className="font-semibold text-foreground mb-3">Max Price</h3>
+        <h3 className="font-semibold text-foreground mb-3">Price Range</h3>
         <div className="px-2">
           <Slider 
-             value={maxPrice} 
-             onValueChange={setMaxPrice} 
+             value={priceRange} 
+             onValueChange={setPriceRange} 
              max={dbMaxPrice} 
-             min={0} 
-             step={500} 
+             min={dbMinPrice} 
+             step={250} 
              className="mb-4" 
           />
-          <div className="flex justify-between text-sm text-muted-foreground font-medium">
-            <span>₹0</span>
-            <span>Up to ₹{maxPrice[0]}</span>
+          <div className="flex justify-between text-xs text-muted-foreground font-semibold">
+            <span>₹{(priceRange[0] || 0).toLocaleString("en-IN")}</span>
+            <span>₹{(priceRange[1] || dbMaxPrice).toLocaleString("en-IN")}</span>
           </div>
         </div>
       </div>
@@ -180,7 +180,8 @@ function ShopContent() {
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedCategory, setSelectedCategory] = useState("All")
   const [selectedBadge, setSelectedBadge] = useState("All")
-  const [maxPrice, setMaxPrice] = useState<number[]>([1000000])
+  const [priceRange, setPriceRange] = useState<number[]>([0, 1000000])
+  const [dbMinPrice, setDbMinPrice] = useState<number>(0)
   const [dbMaxPrice, setDbMaxPrice] = useState<number>(1000000)
   const [sortBy, setSortBy] = useState("default")
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid")
@@ -255,7 +256,10 @@ function ShopContent() {
         if (searchQuery) params.search = searchQuery
         if (selectedCategory && selectedCategory !== "All") params.category = selectedCategory
         if (selectedBadge && selectedBadge !== "All") params.badge = selectedBadge
-        if (maxPrice[0] < dbMaxPrice - 1) params.max_price = maxPrice[0]
+
+        if (priceRange[0] > dbMinPrice) params.min_price = priceRange[0]
+        if (priceRange[1] < dbMaxPrice) params.max_price = priceRange[1]
+
         if (showInStockOnly) params.in_stock = "true"
         if (showOnSaleOnly) params.on_sale = "true"
 
@@ -276,9 +280,11 @@ function ShopContent() {
           setTotalPages(Math.ceil((data.count || list.length) / pageSize))
 
           if (data.max_price !== undefined && dbMaxPrice === 1000000) {
+            const roundedMin = Math.floor(parseFloat(data.min_price || 0))
             const roundedMax = Math.ceil(parseFloat(data.max_price)) || 100000
+            setDbMinPrice(roundedMin)
             setDbMaxPrice(roundedMax)
-            setMaxPrice([roundedMax])
+            setPriceRange([roundedMin, roundedMax])
           }
         }
       } catch (error) {
@@ -288,7 +294,7 @@ function ShopContent() {
       }
     }
     loadProducts()
-  }, [currentPage, searchQuery, selectedCategory, selectedBadge, maxPrice, sortBy, showInStockOnly, showOnSaleOnly, dbMaxPrice])
+  }, [currentPage, searchQuery, selectedCategory, selectedBadge, priceRange[0], priceRange[1], sortBy, showInStockOnly, showOnSaleOnly, dbMinPrice, dbMaxPrice])
 
   const handleSetSearchQuery = (val: string) => {
     setSearchQuery(val)
@@ -305,8 +311,8 @@ function ShopContent() {
     setCurrentPage(1)
     updateQueryParams(searchQuery, selectedCategory, val)
   }
-  const handleSetMaxPrice = (val: number[]) => {
-    setMaxPrice(val)
+  const handleSetPriceRange = (val: number[]) => {
+    setPriceRange(val)
     setCurrentPage(1)
   }
   const handleSetShowInStockOnly = (val: boolean) => {
@@ -326,7 +332,7 @@ function ShopContent() {
     setSearchQuery("")
     setSelectedCategory("All")
     setSelectedBadge("All")
-    setMaxPrice([dbMaxPrice])
+    setPriceRange([dbMinPrice, dbMaxPrice])
     setShowInStockOnly(false)
     setShowOnSaleOnly(false)
     setCurrentPage(1)
@@ -359,8 +365,9 @@ function ShopContent() {
     setSelectedCategory: handleSetSelectedCategory,
     selectedBadge,
     setSelectedBadge: handleSetSelectedBadge,
-    maxPrice,
-    setMaxPrice: handleSetMaxPrice,
+    priceRange,
+    setPriceRange: handleSetPriceRange,
+    dbMinPrice,
     dbMaxPrice,
     showInStockOnly,
     setShowInStockOnly: handleSetShowInStockOnly,

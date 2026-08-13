@@ -39,12 +39,24 @@ export function FeaturedProducts() {
   useEffect(() => {
     async function fetchProducts() {
       try {
-        const response = await fetch(`${API_BASE_URL}/products/featured/`)
+        let response = await fetch(`${API_BASE_URL}/products/featured/`)
+        let list: Product[] = []
+
         if (response.ok) {
           const data = await response.json()
-          const productList = Array.isArray(data) ? data : (data.results || [])
-          setProducts(productList.slice(0, 4))
+          list = Array.isArray(data) ? data : (data.results || [])
         }
+
+        // Fallback to all products if featured endpoint returns empty
+        if (list.length === 0) {
+          response = await fetch(`${API_BASE_URL}/products/`)
+          if (response.ok) {
+            const data = await response.json()
+            list = Array.isArray(data) ? data : (data.results || [])
+          }
+        }
+
+        setProducts(list.slice(0, 8))
       } catch (error) {
         console.error("Failed to fetch products", error)
       } finally {
@@ -55,11 +67,14 @@ export function FeaturedProducts() {
   }, [])
 
   if (loading) {
-    return <div className="py-16 text-center text-muted-foreground">Loading featured products...</div>
-  }
-
-  if (products.length === 0) {
-    return null
+    return (
+      <div className="py-16 text-center text-muted-foreground font-sans">
+        <div className="animate-pulse flex flex-col items-center justify-center gap-2">
+          <div className="h-6 w-48 bg-muted rounded-md mb-2" />
+          <div className="h-4 w-64 bg-muted/60 rounded-md" />
+        </div>
+      </div>
+    )
   }
 
   const handleWishlistToggle = (e: React.MouseEvent, product: Product) => {
