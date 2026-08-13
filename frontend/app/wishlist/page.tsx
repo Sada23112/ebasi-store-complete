@@ -1,5 +1,6 @@
 "use client"
 
+import { useState, useEffect } from "react"
 import { useWishlist, WishlistItem } from "@/lib/wishlist"
 import { getAbsoluteImageUrl } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -8,9 +9,16 @@ import { Badge } from "@/components/ui/badge"
 import { Heart, Trash2, ArrowLeft, ShoppingBag } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
+import { ScrollReveal } from "@/components/scroll-reveal"
+import { WishlistGridSkeleton } from "@/components/skeletons"
 
 export default function WishlistPage() {
   const { items, toggle, count } = useWishlist()
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   const getWhatsAppUrl = (product: WishlistItem) => {
     const origin = typeof window !== "undefined" ? window.location.origin : ""
@@ -25,48 +33,55 @@ export default function WishlistPage() {
         {/* Header */}
         <section className="py-8 px-4 border-b">
           <div className="max-w-7xl mx-auto flex items-center justify-between">
-            <div>
-              <div className="flex items-center gap-2 mb-1">
-                <Link href="/shop" className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-1">
-                  <ArrowLeft className="h-4 w-4" /> Back to Shop
-                </Link>
+            <ScrollReveal direction="down">
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <Link href="/shop" className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors">
+                    <ArrowLeft className="h-4 w-4" /> Back to Shop
+                  </Link>
+                </div>
+                <h1 className="text-4xl font-serif font-bold text-foreground flex items-center gap-3">
+                  <Heart className="h-8 w-8 text-primary fill-primary" /> My Saved Items
+                </h1>
+                <p className="text-muted-foreground mt-1">
+                  {!mounted ? "Loading saved items..." : count === 0 ? "You have no saved items yet." : `You have ${count} item${count > 1 ? "s" : ""} saved in your wishlist.`}
+                </p>
               </div>
-              <h1 className="text-4xl font-serif font-bold text-foreground flex items-center gap-3">
-                <Heart className="h-8 w-8 text-primary fill-primary" /> My Saved Items
-              </h1>
-              <p className="text-muted-foreground mt-1">
-                {count === 0 ? "You have no saved items yet." : `You have ${count} item${count > 1 ? "s" : ""} saved in your wishlist.`}
-              </p>
-            </div>
+            </ScrollReveal>
           </div>
         </section>
 
         <div className="max-w-7xl mx-auto px-4 py-8">
-          {count === 0 ? (
-            <div className="text-center py-20 bg-muted/30 rounded-2xl border border-dashed p-8">
-              <Heart className="h-16 w-16 text-muted-foreground/40 mx-auto mb-4" />
-              <h2 className="text-2xl font-serif font-bold text-foreground mb-2">Your wishlist is empty</h2>
-              <p className="text-muted-foreground max-w-md mx-auto mb-6">
-                Explore our collection of sarees, Mekhela Sadors, and ethnic wear, and save your favorites to order anytime!
-              </p>
-              <Link href="/shop">
-                <Button size="lg" className="bg-primary text-primary-foreground">
-                  <ShoppingBag className="h-4 w-4 mr-2" /> Explore Shop
-                </Button>
-              </Link>
-            </div>
+          {!mounted ? (
+            <WishlistGridSkeleton count={3} />
+          ) : count === 0 ? (
+            <ScrollReveal direction="up">
+              <div className="text-center py-20 bg-muted/30 rounded-2xl border border-dashed p-8">
+                <Heart className="h-16 w-16 text-muted-foreground/40 mx-auto mb-4" />
+                <h2 className="text-2xl font-serif font-bold text-foreground mb-2">Your wishlist is empty</h2>
+                <p className="text-muted-foreground max-w-md mx-auto mb-6">
+                  Explore our collection of sarees, Mekhela Sadors, and ethnic wear, and save your favorites to order anytime!
+                </p>
+                <Link href="/shop">
+                  <Button size="lg" className="bg-primary text-primary-foreground active:scale-95 transition-transform">
+                    <ShoppingBag className="h-4 w-4 mr-2" /> Explore Shop
+                  </Button>
+                </Link>
+              </div>
+            </ScrollReveal>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {items.map((item) => (
+              {items.map((item, idx) => (
+                <ScrollReveal key={item.id} delay={idx * 75} direction="up">
                 <Card key={item.id} className="overflow-hidden rounded-2xl border border-border shadow-sm hover:shadow-md transition-all flex flex-col">
-                  <div className="relative bg-muted h-64 overflow-hidden group">
+                  <div className="relative bg-muted h-64 overflow-hidden rounded-t-2xl group">
                     <Link href={`/product/${item.slug || item.id}`}>
                       <Image
                         src={getAbsoluteImageUrl(item.primary_image || null)}
                         alt={item.name}
                         width={400}
                         height={400}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        className="w-full h-full object-cover rounded-t-2xl group-hover:scale-105 transition-transform duration-500"
                       />
                     </Link>
 
@@ -93,7 +108,7 @@ export default function WishlistPage() {
                         {item.category?.name || "Traditional Wear"}
                       </span>
                       <Link href={`/product/${item.slug || item.id}`}>
-                        <h3 className="font-serif font-bold text-foreground text-lg hover:text-primary transition-colors line-clamp-1 mt-1">
+                        <h3 className="font-sans font-semibold text-foreground text-base sm:text-lg hover:text-primary transition-colors line-clamp-1 mt-1 leading-snug tracking-tight">
                           {item.name}
                         </h3>
                       </Link>
@@ -122,6 +137,7 @@ export default function WishlistPage() {
                     </div>
                   </CardContent>
                 </Card>
+              </ScrollReveal>
               ))}
             </div>
           )}

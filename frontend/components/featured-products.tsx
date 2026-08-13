@@ -30,6 +30,8 @@ interface Product {
   category: { name: string; slug: string }
 }
 
+import { ProductGridSkeleton } from "@/components/skeletons"
+
 export function FeaturedProducts() {
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
@@ -68,12 +70,17 @@ export function FeaturedProducts() {
 
   if (loading) {
     return (
-      <div className="py-16 text-center text-muted-foreground font-sans">
-        <div className="animate-pulse flex flex-col items-center justify-center gap-2">
-          <div className="h-6 w-48 bg-muted rounded-md mb-2" />
-          <div className="h-4 w-64 bg-muted/60 rounded-md" />
+      <section className="py-20 lg:py-24 px-4 bg-background">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl lg:text-5xl font-serif font-bold text-foreground mb-4 tracking-tight">Featured Collection</h2>
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+              Discover our handpicked collection of trending and bestselling pieces.
+            </p>
+          </div>
+          <ProductGridSkeleton count={4} />
         </div>
-      </div>
+      </section>
     )
   }
 
@@ -114,14 +121,14 @@ export function FeaturedProducts() {
               <ScrollReveal key={product.id} delay={idx * 100} direction="up">
                 <div className="relative group flex flex-col h-full">
                   <Card className="overflow-hidden rounded-2xl border border-transparent hover:border-primary/20 premium-shadow hover:premium-shadow-hover transition-all duration-300 ease-out hover:-translate-y-1 bg-card/50 backdrop-blur-sm h-full flex flex-col justify-between">
-                    <div className="relative overflow-hidden bg-muted hover-scale-img">
+                    <div className="relative overflow-hidden rounded-t-2xl bg-muted hover-scale-img">
                       <Link href={`/product/${product.slug || product.id}`}>
                         <Image
                           src={getAbsoluteImageUrl(product.primary_image || (product.images && product.images.length > 0 ? product.images[0].image : null) || "/images/placeholders/placeholder.svg")}
                           alt={product.name}
                           width={400}
                           height={500}
-                          className="w-full h-48 sm:h-80 object-cover"
+                          className="w-full h-48 sm:h-80 object-cover rounded-t-2xl"
                         />
                       </Link>
                       
@@ -184,7 +191,7 @@ export function FeaturedProducts() {
                           <span className="text-xs text-muted-foreground">({product.review_count || 0})</span>
                         </div>
                         <Link href={`/product/${product.slug || product.id}`}>
-                          <h3 className="font-medium text-foreground group-hover:text-primary transition-colors mb-2 line-clamp-2 text-sm sm:text-base">{product.name}</h3>
+                          <h3 className="font-sans font-semibold text-foreground group-hover:text-primary transition-colors mb-2 line-clamp-2 text-sm sm:text-base leading-snug tracking-tight">{product.name}</h3>
                         </Link>
                         <div className="flex flex-wrap items-baseline gap-1.5 mb-3 min-w-0">
                           <span className="text-base sm:text-lg font-bold text-foreground shrink-0">₹{product.price}</span>

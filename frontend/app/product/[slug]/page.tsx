@@ -22,9 +22,8 @@ import {
   Sparkles,
 } from "lucide-react"
 import Link from "next/link"
-import api from "@/lib/api"
-import { ProductGallery } from "@/components/product-gallery"
-import { getAbsoluteImageUrl, getBadgeInfo, cn } from "@/lib/utils"
+import { ProductDetailSkeleton } from "@/components/skeletons"
+import { ScrollReveal } from "@/components/scroll-reveal"
 import { useWishlist } from "@/lib/wishlist"
 
 const SIZES = ["Free Size / Standard", "Unstitched", "S", "M", "L", "XL", "XXL"]
@@ -173,11 +172,7 @@ export default function ProductDetailPage() {
   }
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <Loader2 className="h-10 w-10 animate-spin text-primary" />
-      </div>
-    )
+    return <ProductDetailSkeleton />
   }
 
   if (!product) {
@@ -229,113 +224,121 @@ export default function ProductDetailPage() {
         <div className="max-w-7xl mx-auto px-4 py-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
             {/* Product Media Gallery */}
-            <div className="space-y-4">
-              <ProductGallery mediaItems={mediaItems} productName={product.name} />
-            </div>
+            <ScrollReveal direction="right">
+              <div className="space-y-4">
+                <ProductGallery mediaItems={mediaItems} productName={product.name} />
+              </div>
+            </ScrollReveal>
 
             {/* Product Details */}
-            <div className="space-y-6 animate-fade-up">
-              <div>
-                <div className="flex flex-wrap items-center gap-2 mb-2">
-                  {product.is_on_sale && (
-                    <Badge className={getBadgeInfo('sale')?.className}>
-                      Sale
-                    </Badge>
-                  )}
-                  {product.badge ? (
-                    getBadgeInfo(product.badge) && (
-                      <Badge className={getBadgeInfo(product.badge)?.className}>
-                        {getBadgeInfo(product.badge)?.label}
+            <ScrollReveal direction="left">
+              <div className="space-y-6">
+                <div>
+                  <div className="flex flex-wrap items-center gap-2 mb-2">
+                    {product.is_on_sale && (
+                      <Badge className={getBadgeInfo('sale')?.className}>
+                        Sale
                       </Badge>
-                    )
-                  ) : (
-                    product.is_featured && (
-                      <Badge className={getBadgeInfo('trending')?.className}>
-                        Trending
+                    )}
+                    {product.badge ? (
+                      getBadgeInfo(product.badge) && (
+                        <Badge className={getBadgeInfo(product.badge)?.className}>
+                          {getBadgeInfo(product.badge)?.label}
+                        </Badge>
+                      )
+                    ) : (
+                      product.is_featured && (
+                        <Badge className={getBadgeInfo('trending')?.className}>
+                          Trending
+                        </Badge>
+                      )
+                    )}
+                    {isOutOfStock && (
+                      <Badge variant="secondary" className="bg-red-600 text-white">
+                        Out of Stock
                       </Badge>
-                    )
-                  )}
-                  {isOutOfStock && (
-                    <Badge variant="secondary" className="bg-red-600 text-white">
-                      Out of Stock
-                    </Badge>
-                  )}
-                </div>
-
-                <h1 className="text-2xl sm:text-3xl lg:text-4xl font-serif font-bold text-foreground mb-3 leading-tight">
-                  {product.name}
-                </h1>
-
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="flex items-center">
-                    {[...Array(5)].map((_, i) => (
-                      <Star
-                        key={i}
-                        className={`h-4 w-4 ${i < Math.floor(product.average_rating || 0) ? "fill-yellow-400 text-yellow-400" : "text-gray-300"
-                          }`}
-                      />
-                    ))}
+                    )}
                   </div>
-                  <span className="text-sm text-muted-foreground font-medium">
-                    {product.average_rating || 0} ({reviews.length} review{reviews.length !== 1 ? 's' : ''})
-                  </span>
+
+                  <h1 className="text-2xl sm:text-3xl lg:text-4xl font-serif font-bold text-foreground mb-3 leading-tight">
+                    {product.name}
+                  </h1>
+
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="flex items-center">
+                      {[...Array(5)].map((_, i) => (
+                        <Star
+                          key={i}
+                          className={`h-4 w-4 ${i < Math.floor(product.average_rating || 0) ? "fill-yellow-400 text-yellow-400" : "text-gray-300"
+                            }`}
+                        />
+                      ))}
+                    </div>
+                    <span className="text-sm text-muted-foreground font-medium">
+                      {product.average_rating || 0} ({reviews.length} review{reviews.length !== 1 ? 's' : ''})
+                    </span>
+                  </div>
                 </div>
-              </div>
 
-              {/* Price Display */}
-              <div className="flex items-baseline gap-3 p-4 bg-muted/30 rounded-xl border border-border">
-                <span className="text-3xl font-bold text-foreground">₹{product.price}</span>
-                {product.compare_price && parseFloat(product.compare_price) > parseFloat(product.price) && (
-                  <span className="text-xl text-muted-foreground line-through">₹{product.compare_price}</span>
-                )}
-                {product.discount_percentage > 0 && (
-                  <Badge variant="secondary" className="bg-emerald-600 text-white font-semibold text-xs px-2 py-0.5">
-                    {product.discount_percentage}% OFF
-                  </Badge>
-                )}
-              </div>
-
-              {/* Stock Status Indicator */}
-              <div className="flex items-center gap-2">
-                {!isOutOfStock ? (
-                  <>
-                    <div className="w-2.5 h-2.5 bg-green-500 rounded-full animate-pulse"></div>
-                    <span className="text-sm font-medium text-green-600">In Stock ({product.stock_quantity || 'Available'})</span>
-                  </>
-                ) : (
-                  <>
-                    <div className="w-2.5 h-2.5 bg-red-500 rounded-full"></div>
-                    <span className="text-sm font-medium text-red-600">Currently Out of Stock — Inquire on WhatsApp for Restock</span>
-                  </>
-                )}
-              </div>
-
-              {/* Size Selector */}
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-2">
-                  Select Size / Fitting Option:
-                </label>
-                <div className="flex flex-wrap gap-2">
-                  {SIZES.map((size) => {
-                    const isSelected = selectedSize === size
-                    return (
-                      <Button
-                        key={size}
-                        type="button"
-                        variant={isSelected ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => setSelectedSize(size)}
-                        className={cn(
-                          "transition-all duration-300 active:scale-95",
-                          isSelected ? "bg-primary text-primary-foreground font-semibold shadow-xs" : "bg-transparent hover:border-primary/50"
-                        )}
-                      >
-                        {size}
-                      </Button>
-                    )
-                  })}
+                {/* Price Display */}
+                <div className="flex items-baseline gap-3 p-5 bg-gradient-to-r from-muted/50 via-muted/30 to-background rounded-2xl border border-border/60 shadow-xs">
+                  <span className="text-3xl sm:text-4xl font-bold text-foreground font-sans tracking-tight">₹{product.price}</span>
+                  {product.compare_price && parseFloat(product.compare_price) > parseFloat(product.price) && (
+                    <span className="text-lg sm:text-xl text-muted-foreground line-through font-sans">₹{product.compare_price}</span>
+                  )}
+                  {product.discount_percentage > 0 && (
+                    <Badge variant="secondary" className="bg-emerald-600 text-white font-semibold text-xs px-2.5 py-0.5 shadow-xs">
+                      {product.discount_percentage}% OFF
+                    </Badge>
+                  )}
                 </div>
-              </div>
+
+                {/* Stock Status Indicator */}
+                <div className="flex items-center gap-2 px-1">
+                  {!isOutOfStock ? (
+                    <>
+                      <div className="w-2.5 h-2.5 bg-green-500 rounded-full animate-pulse"></div>
+                      <span className="text-sm font-medium text-green-600">In Stock — Ready to Dispatch from Assam</span>
+                    </>
+                  ) : (
+                    <>
+                      <div className="w-2.5 h-2.5 bg-red-500 rounded-full"></div>
+                      <span className="text-sm font-medium text-red-600">Currently Out of Stock — Inquire on WhatsApp for Restock</span>
+                    </>
+                  )}
+                </div>
+
+                {/* Size Selector */}
+                <div>
+                  <div className="flex justify-between items-center mb-2">
+                    <label className="block text-sm font-medium text-foreground">
+                      Select Size / Fitting Option:
+                    </label>
+                    <span className="text-xs text-primary font-medium">Size Guide</span>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {SIZES.map((size) => {
+                      const isSelected = selectedSize === size
+                      return (
+                        <Button
+                          key={size}
+                          type="button"
+                          variant={isSelected ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => setSelectedSize(size)}
+                          className={cn(
+                            "transition-all duration-300 active:scale-95 text-xs sm:text-sm h-9 px-3.5",
+                            isSelected
+                              ? "bg-primary text-primary-foreground font-semibold shadow-xs ring-2 ring-primary/30"
+                              : "bg-transparent hover:border-primary/50 hover:bg-muted/30"
+                          )}
+                        >
+                          {size}
+                        </Button>
+                      )
+                    })}
+                  </div>
+                </div>
 
               {/* Customization / Color note */}
               <div>
@@ -450,7 +453,8 @@ export default function ProductDetailPage() {
                 </div>
               </div>
             </div>
-          </div>
+          </ScrollReveal>
+        </div>
 
           {/* Product Tabs */}
           <div className="mt-16">
@@ -603,7 +607,7 @@ export default function ProductDetailPage() {
       </main>
 
       {/* Sticky Mobile WhatsApp Bottom Bar */}
-      <div className="fixed bottom-0 left-0 right-0 z-40 bg-background/95 backdrop-blur-md border-t p-3 sm:hidden shadow-lg animate-fade-up">
+      <div className="fixed bottom-0 left-0 right-0 z-40 bg-background/95 backdrop-blur-xl border-t border-border p-3 md:hidden shadow-lg animate-fade-up">
         <div className="flex items-center justify-between gap-3">
           <div className="flex flex-col min-w-0">
             <span className="text-xs text-muted-foreground truncate">{product.name}</span>

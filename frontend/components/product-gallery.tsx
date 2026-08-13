@@ -66,7 +66,7 @@ export function ProductGallery({ mediaItems, productName }: ProductGalleryProps)
                             onClick={() => handleThumbnailClick(index)}
                             onMouseEnter={() => handleThumbnailHover(index)}
                             className={cn(
-                                "relative flex-shrink-0 w-20 h-20 rounded-md overflow-hidden border-2 transition-all duration-300 cursor-pointer active:scale-95",
+                                "relative flex-shrink-0 w-20 h-20 rounded-xl overflow-hidden border-2 transition-all duration-300 cursor-pointer active:scale-95",
                                 current === index
                                     ? "border-primary ring-2 ring-primary/30 shadow-md scale-105"
                                     : "border-transparent opacity-70 hover:opacity-100 hover:border-border hover:scale-100"
@@ -103,7 +103,7 @@ export function ProductGallery({ mediaItems, productName }: ProductGalleryProps)
                     <CarouselContent>
                         {mediaItems.map((item, index) => (
                             <CarouselItem key={index}>
-                                <div className="relative aspect-square w-full overflow-hidden rounded-xl bg-muted border shadow-sm transition-all duration-500">
+                                <div className="relative aspect-square w-full overflow-hidden rounded-2xl bg-muted border border-border/60 shadow-md transition-all duration-500">
                                     {item.type === "image" ? (
                                         <ZoomableImage
                                             src={item.url}

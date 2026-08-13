@@ -13,6 +13,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
 import { Search, Grid3X3, List, Star, SlidersHorizontal, Loader2, Heart } from "lucide-react"
 import Image from "next/image"
+import { ScrollReveal } from "@/components/scroll-reveal"
+import { ProductGridSkeleton } from "@/components/skeletons"
 import Link from "next/link"
 import { getAbsoluteImageUrl, getBadgeInfo } from "@/lib/utils"
 import { API_BASE_URL } from "@/lib/constants"
@@ -65,26 +67,39 @@ function FilterSidebar({
   setShowOnSaleOnly,
   clearAllFilters,
 }: FilterSidebarProps) {
+  const hasActiveFilters = searchQuery !== "" || selectedCategory !== "All" || selectedBadge !== "All" || showInStockOnly || showOnSaleOnly || priceRange[0] > dbMinPrice || priceRange[1] < dbMaxPrice
+
   return (
-    <div className="space-y-6">
+    <div className="bg-card/70 backdrop-blur-md rounded-2xl border border-border/60 p-5 space-y-6 shadow-sm">
+      <div className="flex items-center justify-between border-b pb-3">
+        <h2 className="font-serif font-bold text-foreground text-lg flex items-center gap-2">
+          <SlidersHorizontal className="h-4 w-4 text-primary" /> Filter Products
+        </h2>
+        {hasActiveFilters && (
+          <Button variant="ghost" size="sm" onClick={clearAllFilters} className="text-xs text-primary hover:text-primary/80 h-auto p-0 font-medium">
+            Clear all
+          </Button>
+        )}
+      </div>
+
       {/* Search */}
       <div>
-        <h3 className="font-semibold text-foreground mb-3">Search</h3>
+        <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Search Catalog</label>
         <div className="relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Search products..."
+            placeholder="Search silk, mekhela, saree..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10 transition-all duration-300 focus:ring-2 focus:ring-primary/20"
+            className="pl-9 h-10 text-sm bg-background/80 transition-all duration-300 focus:ring-2 focus:ring-primary/20 rounded-xl"
           />
         </div>
       </div>
 
       {/* Categories */}
       <div>
-        <h3 className="font-semibold text-foreground mb-3">Categories</h3>
-        <div className="space-y-1 max-h-60 overflow-y-auto pr-1">
+        <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Categories</label>
+        <div className="space-y-1 max-h-56 overflow-y-auto pr-1">
           {categories.map((category) => {
             const isActive = selectedCategory === category.slug
             return (
@@ -92,12 +107,13 @@ function FilterSidebar({
                 key={category.slug}
                 variant={isActive ? "default" : "ghost"}
                 className={cn(
-                  "w-full justify-start text-sm transition-all duration-300 active:scale-[0.98]",
-                  isActive ? "shadow-sm font-semibold" : "hover:bg-accent hover:text-accent-foreground"
+                  "w-full justify-between text-sm h-9 px-3 rounded-xl transition-all duration-200 active:scale-[0.98]",
+                  isActive ? "bg-primary text-primary-foreground font-medium shadow-xs" : "text-foreground/80 hover:bg-muted/50 hover:text-foreground"
                 )}
                 onClick={() => setSelectedCategory(category.slug)}
               >
-                {category.name}
+                <span>{category.name}</span>
+                {isActive && <span className="text-xs">✓</span>}
               </Button>
             )
           })}
@@ -106,17 +122,17 @@ function FilterSidebar({
 
       {/* Badges */}
       <div>
-        <h3 className="font-semibold text-foreground mb-3">Filter by Badge</h3>
-        <div className="space-y-1">
+        <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Collection Badge</label>
+        <div className="flex flex-wrap gap-1.5">
           {BADGES.map((badgeItem) => {
             const isActive = selectedBadge === badgeItem.key
             return (
               <Button
                 key={badgeItem.key}
-                variant={isActive ? "default" : "ghost"}
+                variant={isActive ? "default" : "outline"}
                 className={cn(
-                  "w-full justify-start text-xs font-normal transition-all duration-300 active:scale-[0.98]",
-                  isActive ? "shadow-sm font-semibold" : "hover:bg-accent"
+                  "text-xs h-7 px-2.5 rounded-lg transition-all duration-200 active:scale-[0.98]",
+                  isActive ? "bg-primary text-primary-foreground font-semibold shadow-xs" : "bg-transparent hover:border-primary/40 text-muted-foreground"
                 )}
                 onClick={() => setSelectedBadge(badgeItem.key)}
                 size="sm"
@@ -130,45 +146,48 @@ function FilterSidebar({
 
       {/* Price Range */}
       <div>
-        <h3 className="font-semibold text-foreground mb-3">Price Range</h3>
-        <div className="px-2">
+        <div className="flex justify-between items-center mb-2">
+          <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider">Price Range</label>
+          <span className="text-xs font-medium text-foreground">
+            ₹{(priceRange[0] || 0).toLocaleString("en-IN")} - ₹{(priceRange[1] || dbMaxPrice).toLocaleString("en-IN")}
+          </span>
+        </div>
+        <div className="px-1 pt-2">
           <Slider 
              value={priceRange} 
              onValueChange={setPriceRange} 
              max={dbMaxPrice} 
              min={dbMinPrice} 
              step={250} 
-             className="mb-4" 
+             className="mb-2" 
           />
-          <div className="flex justify-between text-xs text-muted-foreground font-semibold">
-            <span>₹{(priceRange[0] || 0).toLocaleString("en-IN")}</span>
-            <span>₹{(priceRange[1] || dbMaxPrice).toLocaleString("en-IN")}</span>
-          </div>
         </div>
       </div>
 
       {/* Availability */}
-      <div>
-        <h3 className="font-semibold text-foreground mb-3 font-medium">Availability</h3>
+      <div className="pt-1 border-t">
+        <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2.5">Availability & Offers</label>
         <div className="space-y-2">
           <div className="flex items-center space-x-2">
             <Checkbox id="in-stock" checked={showInStockOnly} onCheckedChange={(checked) => setShowInStockOnly(checked as boolean)} />
-            <label htmlFor="in-stock" className="text-sm text-foreground cursor-pointer select-none">
+            <label htmlFor="in-stock" className="text-sm text-foreground cursor-pointer select-none font-medium">
               In Stock Only
             </label>
           </div>
           <div className="flex items-center space-x-2">
             <Checkbox id="on-sale" checked={showOnSaleOnly} onCheckedChange={(checked) => setShowOnSaleOnly(checked as boolean)} />
-            <label htmlFor="on-sale" className="text-sm text-foreground cursor-pointer select-none">
-              On Sale
+            <label htmlFor="on-sale" className="text-sm text-foreground cursor-pointer select-none font-medium">
+              On Sale Items
             </label>
           </div>
         </div>
       </div>
 
-      <Button variant="outline" onClick={clearAllFilters} className="w-full bg-transparent transition-all active:scale-[0.98]">
-        Clear All Filters
-      </Button>
+      {hasActiveFilters && (
+        <Button variant="outline" onClick={clearAllFilters} className="w-full bg-transparent border-dashed text-xs h-9 rounded-xl transition-all active:scale-[0.98]">
+          Reset All Filters
+        </Button>
+      )}
     </div>
   )
 }
@@ -463,9 +482,7 @@ function ShopContent() {
             </div>
 
             {loading ? (
-              <div className="flex justify-center py-20">
-                <Loader2 className="h-10 w-10 animate-spin text-primary" />
-              </div>
+              <ProductGridSkeleton count={8} />
             ) : filteredProducts.length === 0 ? (
               <div className="text-center py-16 bg-muted/20 rounded-2xl p-8 animate-fade-up">
                 <p className="text-lg font-medium text-foreground mb-2">No products match your current filters</p>
@@ -497,7 +514,7 @@ function ShopContent() {
                           {/* Image */}
                           <div className={cn(
                             "relative overflow-hidden shrink-0 bg-muted hover-scale-img",
-                            viewMode === "list" ? "w-full sm:w-56 md:w-64 h-48 sm:h-auto" : "h-48 sm:h-80"
+                            viewMode === "list" ? "w-full sm:w-56 md:w-64 h-48 sm:h-auto rounded-t-2xl sm:rounded-l-2xl sm:rounded-tr-none" : "h-48 sm:h-80 rounded-t-2xl"
                           )}>
                             <Link href={`/product/${product.slug || product.id}`}>
                               <Image
@@ -505,7 +522,10 @@ function ShopContent() {
                                 alt={product.name}
                                 width={400}
                                 height={500}
-                                className="w-full h-full object-cover"
+                                className={cn(
+                                  "w-full h-full object-cover",
+                                  viewMode === "list" ? "rounded-t-2xl sm:rounded-l-2xl sm:rounded-tr-none" : "rounded-t-2xl"
+                                )}
                               />
                             </Link>
 
@@ -568,7 +588,7 @@ function ShopContent() {
                               </div>
 
                               <Link href={`/product/${product.slug || product.id}`}>
-                                <h3 className="font-serif font-bold text-foreground group-hover:text-primary transition-colors line-clamp-2 text-sm sm:text-base">
+                                <h3 className="font-sans font-semibold text-foreground group-hover:text-primary transition-colors line-clamp-2 text-sm sm:text-base leading-snug tracking-tight">
                                   {product.name}
                                 </h3>
                               </Link>
@@ -660,8 +680,8 @@ export default function ShopPage() {
   return (
     <div className="min-h-screen bg-background">
       <Suspense fallback={
-        <div className="flex justify-center items-center min-h-[60vh]">
-          <Loader2 className="h-10 w-10 animate-spin text-primary" />
+        <div className="max-w-7xl mx-auto px-4 pt-28 pb-16">
+          <ProductGridSkeleton count={8} />
         </div>
       }>
         <ShopContent />
