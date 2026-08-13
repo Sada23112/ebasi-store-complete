@@ -206,10 +206,11 @@ class EbasiAPI {
   async getProductBySlug(slug) {
     try {
       const response = await fetch(`${API_BASE_URL}/products/${slug}/`);
+      if (!response.ok) return null;
       return await response.json();
     } catch (error) {
       console.error('Product Error:', error);
-      throw error;
+      return null;
     }
   }
 

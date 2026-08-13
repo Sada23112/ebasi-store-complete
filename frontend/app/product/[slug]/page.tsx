@@ -25,6 +25,9 @@ import Link from "next/link"
 import { ProductDetailSkeleton } from "@/components/skeletons"
 import { ScrollReveal } from "@/components/scroll-reveal"
 import { useWishlist } from "@/lib/wishlist"
+import api from "@/lib/api"
+import { getAbsoluteImageUrl, getBadgeInfo, cn } from "@/lib/utils"
+import { ProductGallery } from "@/components/product-gallery"
 
 const SIZES = ["Free Size / Standard", "Unstitched", "S", "M", "L", "XL", "XXL"]
 
@@ -55,7 +58,11 @@ export default function ProductDetailPage() {
       try {
         if (!slug) return
         const productData = await api.getProductBySlug(slug)
-        setProduct(productData)
+        if (productData && !productData.detail && productData.id) {
+          setProduct(productData)
+        } else {
+          setProduct(null)
+        }
 
         const reviewsData = await api.getProductReviews(slug)
         if (Array.isArray(reviewsData)) {
@@ -67,6 +74,7 @@ export default function ProductDetailPage() {
         }
       } catch (err) {
         console.error("Error fetching product data:", err)
+        setProduct(null)
       } finally {
         setLoading(false)
       }
