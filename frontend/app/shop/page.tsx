@@ -36,8 +36,9 @@ interface FilterSidebarProps {
   setSelectedCategory: (value: string) => void
   selectedBadge: string
   setSelectedBadge: (value: string) => void
-  maxPrice: number[]
-  setMaxPrice: (value: number[]) => void
+  priceRange: number[]
+  setPriceRange: (value: number[]) => void
+  dbMinPrice: number
   dbMaxPrice: number
   showInStockOnly: boolean
   setShowInStockOnly: (value: boolean) => void
@@ -54,8 +55,9 @@ function FilterSidebar({
   setSelectedCategory,
   selectedBadge,
   setSelectedBadge,
-  maxPrice,
-  setMaxPrice,
+  priceRange,
+  setPriceRange,
+  dbMinPrice,
   dbMaxPrice,
   showInStockOnly,
   setShowInStockOnly,

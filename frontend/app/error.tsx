@@ -20,8 +20,7 @@ export default function Error({
     <div className="min-h-screen bg-background flex items-center justify-center px-4">
       <div className="text-center max-w-md">
         <div className="mb-8">
-          <Image src="/error-illustration.png" alt="Error" width={200} height={200} className="mx-auto mb-6" />
-          <AlertTriangle className="h-16 w-16 text-destructive mx-auto mb-4" />
+          <AlertTriangle className="h-16 w-16 text-primary mx-auto mb-4" />
           <h1 className="font-serif text-3xl font-bold mb-4">Oops! Something went wrong</h1>
           <p className="text-muted-foreground mb-8">
             We're sorry, but something unexpected happened. Please try again or contact support if the problem persists.
