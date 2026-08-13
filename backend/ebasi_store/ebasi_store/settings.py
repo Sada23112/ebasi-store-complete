@@ -25,22 +25,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
-# SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config('DEBUG', default=True, cast=bool)
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = config('SECRET_KEY', default=None)
-if not SECRET_KEY:
-    if DEBUG:
-        SECRET_KEY = 'django-insecure-local-dev-key-change-in-production'
-    else:
-        from django.core.exceptions import ImproperlyConfigured
-        raise ImproperlyConfigured("SECRET_KEY environment variable is required in production.")
+SECRET_KEY = config('SECRET_KEY', default='django-insecure-local-dev-key-change-in-production')
 
-
-
-
-# ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'your-domain.com']
+# ALLOWED_HOSTS
 ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='127.0.0.1,localhost,ebasi-store.onrender.com', cast=Csv())
 
 
@@ -284,3 +274,19 @@ CORS_ALLOW_HEADERS = [
     'x-csrftoken',
     'x-requested-with',
 ]
+
+# Security Headers & SSL Settings
+SECURE_BROWSER_XSS_FILTER = True
+SECURE_CONTENT_TYPE_NOSNIFF = True
+X_FRAME_OPTIONS = 'DENY'
+
+if not DEBUG:
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    SECURE_SSL_REDIRECT = config('SECURE_SSL_REDIRECT', default=True, cast=bool)
+    SESSION_COOKIE_SECURE = config('SESSION_COOKIE_SECURE', default=True, cast=bool)
+    CSRF_COOKIE_SECURE = config('CSRF_COOKIE_SECURE', default=True, cast=bool)
+    SESSION_COOKIE_HTTPONLY = True
+    CSRF_COOKIE_HTTPONLY = True
+    SECURE_HSTS_SECONDS = config('SECURE_HSTS_SECONDS', default=31536000, cast=int)
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
