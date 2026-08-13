@@ -56,17 +56,17 @@ export function ProductGallery({ mediaItems, productName }: ProductGalleryProps)
     if (!mediaItems.length) return null
 
     return (
-        <div className="flex flex-col-reverse md:flex-row gap-4">
+        <div className="flex flex-col-reverse md:flex-row gap-3 sm:gap-4">
             {/* Thumbnails */}
             {mediaItems.length > 1 && (
-                <div className="flex md:flex-col gap-3 overflow-x-auto md:overflow-y-auto md:w-24 md:max-h-[500px] scrollbar-hide px-1 py-1">
+                <div className="flex md:flex-col gap-2.5 sm:gap-3 overflow-x-auto md:overflow-y-auto md:w-24 md:max-h-[500px] scrollbar-hide px-0.5 py-0.5">
                     {mediaItems.map((item, index) => (
                         <button
                             key={index}
                             onClick={() => handleThumbnailClick(index)}
                             onMouseEnter={() => handleThumbnailHover(index)}
                             className={cn(
-                                "relative flex-shrink-0 w-20 h-20 rounded-xl overflow-hidden border-2 transition-all duration-300 cursor-pointer active:scale-95",
+                                "relative flex-shrink-0 w-16 h-16 sm:w-20 sm:h-20 rounded-lg sm:rounded-xl overflow-hidden border-2 transition-all duration-300 cursor-pointer active:scale-95",
                                 current === index
                                     ? "border-primary ring-2 ring-primary/30 shadow-md scale-105"
                                     : "border-transparent opacity-70 hover:opacity-100 hover:border-border hover:scale-100"
@@ -89,7 +89,7 @@ export function ProductGallery({ mediaItems, productName }: ProductGalleryProps)
                                             className="object-cover opacity-70"
                                         />
                                     ) : null}
-                                    <Play className="h-6 w-6 text-white absolute" fill="white" />
+                                    <Play className="h-5 w-5 sm:h-6 sm:w-6 text-white absolute" fill="white" />
                                 </div>
                             )}
                         </button>
@@ -98,12 +98,12 @@ export function ProductGallery({ mediaItems, productName }: ProductGalleryProps)
             )}
 
             {/* Main Carousel */}
-            <div className="flex-1 relative sticky top-24">
+            <div className="flex-1 relative md:sticky md:top-24">
                 <Carousel setApi={setApi} className="w-full">
                     <CarouselContent>
                         {mediaItems.map((item, index) => (
                             <CarouselItem key={index}>
-                                <div className="relative aspect-square w-full overflow-hidden rounded-2xl bg-muted border border-border/60 shadow-md transition-all duration-500">
+                                <div className="relative aspect-square w-full overflow-hidden rounded-xl sm:rounded-2xl bg-muted border border-border/60 shadow-md transition-all duration-500">
                                     {item.type === "image" ? (
                                         <ZoomableImage
                                             src={item.url}
@@ -127,6 +127,9 @@ export function ProductGallery({ mediaItems, productName }: ProductGalleryProps)
                         <>
                             <CarouselPrevious className="left-4 hidden md:flex hover:bg-primary hover:text-white transition-all" />
                             <CarouselNext className="right-4 hidden md:flex hover:bg-primary hover:text-white transition-all" />
+                            <div className="absolute bottom-3 right-3 bg-black/60 backdrop-blur-md text-white text-[11px] font-medium px-2.5 py-0.5 rounded-full md:hidden z-10 pointer-events-none">
+                                {current + 1} / {mediaItems.length}
+                            </div>
                         </>
                     )}
                 </Carousel>

@@ -93,6 +93,7 @@ export const metadata: Metadata = {
 import { Navigation } from "@/components/navigation"
 import { Footer } from "@/components/footer"
 import { Toaster } from "@/components/ui/toaster"
+import { NavigationProgressBar } from "@/components/navigation-progress-bar"
 
 export default function RootLayout({
   children,
@@ -128,6 +129,7 @@ export default function RootLayout({
         />
       </head>
       <body className={`${inter.variable} ${cormorant.variable} ${inter.className} antialiased`}>
+        <NavigationProgressBar />
         <Navigation />
         <Suspense fallback={null}>{children}</Suspense>
         <Footer />

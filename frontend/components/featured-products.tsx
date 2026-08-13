@@ -102,18 +102,18 @@ export function FeaturedProducts() {
   }
 
   return (
-    <section className="py-20 lg:py-24 px-4 bg-background scroll-mt-24">
+    <section className="py-12 sm:py-20 lg:py-24 px-3 sm:px-4 bg-background scroll-mt-24">
       <div className="max-w-7xl mx-auto">
         <ScrollReveal direction="up">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl lg:text-5xl font-serif font-bold text-foreground mb-4 tracking-tight">Featured Collection</h2>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+          <div className="text-center mb-10 sm:mb-16">
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-serif font-bold text-foreground mb-3 sm:mb-4 tracking-tight">Featured Collection</h2>
+            <p className="text-sm sm:text-lg text-muted-foreground max-w-2xl mx-auto px-2">
               Discover our handpicked collection of trending and bestselling pieces.
             </p>
           </div>
         </ScrollReveal>
 
-        <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-6 lg:gap-8 mb-16">
+        <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2.5 sm:gap-6 lg:gap-8 mb-12 sm:mb-16">
           {products.map((product, idx) => {
             const saved = isSaved(product.id)
             const isOutOfStock = product.stock_status === 'out_of_stock'
@@ -122,14 +122,14 @@ export function FeaturedProducts() {
               <ScrollReveal key={product.id} delay={idx * 100} direction="up">
                 <div className="relative group flex flex-col h-full">
                   <Link href={`/product/${product.slug || product.id}`} className="block h-full cursor-pointer">
-                    <Card className="overflow-hidden rounded-2xl border border-transparent hover:border-primary/20 premium-shadow hover:premium-shadow-hover transition-all duration-300 ease-out hover:-translate-y-1 bg-card/50 backdrop-blur-sm h-full flex flex-col justify-between">
-                      <div className="relative overflow-hidden rounded-t-2xl bg-muted hover-scale-img">
+                    <Card className="overflow-hidden rounded-xl sm:rounded-2xl border border-transparent hover:border-primary/20 premium-shadow hover:premium-shadow-hover transition-all duration-300 ease-out hover:-translate-y-1 bg-card/50 backdrop-blur-sm h-full flex flex-col justify-between">
+                      <div className="relative overflow-hidden rounded-t-xl sm:rounded-t-2xl bg-muted hover-scale-img">
                         <Image
                           src={getAbsoluteImageUrl(product.primary_image || (product.images && product.images.length > 0 ? product.images[0].image : null) || "/images/placeholders/placeholder.svg")}
                           alt={product.name}
                           width={400}
                           height={500}
-                          className="w-full h-48 sm:h-80 object-cover rounded-t-2xl"
+                          className="w-full h-44 sm:h-80 object-cover rounded-t-xl sm:rounded-t-2xl"
                         />
                         
                         <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
@@ -139,7 +139,7 @@ export function FeaturedProducts() {
                           variant="ghost"
                           size="icon"
                           className={cn(
-                            "absolute top-3 right-3 z-20 h-8 w-8 rounded-full bg-background/80 backdrop-blur-sm shadow-md transition-all active:scale-90",
+                            "absolute top-2 right-2 sm:top-3 sm:right-3 z-20 h-8 w-8 rounded-full bg-background/80 backdrop-blur-sm shadow-md transition-all active:scale-90 min-h-[36px] min-w-[36px] sm:min-h-0 sm:min-w-0",
                             saved ? "text-red-500 hover:text-red-600" : "text-muted-foreground hover:text-foreground",
                             poppingId === product.id && "animate-heart-pop"
                           )}
@@ -149,26 +149,26 @@ export function FeaturedProducts() {
                           <Heart className={`h-4 w-4 ${saved ? "fill-current" : ""}`} />
                         </Button>
 
-                        <div className="absolute top-3 left-3 flex flex-col gap-1.5 z-10 pointer-events-none">
+                        <div className="absolute top-2 left-2 sm:top-3 sm:left-3 flex flex-col gap-1 z-10 pointer-events-none">
                           {isOutOfStock && (
-                            <Badge variant="secondary" className="bg-red-600 text-white font-medium shadow-md text-[10px] sm:text-xs">
+                            <Badge variant="secondary" className="bg-red-600 text-white font-medium shadow-md text-[9px] sm:text-xs px-1.5 py-0">
                               Out of Stock
                             </Badge>
                           )}
                           {product.compare_price && product.compare_price > product.price && (
-                            <Badge className={getBadgeInfo('sale')?.className + " shadow-md"}>
+                            <Badge className={getBadgeInfo('sale')?.className + " shadow-md text-[9px] sm:text-xs px-1.5 py-0"}>
                               Sale
                             </Badge>
                           )}
                           {product.badge ? (
                             getBadgeInfo(product.badge) && (
-                              <Badge className={getBadgeInfo(product.badge)?.className + " shadow-md"}>
+                              <Badge className={getBadgeInfo(product.badge)?.className + " shadow-md text-[9px] sm:text-xs px-1.5 py-0"}>
                                 {getBadgeInfo(product.badge)?.label}
                               </Badge>
                             )
                           ) : (
                             product.is_featured && (
-                              <Badge className={getBadgeInfo('featured')?.className + " shadow-md"}>
+                              <Badge className={getBadgeInfo('featured')?.className + " shadow-md text-[9px] sm:text-xs px-1.5 py-0"}>
                                 Featured
                               </Badge>
                             )
@@ -176,9 +176,9 @@ export function FeaturedProducts() {
                         </div>
                       </div>
 
-                      <CardContent className="p-3 sm:p-5 flex flex-col justify-between flex-1">
-                        <div className="space-y-2">
-                          <div className="flex items-center gap-1 mb-2">
+                      <CardContent className="p-2.5 sm:p-5 flex flex-col justify-between flex-1">
+                        <div className="space-y-1.5">
+                          <div className="flex items-center gap-1 mb-1">
                             <div className="flex items-center">
                               {[...Array(5)].map((_, i) => (
                                 <Star
@@ -188,23 +188,23 @@ export function FeaturedProducts() {
                                 />
                               ))}
                             </div>
-                            <span className="text-xs text-muted-foreground">({product.review_count || 0})</span>
+                            <span className="text-[10px] sm:text-xs text-muted-foreground">({product.review_count || 0})</span>
                           </div>
-                          <h3 className="font-sans font-semibold text-foreground group-hover:text-primary transition-colors mb-2 line-clamp-2 text-sm sm:text-base leading-snug tracking-tight">{product.name}</h3>
-                          <div className="flex flex-wrap items-baseline gap-1.5 mb-3 min-w-0">
-                            <span className="text-base sm:text-lg font-bold text-foreground shrink-0">₹{product.price}</span>
+                          <h3 className="font-sans font-semibold text-foreground group-hover:text-primary transition-colors line-clamp-2 text-xs sm:text-base leading-snug tracking-tight">{product.name}</h3>
+                          <div className="flex flex-wrap items-baseline gap-1 mb-2 min-w-0">
+                            <span className="text-sm sm:text-lg font-bold text-foreground shrink-0">₹{product.price}</span>
                             {product.compare_price && (
                               <div className="flex items-center gap-1 flex-wrap min-w-0">
-                                <span className="text-xs sm:text-sm text-muted-foreground line-through shrink-0">₹{product.compare_price}</span>
-                                <Badge variant="secondary" className="text-[10px] sm:text-xs px-1.5 py-0 h-4 sm:h-5">
+                                <span className="text-[11px] sm:text-sm text-muted-foreground line-through shrink-0">₹{product.compare_price}</span>
+                                <Badge variant="secondary" className="text-[9px] sm:text-xs px-1 py-0 h-4">
                                   {Math.round(((product.compare_price - product.price) / product.compare_price) * 100)}% OFF
                                 </Badge>
                               </div>
                             )}
                           </div>
                         </div>
-                        <div className="mt-4 block">
-                          <div className={cn(buttonVariants({ size: "sm" }), "w-full text-center transition-all duration-300 active:scale-[0.98]")}>
+                        <div className="mt-3 block">
+                          <div className={cn(buttonVariants({ size: "sm" }), "w-full text-center text-xs sm:text-sm transition-all duration-300 active:scale-[0.98] py-1.5 h-8 sm:h-9")}>
                             {isOutOfStock ? "Inquire Restock" : "View Details"}
                           </div>
                         </div>

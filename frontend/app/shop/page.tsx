@@ -420,34 +420,34 @@ function ShopContent() {
           {/* Main Content */}
           <div className="flex-1">
             {/* Toolbar */}
-            <div className="flex items-center justify-between mb-6 flex-wrap gap-4">
-              <div className="flex items-center gap-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-3 sm:gap-4">
+              <div className="flex items-center justify-between sm:justify-start gap-3 w-full sm:w-auto">
                 {mounted && (
                   <Sheet>
                     <SheetTrigger asChild>
-                      <Button variant="outline" className="lg:hidden bg-transparent active:scale-95 transition-all">
+                      <Button variant="outline" className="lg:hidden bg-transparent active:scale-95 transition-all h-10 min-h-[44px] sm:min-h-0">
                         <SlidersHorizontal className="h-4 w-4 mr-2" />
                         Filters
                       </Button>
                     </SheetTrigger>
-                    <SheetContent side="left" className="w-80">
-                      <SheetHeader>
-                        <SheetTitle>Filters</SheetTitle>
+                    <SheetContent side="left" className="w-80 max-w-[calc(100vw-2.5rem)] p-4 sm:p-6 overflow-y-auto">
+                      <SheetHeader className="mb-4">
+                        <SheetTitle className="font-serif text-xl">Filter Collection</SheetTitle>
                       </SheetHeader>
-                      <div className="mt-6">
+                      <div className="max-h-[calc(100vh-6rem)] overflow-y-auto pr-1">
                         <FilterSidebar {...filtersProps} />
                       </div>
                     </SheetContent>
                   </Sheet>
                 )}
 
-                <span className="text-sm text-muted-foreground font-medium">{filteredProducts.length} products found</span>
+                <span className="text-xs sm:text-sm text-muted-foreground font-medium">{filteredProducts.length} products found</span>
               </div>
 
-              <div className="flex items-center gap-4">
+              <div className="flex items-center justify-between sm:justify-end gap-3 w-full sm:w-auto">
                 {/* Sort */}
                 <Select value={sortBy} onValueChange={handleSetSortBy}>
-                  <SelectTrigger className="w-52 transition-all">
+                  <SelectTrigger className="w-full sm:w-52 h-10 transition-all text-xs sm:text-sm">
                     <SelectValue placeholder="Sort by" />
                   </SelectTrigger>
                   <SelectContent>
@@ -461,22 +461,24 @@ function ShopContent() {
                 </Select>
 
                 {/* View Toggle */}
-                <div className="flex border rounded-md overflow-hidden shadow-xs">
+                <div className="flex border rounded-lg overflow-hidden shadow-xs shrink-0">
                   <Button
                     variant={viewMode === "grid" ? "default" : "ghost"}
                     size="sm"
                     onClick={() => setViewMode("grid")}
-                    className="rounded-r-none transition-all"
+                    className="rounded-r-none transition-all h-10 w-10 px-0 min-h-[40px]"
                   >
                     <Grid3X3 className="h-4 w-4" />
+                    <span className="sr-only">Grid View</span>
                   </Button>
                   <Button
                     variant={viewMode === "list" ? "default" : "ghost"}
                     size="sm"
                     onClick={() => setViewMode("list")}
-                    className="rounded-l-none transition-all"
+                    className="rounded-l-none transition-all h-10 w-10 px-0 min-h-[40px]"
                   >
                     <List className="h-4 w-4" />
+                    <span className="sr-only">List View</span>
                   </Button>
                 </div>
               </div>
@@ -494,7 +496,7 @@ function ShopContent() {
               <>
                 <div
                   className={cn(
-                    "transition-all duration-500",
+                    "transition-all duration-500 animate-fade-in",
                     viewMode === "grid"
                       ? "grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-6"
                       : "space-y-4"

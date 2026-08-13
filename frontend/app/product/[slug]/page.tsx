@@ -202,12 +202,12 @@ export default function ProductDetailPage() {
   const savedInWishlist = isSaved(product.id)
 
   return (
-    <div className="min-h-screen bg-background">
-      <main className="pt-20 pb-24 sm:pb-16">
+    <div className="min-h-screen bg-background animate-fade-in">
+      <main className="pt-20 pb-28 sm:pb-16">
         {/* Breadcrumb */}
-        <div className="px-4 py-4 border-b">
+        <div className="px-4 py-3 border-b">
           <div className="max-w-7xl mx-auto">
-            <nav className="flex items-center space-x-2 text-sm text-muted-foreground overflow-x-auto whitespace-nowrap">
+            <nav className="flex items-center space-x-2 text-xs sm:text-sm text-muted-foreground overflow-x-auto scrollbar-hide whitespace-nowrap py-1">
               <Link href="/" className="hover:text-foreground transition-colors">
                 Home
               </Link>
@@ -224,7 +224,7 @@ export default function ProductDetailPage() {
                 </>
               )}
               <span>/</span>
-              <span className="text-foreground font-medium truncate max-w-[200px]">{product.name}</span>
+              <span className="text-foreground font-medium truncate max-w-[150px] sm:max-w-[200px]">{product.name}</span>
             </nav>
           </div>
         </div>
@@ -615,7 +615,7 @@ export default function ProductDetailPage() {
       </main>
 
       {/* Sticky Mobile WhatsApp Bottom Bar */}
-      <div className="fixed bottom-0 left-0 right-0 z-40 bg-background/95 backdrop-blur-xl border-t border-border p-3 md:hidden shadow-lg animate-fade-up">
+      <div className="fixed bottom-0 left-0 right-0 z-40 bg-background/95 backdrop-blur-xl border-t border-border p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] md:hidden shadow-lg animate-fade-up">
         <div className="flex items-center justify-between gap-3">
           <div className="flex flex-col min-w-0">
             <span className="text-xs text-muted-foreground truncate">{product.name}</span>
