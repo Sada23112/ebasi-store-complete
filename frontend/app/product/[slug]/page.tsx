@@ -20,6 +20,10 @@ import {
   Store,
   ShieldCheck,
   Sparkles,
+  RefreshCw,
+  AlertTriangle,
+  ArrowLeft,
+  Home,
 } from "lucide-react"
 import Link from "next/link"
 import { ProductDetailSkeleton } from "@/components/skeletons"
@@ -38,6 +42,7 @@ export default function ProductDetailPage() {
   const [product, setProduct] = useState<any>(null)
   const [reviews, setReviews] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+  const [hasError, setHasError] = useState(false)
   const [quantity, setQuantity] = useState(1)
   const [selectedSize, setSelectedSize] = useState("Free Size / Standard")
   const [customNote, setCustomNote] = useState("")
@@ -52,34 +57,38 @@ export default function ProductDetailPage() {
   const [reviewHover, setReviewHover] = useState(0)
   const [submittingReview, setSubmittingReview] = useState(false)
   const [reviewSuccess, setReviewSuccess] = useState(false)
+  const [reviewError, setReviewError] = useState("")
+
+  const fetchData = async () => {
+    setLoading(true)
+    setHasError(false)
+    try {
+      if (!slug) return
+      const productData = await api.getProductBySlug(slug)
+      if (productData && !productData.detail && productData.id) {
+        setProduct(productData)
+      } else {
+        setProduct(null)
+      }
+
+      const reviewsData = await api.getProductReviews(slug)
+      if (Array.isArray(reviewsData)) {
+        setReviews(reviewsData)
+      } else if (reviewsData && Array.isArray(reviewsData.results)) {
+        setReviews(reviewsData.results)
+      } else {
+        setReviews([])
+      }
+    } catch (err) {
+      console.error("Error fetching product data:", err)
+      setProduct(null)
+      setHasError(true)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        if (!slug) return
-        const productData = await api.getProductBySlug(slug)
-        if (productData && !productData.detail && productData.id) {
-          setProduct(productData)
-        } else {
-          setProduct(null)
-        }
-
-        const reviewsData = await api.getProductReviews(slug)
-        if (Array.isArray(reviewsData)) {
-          setReviews(reviewsData)
-        } else if (reviewsData && Array.isArray(reviewsData.results)) {
-          setReviews(reviewsData.results)
-        } else {
-          setReviews([])
-        }
-      } catch (err) {
-        console.error("Error fetching product data:", err)
-        setProduct(null)
-      } finally {
-        setLoading(false)
-      }
-    }
-
     fetchData()
   }, [slug])
 
@@ -160,6 +169,7 @@ export default function ProductDetailPage() {
     if (!reviewComment.trim() || reviewRating < 1) return
 
     setSubmittingReview(true)
+    setReviewError("")
     try {
       const newReview = await api.submitReview(slug, {
         user_name: reviewName.trim() || "",
@@ -171,9 +181,10 @@ export default function ProductDetailPage() {
       setReviewRating(5)
       setReviewComment("")
       setReviewSuccess(true)
-      setTimeout(() => setReviewSuccess(false), 3000)
+      setTimeout(() => setReviewSuccess(false), 4000)
     } catch (error) {
       console.error("Failed to submit review:", error)
+      setReviewError("Unable to submit review right now. Please check your connection and try again.")
     } finally {
       setSubmittingReview(false)
     }
@@ -183,17 +194,59 @@ export default function ProductDetailPage() {
     return <ProductDetailSkeleton />
   }
 
+  if (hasError) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center px-4">
+        <div className="text-center py-16 max-w-md">
+          <div className="mx-auto mb-6 w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
+            <AlertTriangle className="h-8 w-8 text-primary" />
+          </div>
+          <h1 className="text-2xl sm:text-3xl font-serif font-bold mb-3 text-foreground">Unable to Load Product</h1>
+          <p className="text-sm text-muted-foreground mb-6 leading-relaxed">
+            We couldn't connect to the server to fetch this product. Please check your connection and try again.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <Button size="default" onClick={fetchData} className="bg-primary text-primary-foreground min-h-[44px]">
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Retry Connection
+            </Button>
+            <Button size="default" variant="outline" asChild className="min-h-[44px]">
+              <Link href="/shop">
+                <Store className="h-4 w-4 mr-2" />
+                Browse Store
+              </Link>
+            </Button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   if (!product) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center px-4">
         <div className="text-center py-16 max-w-md">
-          <h1 className="text-3xl font-serif font-bold mb-4 text-foreground">Product Not Found</h1>
-          <p className="text-muted-foreground mb-6">The product you are looking for does not exist or has been removed.</p>
-          <Link href="/shop">
-            <Button size="lg" className="bg-primary text-primary-foreground">
-              Browse Store
+          <div className="mx-auto mb-6 w-16 h-16 rounded-full bg-muted flex items-center justify-center">
+            <Store className="h-8 w-8 text-muted-foreground" />
+          </div>
+          <h1 className="text-2xl sm:text-3xl font-serif font-bold mb-3 text-foreground">Product Not Found</h1>
+          <p className="text-sm text-muted-foreground mb-6 leading-relaxed">
+            The product you are looking for does not exist or has been removed from our catalog.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <Button size="default" asChild className="bg-primary text-primary-foreground min-h-[44px]">
+              <Link href="/shop">
+                <Store className="h-4 w-4 mr-2" />
+                Browse Store
+              </Link>
             </Button>
-          </Link>
+            <Button size="default" variant="outline" asChild className="min-h-[44px]">
+              <Link href="/">
+                <Home className="h-4 w-4 mr-2" />
+                Go Home
+              </Link>
+            </Button>
+          </div>
         </div>
       </div>
     )
@@ -563,6 +616,11 @@ export default function ProductDetailPage() {
                           {reviewSuccess && (
                             <span className="text-sm text-green-600 font-medium flex items-center gap-1 animate-fade-up">
                               <Check className="h-4 w-4" /> Review submitted successfully!
+                            </span>
+                          )}
+                          {reviewError && (
+                            <span className="text-sm text-red-600 font-medium flex items-center gap-1 animate-fade-up">
+                              <AlertTriangle className="h-4 w-4 shrink-0" /> {reviewError}
                             </span>
                           )}
                         </div>

@@ -1,6 +1,7 @@
 from rest_framework import generics, filters, permissions, status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
+from django.shortcuts import get_object_or_404
 from .models import Category, Product, Review, ProductImage
 from .serializers import CategorySerializer, ProductListSerializer, ProductDetailSerializer, ReviewSerializer
 from django.db.models import Q, Count, Avg, Prefetch
@@ -126,5 +127,5 @@ class ReviewListCreateView(generics.ListCreateAPIView):
 
     def perform_create(self, serializer):
         slug = self.kwargs['slug']
-        product = Product.objects.get(slug=slug, is_active=True)
+        product = get_object_or_404(Product, slug=slug, is_active=True)
         serializer.save(product=product)

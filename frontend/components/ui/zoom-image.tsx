@@ -15,6 +15,7 @@ interface ZoomableImageProps {
 }
 
 export function ZoomableImage({ src, alt, width, height, className, priority = false }: ZoomableImageProps) {
+    const [currentSrc, setCurrentSrc] = useState(src)
     const [showZoom, setShowZoom] = useState(false)
     const [position, setPosition] = useState({ x: 50, y: 50 })
     const imageRef = useRef<HTMLDivElement>(null)
@@ -38,11 +39,12 @@ export function ZoomableImage({ src, alt, width, height, className, priority = f
             onMouseMove={handleMouseMove}
         >
             <Image
-                src={src}
+                src={currentSrc}
                 alt={alt}
                 fill
                 className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.02]"
                 priority={priority}
+                onError={() => setCurrentSrc("/images/placeholders/placeholder.svg")}
             />
 
             {/* Inspect Hint Badge */}
@@ -58,7 +60,7 @@ export function ZoomableImage({ src, alt, width, height, className, priority = f
                     showZoom ? "opacity-100" : "opacity-0"
                 )}
                 style={{
-                    backgroundImage: `url(${src})`,
+                    backgroundImage: `url(${currentSrc})`,
                     backgroundPosition: `${position.x}% ${position.y}%`,
                     backgroundSize: "220%",
                     backgroundRepeat: "no-repeat",

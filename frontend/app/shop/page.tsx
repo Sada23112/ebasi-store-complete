@@ -11,7 +11,7 @@ import { Slider } from "@/components/ui/slider"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
-import { Search, Grid3X3, List, Star, SlidersHorizontal, Loader2, Heart } from "lucide-react"
+import { Search, Grid3X3, List, Star, SlidersHorizontal, Loader2, Heart, AlertTriangle, RefreshCw } from "lucide-react"
 import Image from "next/image"
 import { ScrollReveal } from "@/components/scroll-reveal"
 import { ProductGridSkeleton } from "@/components/skeletons"
@@ -254,10 +254,13 @@ function ShopContent() {
     router.replace(queryString ? `/shop?${queryString}` : "/shop", { scroll: false })
   }
 
+  const [hasError, setHasError] = useState(false)
+
   useEffect(() => {
     async function loadProducts() {
       try {
         setLoading(true)
+        setHasError(false)
 
         let ordering = "-created_at"
         if (sortBy === "price-low") ordering = "price"
@@ -307,9 +310,12 @@ function ShopContent() {
             setDbMaxPrice(roundedMax)
             setPriceRange([roundedMin, roundedMax])
           }
+        } else {
+          setHasError(true)
         }
       } catch (error) {
         console.error("Failed to fetch products", error)
+        setHasError(true)
       } finally {
         setLoading(false)
       }
@@ -486,11 +492,25 @@ function ShopContent() {
 
             {loading ? (
               <ProductGridSkeleton count={8} />
+            ) : hasError ? (
+              <div className="text-center py-16 bg-muted/20 rounded-2xl p-8 animate-fade-up max-w-md mx-auto">
+                <div className="mx-auto mb-4 w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+                  <AlertTriangle className="h-6 w-6 text-primary" />
+                </div>
+                <p className="text-lg font-medium text-foreground mb-2">Unable to Load Products</p>
+                <p className="text-sm text-muted-foreground mb-6 leading-relaxed">
+                  We couldn't connect to the server to fetch the collection. Please check your connection and try again.
+                </p>
+                <Button onClick={() => setCurrentPage(1)} className="active:scale-95 transition-all min-h-[44px]">
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                  Retry Connection
+                </Button>
+              </div>
             ) : filteredProducts.length === 0 ? (
               <div className="text-center py-16 bg-muted/20 rounded-2xl p-8 animate-fade-up">
                 <p className="text-lg font-medium text-foreground mb-2">No products match your current filters</p>
                 <p className="text-sm text-muted-foreground mb-4">Try clearing filters or searching with a different term.</p>
-                <Button onClick={clearAllFilters} className="active:scale-95 transition-all">Clear All Filters</Button>
+                <Button onClick={clearAllFilters} className="active:scale-95 transition-all min-h-[44px]">Clear All Filters</Button>
               </div>
             ) : (
               <>

@@ -2,16 +2,17 @@
 
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { Home, Search, ArrowLeft } from "lucide-react"
-import Image from "next/image"
+import { Home, Search, ArrowLeft, SearchX } from "lucide-react"
 
 export default function NotFound() {
   return (
     <div className="min-h-screen bg-background flex items-center justify-center px-4">
       <div className="text-center max-w-md">
         <div className="mb-8">
-          <Image src="/404-error-illustration.png" alt="404 Error" width={200} height={200} className="mx-auto mb-6" />
-          <h1 className="font-serif text-6xl font-bold text-primary mb-4">404</h1>
+          <div className="mx-auto mb-6 w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center">
+            <SearchX className="h-10 w-10 text-primary" />
+          </div>
+          <h1 className="font-serif text-6xl font-bold text-primary mb-2">404</h1>
           <h2 className="font-serif text-2xl font-semibold mb-4">Page Not Found</h2>
           <p className="text-muted-foreground mb-8">
             Sorry, the page you're looking for doesn't exist. It might have been moved, deleted, or you entered the

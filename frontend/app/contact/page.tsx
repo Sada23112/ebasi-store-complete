@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { useToast } from "@/hooks/use-toast"
 import api from "@/lib/api"
 import { useState } from "react"
-import { Facebook, Instagram } from "lucide-react"
+import { Facebook, Instagram, Loader2 } from "lucide-react"
 import { ScrollReveal } from "@/components/scroll-reveal"
 
 export default function ContactPage() {
@@ -171,8 +171,15 @@ export default function ContactPage() {
                       />
                     </div>
 
-                    <Button type="submit" disabled={isLoading} className="w-full bg-primary hover:bg-primary/90 text-primary-foreground py-3 text-lg active:scale-95 transition-transform">
-                      {isLoading ? "Sending..." : "Send Message"}
+                    <Button type="submit" disabled={isLoading} className="w-full bg-primary hover:bg-primary/90 text-primary-foreground py-3 text-lg active:scale-95 transition-transform min-h-[44px]">
+                      {isLoading ? (
+                        <>
+                          <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+                          Sending Message...
+                        </>
+                      ) : (
+                        "Send Message"
+                      )}
                     </Button>
                   </form>
                 </CardContent>
