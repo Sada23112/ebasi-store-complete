@@ -91,7 +91,7 @@ class ProductDetailView(generics.RetrieveAPIView):
 
 
 class FeaturedProductsView(generics.ListAPIView):
-    queryset = Product.objects.filter(is_active=True, is_featured=True)
+    queryset = Product.objects.filter(is_active=True, is_featured=True).order_by('-created_at')
     serializer_class = ProductListSerializer
 
 

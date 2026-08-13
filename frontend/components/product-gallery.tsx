@@ -47,7 +47,6 @@ export function ProductGallery({ mediaItems, productName }: ProductGalleryProps)
         }
     }
 
-    // Hover on thumbnail to switch (Amazon style) - optional, sticking to click for stability or add mouseEnter
     const handleThumbnailHover = (index: number) => {
         if (api) {
             api.scrollTo(index)
@@ -58,7 +57,7 @@ export function ProductGallery({ mediaItems, productName }: ProductGalleryProps)
 
     return (
         <div className="flex flex-col-reverse md:flex-row gap-4">
-            {/* Thumbnails - Sidebar on Desktop, Bottom on Mobile */}
+            {/* Thumbnails */}
             {mediaItems.length > 1 && (
                 <div className="flex md:flex-col gap-3 overflow-x-auto md:overflow-y-auto md:w-24 md:max-h-[500px] scrollbar-hide px-1 py-1">
                     {mediaItems.map((item, index) => (
@@ -67,8 +66,10 @@ export function ProductGallery({ mediaItems, productName }: ProductGalleryProps)
                             onClick={() => handleThumbnailClick(index)}
                             onMouseEnter={() => handleThumbnailHover(index)}
                             className={cn(
-                                "relative flex-shrink-0 w-20 h-20 rounded-md overflow-hidden border-2 transition-all cursor-pointer",
-                                current === index ? "border-primary ring-2 ring-primary/20 shadow-md" : "border-transparent opacity-70 hover:opacity-100 hover:border-gray-300"
+                                "relative flex-shrink-0 w-20 h-20 rounded-md overflow-hidden border-2 transition-all duration-300 cursor-pointer active:scale-95",
+                                current === index
+                                    ? "border-primary ring-2 ring-primary/30 shadow-md scale-105"
+                                    : "border-transparent opacity-70 hover:opacity-100 hover:border-border hover:scale-100"
                             )}
                         >
                             {item.type === "image" ? (
@@ -76,7 +77,7 @@ export function ProductGallery({ mediaItems, productName }: ProductGalleryProps)
                                     src={item.url}
                                     alt={`Thumbnail ${index + 1}`}
                                     fill
-                                    className="object-cover"
+                                    className="object-cover transition-transform duration-500 hover:scale-110"
                                 />
                             ) : (
                                 <div className="relative w-full h-full bg-gray-900 flex items-center justify-center">
@@ -97,12 +98,12 @@ export function ProductGallery({ mediaItems, productName }: ProductGalleryProps)
             )}
 
             {/* Main Carousel */}
-            <div className="flex-1 relative sticky top-24"> {/* sticky for better UX when scrolling info */}
+            <div className="flex-1 relative sticky top-24">
                 <Carousel setApi={setApi} className="w-full">
                     <CarouselContent>
                         {mediaItems.map((item, index) => (
                             <CarouselItem key={index}>
-                                <div className="relative aspect-square w-full overflow-hidden rounded-lg bg-muted border">
+                                <div className="relative aspect-square w-full overflow-hidden rounded-xl bg-muted border shadow-sm transition-all duration-500">
                                     {item.type === "image" ? (
                                         <ZoomableImage
                                             src={item.url}
@@ -124,8 +125,8 @@ export function ProductGallery({ mediaItems, productName }: ProductGalleryProps)
                     </CarouselContent>
                     {mediaItems.length > 1 && (
                         <>
-                            <CarouselPrevious className="left-4 hidden md:flex" />
-                            <CarouselNext className="right-4 hidden md:flex" />
+                            <CarouselPrevious className="left-4 hidden md:flex hover:bg-primary hover:text-white transition-all" />
+                            <CarouselNext className="right-4 hidden md:flex hover:bg-primary hover:text-white transition-all" />
                         </>
                     )}
                 </Carousel>

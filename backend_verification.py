@@ -65,15 +65,15 @@ def test_api():
         except Exception as e:
             errors.append(f"Admin Dashboard error: {e}")
 
-        # Orders List
+        # Users List
         try:
-            response = requests.get(f"{BASE_URL}/admin/orders/", headers=headers)
+            response = requests.get(f"{BASE_URL}/admin/users/", headers=headers)
             if response.status_code == 200:
-                print("✅ Admin Orders API is accessible")
+                print("✅ Admin Users API is accessible")
             else:
-                errors.append(f"Admin Orders API failed: {response.status_code}")
+                errors.append(f"Admin Users API failed: {response.status_code}")
         except Exception as e:
-            errors.append(f"Admin Orders error: {e}")
+            errors.append(f"Admin Users error: {e}")
 
     # Summary
     print("\nVerification Summary:")
