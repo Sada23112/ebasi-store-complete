@@ -5,6 +5,8 @@ import Link from "next/link"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { ScrollReveal } from "@/components/scroll-reveal"
+import { STORE_INFO } from "@/lib/constants"
+import { Sparkles, Heart, ShieldCheck, MessageCircle, MapPin } from "lucide-react"
 
 export default function AboutPage() {
   return (
@@ -14,9 +16,15 @@ export default function AboutPage() {
         <section className="py-20 px-4 bg-gradient-to-r from-pink-50 to-purple-50 dark:from-pink-950/20 dark:to-purple-950/20">
           <ScrollReveal direction="up">
             <div className="max-w-4xl mx-auto text-center">
-              <h1 className="font-serif text-4xl md:text-5xl font-bold text-foreground mb-6">About EBASI STORE</h1>
-              <p className="text-xl text-muted-foreground leading-relaxed">
-                Celebrating the beauty of traditional and contemporary fashion since our inception
+              <div className="inline-flex items-center rounded-full border border-primary/20 bg-primary/5 px-3 py-1 text-xs text-primary font-medium mb-4">
+                <Sparkles className="h-3.5 w-3.5 mr-1.5" />
+                {STORE_INFO.businessType} • Dhemaji, Assam
+              </div>
+              <h1 className="font-serif text-4xl md:text-5xl font-bold text-foreground mb-6">
+                About {STORE_INFO.name}
+              </h1>
+              <p className="text-xl text-muted-foreground leading-relaxed max-w-2xl mx-auto">
+                Celebrating the timeless artistry of Assamese handlooms, Deori Egu-Jokasiba, and authentic ethnic wear.
               </p>
             </div>
           </ScrollReveal>
@@ -28,27 +36,30 @@ export default function AboutPage() {
             <ScrollReveal direction="up">
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
                 <div>
-                  <h2 className="font-serif text-3xl font-bold text-foreground mb-6">Our Story</h2>
+                  <h2 className="font-serif text-3xl font-bold text-foreground mb-6">Our Heritage & Story</h2>
                   <p className="text-muted-foreground mb-6 leading-relaxed">
-                    EBASI STORE was born from a passion for preserving the rich textile heritage of India while embracing
-                    contemporary fashion trends. Founded with the vision of making authentic, high-quality clothing
-                    accessible to women everywhere, we have grown from a small boutique to a trusted name in ethnic and
-                    modern fashion.
+                    <strong>{STORE_INFO.name}</strong> ({STORE_INFO.enterpriseName}) is an authentic clothing brand and boutique
+                    based in Dhemaji, Assam. We are dedicated to preserving and showcasing the indigenous weaving traditions
+                    of Northeast India, including sacred Deori Egu-Jokasiba, traditional Mekhela Sador, Gamusa, and handcrafted sarees.
                   </p>
                   <p className="text-muted-foreground mb-6 leading-relaxed">
-                    Our journey began with a simple belief: every woman deserves to feel confident and beautiful in what
-                    she wears. Whether it's a traditional saree for a special occasion or contemporary wear for everyday
-                    elegance, we curate pieces that celebrate femininity and individual style.
+                    With over 1,000+ satisfied clients across Assam and all of India, our mission is to deliver pure,
+                    genuine handloom fabrics directly from local weavers to your wardrobe with uncompromised quality and personalized care.
                   </p>
                   <p className="text-muted-foreground leading-relaxed">
-                    Today, EBASI STORE continues to bridge the gap between tradition and modernity, offering carefully
-                    selected pieces that honor our cultural roots while embracing contemporary aesthetics.
+                    Every piece in our boutique is a testament to cultural pride, crafted by skilled weavers who pour heritage,
+                    geometry, and intricate zari into every thread.
                   </p>
+
+                  <div className="mt-8 flex items-center gap-2 text-sm text-primary font-medium">
+                    <MapPin className="h-4 w-4" />
+                    <span>Located in Dhemaji, Assam — Serving customers across India</span>
+                  </div>
                 </div>
-                <div className="relative w-full h-96 overflow-hidden rounded-2xl shadow-lg bg-muted">
+                <div className="relative w-full h-96 overflow-hidden rounded-2xl shadow-lg bg-muted border border-border/50">
                   <Image
-                    src="/images/placeholders/placeholder.svg"
-                    alt="Our Story"
+                    src="/images/branding/og-image.jpg"
+                    alt="Authentic Assamese Handloom - Ms Ebasi Store"
                     fill
                     sizes="(max-width: 1024px) 100vw, 50vw"
                     className="object-cover rounded-2xl"
@@ -59,15 +70,14 @@ export default function AboutPage() {
           </div>
         </section>
 
-        {/* Mission & Values */}
+        {/* Brand Values */}
         <section className="py-16 px-4 bg-muted/30">
           <div className="max-w-7xl mx-auto">
             <ScrollReveal direction="up">
               <div className="text-center mb-12">
-                <h2 className="font-serif text-3xl font-bold text-foreground mb-4">Our Mission & Values</h2>
+                <h2 className="font-serif text-3xl font-bold text-foreground mb-4">Our Core Values</h2>
                 <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
-                  We are committed to empowering women through fashion while supporting traditional artisans and
-                  sustainable practices
+                  Rooted in authenticity, ethical craftsmanship, and direct customer relationships
                 </p>
               </div>
             </ScrollReveal>
@@ -77,12 +87,11 @@ export default function AboutPage() {
                 <Card className="text-center border border-border/50 shadow-sm hover:shadow-md transition-all h-full">
                   <CardContent className="p-8">
                     <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6">
-                      <span className="text-2xl">💎</span>
+                      <Sparkles className="h-7 w-7 text-primary" />
                     </div>
-                    <h3 className="font-serif text-xl font-semibold text-foreground mb-4">Quality First</h3>
-                    <p className="text-muted-foreground leading-relaxed">
-                      We source only the finest fabrics and work with skilled artisans to ensure every piece meets our
-                      high standards of quality and craftsmanship.
+                    <h3 className="font-serif text-xl font-semibold text-foreground mb-4">Pure Indigenous Handloom</h3>
+                    <p className="text-muted-foreground leading-relaxed text-sm">
+                      Authentic Deori Egu-Jokasiba, Muga, Paat, Tos, and Kesavan cotton handloom sets crafted with genuine traditional motifs.
                     </p>
                   </CardContent>
                 </Card>
@@ -92,12 +101,11 @@ export default function AboutPage() {
                 <Card className="text-center border border-border/50 shadow-sm hover:shadow-md transition-all h-full">
                   <CardContent className="p-8">
                     <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6">
-                      <span className="text-2xl">🌱</span>
+                      <Heart className="h-7 w-7 text-primary" />
                     </div>
-                    <h3 className="font-serif text-xl font-semibold text-foreground mb-4">Sustainability</h3>
-                    <p className="text-muted-foreground leading-relaxed">
-                      We believe in responsible fashion. Our commitment to sustainability drives us to support
-                      eco-friendly practices and ethical manufacturing processes.
+                    <h3 className="font-serif text-xl font-semibold text-foreground mb-4">1000+ Happy Clients</h3>
+                    <p className="text-muted-foreground leading-relaxed text-sm">
+                      A trusted community of women celebrating handlooms with high customer satisfaction and repeat orders across India.
                     </p>
                   </CardContent>
                 </Card>
@@ -107,12 +115,11 @@ export default function AboutPage() {
                 <Card className="text-center border border-border/50 shadow-sm hover:shadow-md transition-all h-full">
                   <CardContent className="p-8">
                     <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6">
-                      <span className="text-2xl">🤝</span>
+                      <ShieldCheck className="h-7 w-7 text-primary" />
                     </div>
-                    <h3 className="font-serif text-xl font-semibold text-foreground mb-4">Community Support</h3>
-                    <p className="text-muted-foreground leading-relaxed">
-                      We partner with local artisans and craftspeople, supporting traditional techniques while providing
-                      fair wages and sustainable livelihoods.
+                    <h3 className="font-serif text-xl font-semibold text-foreground mb-4">Transparent Direct Ordering</h3>
+                    <p className="text-muted-foreground leading-relaxed text-sm">
+                      Personalized 1-on-1 WhatsApp assistance, verified prepaid ordering, and direct dispatch from Dhemaji, Assam.
                     </p>
                   </CardContent>
                 </Card>
@@ -121,75 +128,48 @@ export default function AboutPage() {
           </div>
         </section>
 
-        {/* Team Section */}
+        {/* Handloom Specialties Section */}
         <section className="py-16 px-4">
           <div className="max-w-7xl mx-auto">
             <ScrollReveal direction="up">
               <div className="text-center mb-12">
-                <h2 className="font-serif text-3xl font-bold text-foreground mb-4">Meet Our Team</h2>
-                <p className="text-lg text-muted-foreground">The passionate individuals behind EBASI STORE</p>
+                <h2 className="font-serif text-3xl font-bold text-foreground mb-4">Our Handcrafted Specialties</h2>
+                <p className="text-lg text-muted-foreground">Each creation represents generations of Assamese weaving expertise</p>
               </div>
             </ScrollReveal>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               <ScrollReveal delay={100} direction="up">
-                <div className="text-center">
-                  <div className="relative w-48 h-48 mx-auto mb-6 rounded-full overflow-hidden shadow-lg bg-muted">
-                    <Image
-                      src="/images/placeholders/placeholder.svg"
-                      alt="Founder"
-                      fill
-                      sizes="192px"
-                      className="object-cover rounded-full"
-                    />
-                  </div>
-                  <h3 className="font-serif text-xl font-semibold text-foreground mb-2">Priya Sharma</h3>
-                  <p className="text-primary font-medium mb-3">Founder & CEO</p>
-                  <p className="text-muted-foreground text-sm leading-relaxed">
-                    With over 15 years in fashion retail, Priya founded EBASI STORE to celebrate the beauty of Indian
-                    textiles and empower women through fashion.
-                  </p>
-                </div>
+                <Card className="border border-border/50 shadow-sm h-full">
+                  <CardContent className="p-8 space-y-3">
+                    <h3 className="font-serif text-xl font-semibold text-foreground">Deori Egu-Jokasiba</h3>
+                    <p className="text-muted-foreground text-sm leading-relaxed">
+                      Sacred and traditional attire of the Deori community, handcrafted with authentic tribal patterns, geometric precision, and cultural reverence.
+                    </p>
+                  </CardContent>
+                </Card>
               </ScrollReveal>
 
               <ScrollReveal delay={200} direction="up">
-                <div className="text-center">
-                  <div className="relative w-48 h-48 mx-auto mb-6 rounded-full overflow-hidden shadow-lg bg-muted">
-                    <Image
-                      src="/images/placeholders/placeholder.svg"
-                      alt="Creative Director"
-                      fill
-                      sizes="192px"
-                      className="object-cover rounded-full"
-                    />
-                  </div>
-                  <h3 className="font-serif text-xl font-semibold text-foreground mb-2">Anita Desai</h3>
-                  <p className="text-primary font-medium mb-3">Creative Director</p>
-                  <p className="text-muted-foreground text-sm leading-relaxed">
-                    A graduate from NIFT, Anita brings her expertise in textile design and contemporary fashion to curate
-                    our unique collections.
-                  </p>
-                </div>
+                <Card className="border border-border/50 shadow-sm h-full">
+                  <CardContent className="p-8 space-y-3">
+                    <h3 className="font-serif text-xl font-semibold text-foreground">Mekhela Sador Sets</h3>
+                    <p className="text-muted-foreground text-sm leading-relaxed">
+                      Exquisite two-piece Assamese attire woven in Muga, Paat silk, Tos, and pure cotton, adorned with intricate Guna and Mina kari zari borders.
+                    </p>
+                  </CardContent>
+                </Card>
               </ScrollReveal>
 
               <ScrollReveal delay={300} direction="up">
-                <div className="text-center">
-                  <div className="relative w-48 h-48 mx-auto mb-6 rounded-full overflow-hidden shadow-lg bg-muted">
-                    <Image
-                      src="/images/placeholders/placeholder.svg"
-                      alt="Operations Manager"
-                      fill
-                      sizes="192px"
-                      className="object-cover rounded-full"
-                    />
-                  </div>
-                  <h3 className="font-serif text-xl font-semibold text-foreground mb-2">Rajesh Kumar</h3>
-                  <p className="text-primary font-medium mb-3">Operations Manager</p>
-                  <p className="text-muted-foreground text-sm leading-relaxed">
-                    Rajesh ensures smooth operations and maintains our quality standards, working closely with our network
-                    of artisans and suppliers.
-                  </p>
-                </div>
+                <Card className="border border-border/50 shadow-sm h-full">
+                  <CardContent className="p-8 space-y-3">
+                    <h3 className="font-serif text-xl font-semibold text-foreground">Traditional Gamusa & Sarees</h3>
+                    <p className="text-muted-foreground text-sm leading-relaxed">
+                      Handwoven Assamese Gamusas and festive sarees crafted for weddings, Bihu celebrations, and formal cultural events.
+                    </p>
+                  </CardContent>
+                </Card>
               </ScrollReveal>
             </div>
           </div>
@@ -199,17 +179,26 @@ export default function AboutPage() {
         <section className="py-16 px-4 bg-primary text-primary-foreground">
           <ScrollReveal direction="up">
             <div className="max-w-4xl mx-auto text-center">
-              <h2 className="font-serif text-3xl font-bold mb-4">Join Our Fashion Journey</h2>
+              <h2 className="font-serif text-3xl font-bold mb-4">Experience Authentic Assamese Weaves</h2>
               <p className="text-lg mb-8 opacity-90">
-                Be part of our community and stay updated with the latest collections, exclusive offers, and fashion
-                inspiration.
+                Explore our catalog or connect directly on WhatsApp for personalized orders and inquiries.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <Link href="/shop">
                   <Button className="bg-background text-foreground hover:bg-muted transition-colors font-medium h-auto py-3 px-8 text-base active:scale-95">
-                    Shop Now
+                    Browse Collections
                   </Button>
                 </Link>
+                <a
+                  href={STORE_INFO.whatsappUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <Button variant="outline" className="border-white text-white hover:bg-white/10 transition-colors font-medium h-auto py-3 px-8 text-base active:scale-95 bg-transparent">
+                    <MessageCircle className="h-4 w-4 mr-2" />
+                    Chat with Boutique
+                  </Button>
+                </a>
               </div>
             </div>
           </ScrollReveal>

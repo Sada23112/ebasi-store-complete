@@ -11,6 +11,7 @@ import Link from "next/link"
 import Image from "next/image"
 import { ScrollReveal } from "@/components/scroll-reveal"
 import { WishlistGridSkeleton } from "@/components/skeletons"
+import { STORE_INFO } from "@/lib/constants"
 
 export default function WishlistPage() {
   const { items, toggle, count } = useWishlist()
@@ -26,12 +27,12 @@ export default function WishlistPage() {
     const isOutOfStock = product.stock_status === "out_of_stock"
 
     if (isOutOfStock) {
-      const message = `Hi EBASI STORE! 👋\n\nI noticed this item in my Wishlist is currently out of stock. Could you let me know when it might be available again?\n\n*${product.name}*\nPrice: ₹${product.price}\n\nProduct Link: ${productUrl}`
-      return `https://wa.me/917399291242?text=${encodeURIComponent(message)}`
+      const message = `Hi ${STORE_INFO.name}! 👋\n\nI noticed this item in my Wishlist is currently out of stock. Could you let me know when it might be available again?\n\n*${product.name}*\nPrice: ₹${product.price}\n\nProduct Link: ${productUrl}`
+      return `${STORE_INFO.whatsappUrl}?text=${encodeURIComponent(message)}`
     }
 
-    const message = `Hi EBASI STORE! 👋\n\nI would like to order this item from my Wishlist:\n\n*${product.name}*\nPrice: ₹${product.price}\n\nProduct Link: ${productUrl}`
-    return `https://wa.me/917399291242?text=${encodeURIComponent(message)}`
+    const message = `Hi ${STORE_INFO.name}! 👋\n\nI would like to order this item from my Wishlist:\n\n*${product.name}*\nPrice: ₹${product.price}\n\nProduct Link: ${productUrl}`
+    return `${STORE_INFO.whatsappUrl}?text=${encodeURIComponent(message)}`
   }
 
   return (

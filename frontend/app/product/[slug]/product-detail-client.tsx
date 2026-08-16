@@ -30,6 +30,7 @@ import { useWishlist } from "@/lib/wishlist"
 import api from "@/lib/api"
 import { getAbsoluteImageUrl, getBadgeInfo, cn } from "@/lib/utils"
 import { ProductGallery } from "@/components/product-gallery"
+import { STORE_INFO } from "@/lib/constants"
 
 const SIZES = ["Free Size / Standard", "Unstitched", "S", "M", "L", "XL", "XXL"]
 
@@ -144,14 +145,14 @@ export function ProductDetailClient({ slug, initialProduct }: ProductDetailClien
     const currentUrl = typeof window !== "undefined" ? window.location.href : ""
 
     if (isOutOfStock) {
-      const message = `Hi EBASI STORE! 👋\n\nI'm interested in knowing when this product will be back in stock:\n\n*Product:* ${product.name}\n*SKU:* ${product.sku || 'N/A'}\n\n*Product Link:* ${currentUrl}`
-      return `https://wa.me/917399291242?text=${encodeURIComponent(message)}`
+      const message = `Hi ${STORE_INFO.name}! 👋\n\nI'm interested in knowing when this product will be back in stock:\n\n*Product:* ${product.name}\n*SKU:* ${product.sku || 'N/A'}\n\n*Product Link:* ${currentUrl}`
+      return `${STORE_INFO.whatsappUrl}?text=${encodeURIComponent(message)}`
     }
 
     const parsedPrice = parseFloat(String(product.price || 0))
     const validPrice = !isNaN(parsedPrice) ? parsedPrice : 0
     const totalPrice = (validPrice * quantity).toLocaleString('en-IN')
-    let message = `Hi EBASI STORE! 👋\n\nI would like to order:\n\n*Product:* ${product.name || 'Product'}\n*Price:* ₹${validPrice} each\n*Size:* ${selectedSize}\n`
+    let message = `Hi ${STORE_INFO.name}! 👋\n\nI would like to order:\n\n*Product:* ${product.name || 'Product'}\n*Price:* ₹${validPrice} each\n*Size:* ${selectedSize}\n`
 
     if (customNote.trim()) {
       message += `*Note/Color:* ${customNote.trim()}\n`
@@ -163,7 +164,7 @@ export function ProductDetailClient({ slug, initialProduct }: ProductDetailClien
     }
     message += `\n*Product Link:* ${currentUrl}`
 
-    return `https://wa.me/917399291242?text=${encodeURIComponent(message)}`
+    return `${STORE_INFO.whatsappUrl}?text=${encodeURIComponent(message)}`
   }
 
   const handleSubmitReview = async (e: React.FormEvent) => {

@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import Image from "next/image"
 import { Instagram, ArrowRight, Sparkles } from "lucide-react"
+import { STORE_INFO } from "@/lib/constants"
 
 export function HeroSection() {
   return (
@@ -40,7 +41,7 @@ export function HeroSection() {
                 </Button>
               </Link>
               <a
-                href="https://www.instagram.com/ebasistore_mekhelasador/"
+                href={STORE_INFO.instagram.url}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-full sm:w-auto"

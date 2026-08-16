@@ -94,6 +94,7 @@ import { Navigation } from "@/components/navigation"
 import { Footer } from "@/components/footer"
 import { Toaster } from "@/components/ui/toaster"
 import { NavigationProgressBar } from "@/components/navigation-progress-bar"
+import { StoreLocation } from "@/components/store-location"
 
 export default function RootLayout({
   children,
@@ -109,16 +110,25 @@ export default function RootLayout({
             __html: JSON.stringify({
               "@context": "https://schema.org",
               "@type": "ClothingStore",
-              name: "EBASI STORE",
+              name: "Ms Ebasi Store",
+              alternateName: ["EBASI STORE", "EBASI ENTERPRISE"],
               url: process.env.NEXT_PUBLIC_SITE_URL || "https://ebasistore.com",
               logo: `${process.env.NEXT_PUBLIC_SITE_URL || "https://ebasistore.com"}/images/branding/logo.svg`,
               image: `${process.env.NEXT_PUBLIC_SITE_URL || "https://ebasistore.com"}/images/branding/og-image.jpg`,
               description:
-                "Authentic Assamese Mekhela Sadors, traditional sarees, and handcrafted women's fashion at EBASI STORE.",
-              telephone: "+91 7399291242",
+                "Authentic Assamese Mekhela Sadors, Deori Egu-Jokasiba, traditional sarees, and handcrafted women's fashion.",
+              telephone: "+91 73992 91242",
               priceRange: "₹₹",
+              address: {
+                "@type": "PostalAddress",
+                streetAddress: "Railway, Station Rd, opposite Parmananda Academy, Nagakhelia No.2",
+                addressLocality: "Dhemaji",
+                addressRegion: "Assam",
+                postalCode: "787057",
+                addressCountry: "IN",
+              },
               sameAs: [
-                "https://www.instagram.com/ebasistore_mekhelasador/",
+                "https://www.instagram.com/ebasistore_traditionalattire/",
               ],
               contactPoint: {
                 "@type": "ContactPoint",
@@ -134,6 +144,7 @@ export default function RootLayout({
         <NavigationProgressBar />
         <Navigation />
         <Suspense fallback={null}>{children}</Suspense>
+        <StoreLocation />
         <Footer />
         <Toaster />
         <Analytics />

@@ -98,8 +98,8 @@ export function Promotions() {
                 <Store className="h-6 w-6 text-amber-600" />
               </div>
               <div>
-                <h4 className="font-semibold text-foreground mb-1">Guwahati Store Pickup</h4>
-                <p className="text-sm text-muted-foreground">Store pickup & direct dispatch options</p>
+                <h4 className="font-semibold text-foreground mb-1">Dhemaji Store Pickup</h4>
+                <p className="text-sm text-muted-foreground">Boutique pickup & India-wide dispatch</p>
               </div>
             </div>
           </ScrollReveal>

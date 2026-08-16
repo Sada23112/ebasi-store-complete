@@ -1,6 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 import { FileText, Truck, RotateCcw, AlertTriangle } from "lucide-react"
+import { STORE_INFO } from "@/lib/constants"
 
 export default function TermsOfServicePage() {
   return (
@@ -356,8 +357,8 @@ export default function TermsOfServicePage() {
             <CardContent>
               <p className="text-muted-foreground mb-4">
                 These Terms shall be governed by and construed in accordance with the laws of India. Any disputes
-                arising from these Terms or your use of our services shall be subject to the exclusive jurisdiction of
-                the courts in Mumbai, Maharashtra.
+                arising from these Terms or your use of our services shall be subject to the jurisdiction of
+                the competent courts in Dhemaji, Assam.
               </p>
               <p className="text-muted-foreground">
                 We encourage you to contact us first to resolve any disputes informally before pursuing legal action.
@@ -370,24 +371,34 @@ export default function TermsOfServicePage() {
             <CardHeader>
               <CardTitle>Contact Information</CardTitle>
               <CardDescription>
-                If you have any questions about these Terms of Service, please contact us:
+                If you have any questions about these Terms of Service or order policies, please contact us:
               </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <p className="font-medium">Email: legal@ebasistore.com</p>
-                  <p className="font-medium">Phone: +91 98765 43210</p>
-                  <p className="font-medium">Business Hours: 9:00 AM - 6:00 PM IST</p>
+                  <p className="font-medium text-foreground">{STORE_INFO.name} ({STORE_INFO.enterpriseName})</p>
+                  <p className="text-sm text-muted-foreground">
+                    Phone / WhatsApp:{" "}
+                    <a href={`tel:${STORE_INFO.phoneRaw}`} className="text-primary hover:underline font-medium">
+                      {STORE_INFO.phoneDisplay}
+                    </a>
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    Instagram:{" "}
+                    <a href={STORE_INFO.instagram.url} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-medium">
+                      {STORE_INFO.instagram.handle}
+                    </a>
+                  </p>
                 </div>
                 <div>
-                  <p className="font-medium mb-2">Mailing Address</p>
-                  <div className="text-sm text-muted-foreground">
-                    <p>EBASI STORE</p>
-                    <p>Legal Department</p>
-                    <p>123 Fashion Street</p>
-                    <p>Mumbai, Maharashtra 400001</p>
-                    <p>India</p>
+                  <p className="font-medium text-foreground mb-2">Store & Mailing Address</p>
+                  <div className="text-sm text-muted-foreground leading-relaxed">
+                    <p>{STORE_INFO.name}</p>
+                    <p>{STORE_INFO.address.street}</p>
+                    <p>{STORE_INFO.address.locality}, {STORE_INFO.address.city}</p>
+                    <p>{STORE_INFO.address.state} — {STORE_INFO.address.postalCode}, {STORE_INFO.address.country}</p>
+                    <p className="text-xs font-mono mt-1">Plus Code: {STORE_INFO.address.plusCode}</p>
                   </div>
                 </div>
               </div>

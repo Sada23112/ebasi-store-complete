@@ -9,6 +9,7 @@ import api from "@/lib/api"
 import { useState } from "react"
 import { Facebook, Instagram, Loader2 } from "lucide-react"
 import { ScrollReveal } from "@/components/scroll-reveal"
+import { STORE_INFO } from "@/lib/constants"
 
 export default function ContactPage() {
   const { toast } = useToast()
@@ -191,48 +192,68 @@ export default function ContactPage() {
                 <div className="space-y-8">
                   <Card className="border border-border/50 shadow-md">
                     <CardContent className="p-8">
-                      <h3 className="font-serif text-xl font-bold text-foreground mb-6">Store Information</h3>
-                      <div className="space-y-4">
+                      <h3 className="font-serif text-xl font-bold text-foreground mb-6">Store & Boutique Information</h3>
+                      <div className="space-y-5">
                         <div className="flex items-start gap-4">
                           <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
-                            <span className="text-primary">📍</span>
+                            <span className="text-primary text-sm">📍</span>
                           </div>
                           <div>
-                            <h4 className="font-semibold text-foreground mb-1">Address</h4>
-                            <p className="text-muted-foreground">
-                              123 Fashion Street, Textile Market
+                            <h4 className="font-semibold text-foreground mb-1">Official Address</h4>
+                            <p className="text-muted-foreground text-sm leading-relaxed">
+                              {STORE_INFO.name} ({STORE_INFO.enterpriseName})
                               <br />
-                              Guwahati, Assam 781001
+                              {STORE_INFO.address.street}
                               <br />
-                              India
+                              {STORE_INFO.address.locality}, {STORE_INFO.address.city}
+                              <br />
+                              {STORE_INFO.address.state} — {STORE_INFO.address.postalCode}, {STORE_INFO.address.country}
                             </p>
+                            <span className="inline-block mt-2 text-xs font-mono bg-muted px-2 py-0.5 rounded text-muted-foreground">
+                              Plus Code: {STORE_INFO.address.plusCode}
+                            </span>
                           </div>
                         </div>
 
                         <div className="flex items-start gap-4">
-                          <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
-                            <span className="text-primary">📞</span>
+                          <div className="w-8 h-8 bg-green-500/10 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
+                            <span className="text-green-600 text-sm">📞</span>
                           </div>
                           <div>
-                            <h4 className="font-semibold text-foreground mb-1">Phone</h4>
-                            <p className="text-muted-foreground">
-                              +91 98765 43210
-                              <br />
-                              +91 98765 43211
-                            </p>
+                            <h4 className="font-semibold text-foreground mb-1">Phone & WhatsApp Support</h4>
+                            <a
+                              href={`tel:${STORE_INFO.phoneRaw}`}
+                              className="text-foreground hover:text-primary transition-colors font-medium text-sm block"
+                            >
+                              {STORE_INFO.phoneDisplay} ({STORE_INFO.phone})
+                            </a>
+                            <a
+                              href={STORE_INFO.whatsappUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-green-600 hover:underline text-xs font-semibold inline-block mt-1"
+                            >
+                              Direct Chat on WhatsApp →
+                            </a>
                           </div>
                         </div>
 
                         <div className="flex items-start gap-4">
-                          <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
-                            <span className="text-primary">✉️</span>
+                          <div className="w-8 h-8 bg-pink-500/10 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
+                            <span className="text-pink-600 text-sm">📷</span>
                           </div>
                           <div>
-                            <h4 className="font-semibold text-foreground mb-1">Email</h4>
-                            <p className="text-muted-foreground">
-                              info@ebasistore.com
-                              <br />
-                              support@ebasistore.com
+                            <h4 className="font-semibold text-foreground mb-1">Instagram Community</h4>
+                            <a
+                              href={STORE_INFO.instagram.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-primary hover:underline font-medium text-sm"
+                            >
+                              {STORE_INFO.instagram.handle}
+                            </a>
+                            <p className="text-xs text-muted-foreground mt-0.5">
+                              1000+ Happy Clients • Daily Collections
                             </p>
                           </div>
                         </div>
@@ -242,19 +263,19 @@ export default function ContactPage() {
 
                   <Card className="border border-border/50 shadow-md">
                     <CardContent className="p-8">
-                      <h3 className="font-serif text-xl font-bold text-foreground mb-6">Business Hours</h3>
-                      <div className="space-y-3">
-                        <div className="flex justify-between">
-                          <span className="text-muted-foreground">Monday - Friday</span>
-                          <span className="font-medium text-foreground">10:00 AM - 8:00 PM</span>
+                      <h3 className="font-serif text-xl font-bold text-foreground mb-4">Ordering & Dispatch Policies</h3>
+                      <div className="space-y-3 text-sm">
+                        <div className="flex flex-col gap-1 pb-3 border-b border-border/50">
+                          <span className="font-semibold text-foreground">Order Model:</span>
+                          <span className="text-muted-foreground">WhatsApp-First Direct Ordering (Personal Assistance)</span>
                         </div>
-                        <div className="flex justify-between">
-                          <span className="text-muted-foreground">Saturday</span>
-                          <span className="font-medium text-foreground">10:00 AM - 9:00 PM</span>
+                        <div className="flex flex-col gap-1 pb-3 border-b border-border/50">
+                          <span className="font-semibold text-foreground">Payment Terms:</span>
+                          <span className="text-muted-foreground">Prepaid via UPI / Bank Transfer (No COD)</span>
                         </div>
-                        <div className="flex justify-between">
-                          <span className="text-muted-foreground">Sunday</span>
-                          <span className="font-medium text-foreground">11:00 AM - 7:00 PM</span>
+                        <div className="flex flex-col gap-1">
+                          <span className="font-semibold text-foreground">Dispatch Origin:</span>
+                          <span className="text-muted-foreground">Dispatched directly from Dhemaji, Assam to all over India</span>
                         </div>
                       </div>
                     </CardContent>

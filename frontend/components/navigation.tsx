@@ -12,6 +12,7 @@ import { cn } from "@/lib/utils"
 import { useWishlist } from "@/lib/wishlist"
 
 import { triggerNavigationStart } from "@/components/navigation-progress-bar"
+import { STORE_INFO } from "@/lib/constants"
 
 export function Navigation() {
   const [isOpen, setIsOpen] = useState(false)
@@ -190,7 +191,7 @@ export function Navigation() {
 
             {/* WhatsApp CTA */}
             <a
-              href="https://wa.me/917399291242?text=Hi! I'm interested in your products."
+              href={`${STORE_INFO.whatsappUrl}?text=${encodeURIComponent("Hi! I'm interested in your products.")}`}
               target="_blank"
               rel="noopener noreferrer"
               className="hidden sm:inline-flex"
@@ -257,7 +258,7 @@ export function Navigation() {
                   {/* WhatsApp CTA in mobile menu */}
                   <div className="pt-4 border-t border-border">
                     <a
-                      href="https://wa.me/917399291242?text=Hi! I'm interested in your products."
+                      href={`${STORE_INFO.whatsappUrl}?text=${encodeURIComponent("Hi! I'm interested in your products.")}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       onClick={() => setIsOpen(false)}

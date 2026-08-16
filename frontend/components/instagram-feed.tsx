@@ -5,6 +5,7 @@ import { Instagram, Loader2 } from "lucide-react"
 import Image from "next/image"
 import { useEffect, useState } from "react"
 import { getInstagramPosts, type InstagramPost } from "@/lib/instagram"
+import { STORE_INFO } from "@/lib/constants"
 
 export function InstagramFeed() {
   const [posts, setPosts] = useState<InstagramPost[]>([])
@@ -25,7 +26,7 @@ export function InstagramFeed() {
             <h2 className="text-4xl font-serif font-bold text-foreground">Shop The Look</h2>
           </div>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Get inspired by our community and shop directly from Instagram
+            Get inspired by our community and shop authentic traditional attire directly
           </p>
         </div>
 
@@ -64,19 +65,19 @@ export function InstagramFeed() {
         ) : (
           <div className="text-center py-12 text-muted-foreground">
             <Instagram className="h-12 w-12 mx-auto mb-4 opacity-50" />
-            <p className="text-lg">Follow us on Instagram to see our latest styles!</p>
+            <p className="text-lg">Follow us on Instagram {STORE_INFO.instagram.handle} to see our latest styles!</p>
           </div>
         )}
 
         <div className="text-center">
           <a
-            href="https://www.instagram.com/ebasistore_mekhelasador/"
+            href={STORE_INFO.instagram.url}
             target="_blank"
             rel="noopener noreferrer"
           >
-            <Button variant="outline" size="lg" className="px-8 bg-transparent hover:bg-primary hover:text-primary-foreground">
+            <Button variant="outline" size="lg" className="px-8 bg-transparent hover:bg-primary hover:text-primary-foreground min-h-[44px]">
               <Instagram className="h-4 w-4 mr-2" />
-              Follow @ebasistore_mekhelasador
+              Follow {STORE_INFO.instagram.handle}
             </Button>
           </a>
         </div>

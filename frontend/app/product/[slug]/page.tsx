@@ -111,8 +111,9 @@ export default async function ProductDetailPage({ params }: PageProps) {
           ? "https://schema.org/OutOfStock"
           : "https://schema.org/InStock",
         seller: {
-          "@type": "Organization",
-          name: "EBASI STORE",
+          "@type": "ClothingStore",
+          name: "Ms Ebasi Store",
+          url: baseUrl,
         },
       },
     }

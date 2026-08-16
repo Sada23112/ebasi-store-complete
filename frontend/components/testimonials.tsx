@@ -7,33 +7,30 @@ import { Star } from "lucide-react"
 const testimonials = [
   {
     id: 1,
-    name: "Priya Sharma",
-    location: "Mumbai",
+    name: "Barsha D.",
+    location: "Assam",
     rating: 5,
     comment:
-      "Absolutely love the quality of sarees from EBASI STORE. The fabric is premium and the designs are stunning. Highly recommended!",
-    avatar: "/customer-priya.jpg",
-    product: "Silk Saree Collection",
+      "The authentic Muga silk Mekhela Sador quality from Ms Ebasi Store is unmatched. The Guna zari work and weaving precision are exceptional.",
+    product: "Muga Silk Mekhela Sador",
   },
   {
     id: 2,
-    name: "Anita Patel",
-    location: "Delhi",
+    name: "Rupali D.",
+    location: "Guwahati",
     rating: 5,
     comment:
-      "Fast delivery and excellent customer service. The kurti I ordered fits perfectly and the color is exactly as shown in the pictures.",
-    avatar: "/customer-anita.jpg",
-    product: "Designer Kurti",
+      "Ordered a traditional Deori Egu-Jokasiba set via WhatsApp. The direct assistance and prompt dispatch from Dhemaji made the whole experience delightful.",
+    product: "Deori Traditional Attire",
   },
   {
     id: 3,
-    name: "Meera Reddy",
-    location: "Bangalore",
+    name: "Nabanita S.",
+    location: "Delhi",
     rating: 5,
     comment:
-      "EBASI STORE has become my go-to place for ethnic wear. The variety is amazing and the prices are very reasonable.",
-    avatar: "/customer-meera.jpg",
-    product: "Ethnic Wear Collection",
+      "Beautiful handloom texture and vibrant color. It feels wonderful supporting genuine traditional Northeast weavers through EBASI STORE.",
+    product: "Handwoven Cotton Saree",
   },
 ]
 
@@ -63,9 +60,8 @@ export function Testimonials() {
                 </div>
                 <p className="text-muted-foreground mb-6 leading-relaxed">"{testimonial.comment}"</p>
                 <div className="flex items-center gap-3">
-                  <Avatar>
-                    <AvatarImage src={testimonial.avatar || "/images/placeholders/placeholder.svg"} alt={testimonial.name} />
-                    <AvatarFallback>
+                  <Avatar className="h-10 w-10 border border-primary/20">
+                    <AvatarFallback className="bg-primary/10 text-primary font-semibold text-xs">
                       {testimonial.name
                         .split(" ")
                         .map((n) => n[0])

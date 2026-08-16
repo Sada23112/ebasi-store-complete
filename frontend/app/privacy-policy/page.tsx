@@ -1,7 +1,6 @@
-import Navigation from "@/components/navigation"
-import Footer from "@/components/footer"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Shield, Globe, Mail } from "lucide-react"
+import { Shield, MapPin, Phone, Instagram } from "lucide-react"
+import { STORE_INFO } from "@/lib/constants"
 
 export default function PrivacyPolicyPage() {
   return (
@@ -140,20 +139,31 @@ export default function PrivacyPolicyPage() {
 
             <Card>
               <CardHeader>
-                <CardTitle>7. Contact Us</CardTitle>
+                <CardTitle>7. Contact Us & Grievance Officer</CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-muted-foreground mb-4">
-                  If you have any questions about this Privacy Policy or our data practices, please contact us:
+                  If you have any questions about this Privacy Policy or your personal data, please contact our store:
                 </p>
-                <div className="space-y-2">
-                  <div className="flex items-center space-x-2">
-                    <Mail className="w-4 h-4 text-muted-foreground" />
-                    <span className="text-sm">privacy@ebasistore.com</span>
+                <div className="space-y-3 text-sm">
+                  <div className="flex items-center space-x-2 text-foreground font-medium">
+                    <span>{STORE_INFO.name} ({STORE_INFO.enterpriseName})</span>
                   </div>
-                  <div className="flex items-center space-x-2">
-                    <Globe className="w-4 h-4 text-muted-foreground" />
-                    <span className="text-sm">Data Protection Officer</span>
+                  <div className="flex items-center space-x-2 text-muted-foreground">
+                    <MapPin className="w-4 h-4 text-primary shrink-0" />
+                    <span>{STORE_INFO.address.full}</span>
+                  </div>
+                  <div className="flex items-center space-x-2 text-muted-foreground">
+                    <Phone className="w-4 h-4 text-green-600 shrink-0" />
+                    <a href={`tel:${STORE_INFO.phoneRaw}`} className="text-primary hover:underline">
+                      {STORE_INFO.phoneDisplay}
+                    </a>
+                  </div>
+                  <div className="flex items-center space-x-2 text-muted-foreground">
+                    <Instagram className="w-4 h-4 text-pink-600 shrink-0" />
+                    <a href={STORE_INFO.instagram.url} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+                      {STORE_INFO.instagram.handle}
+                    </a>
                   </div>
                 </div>
               </CardContent>
