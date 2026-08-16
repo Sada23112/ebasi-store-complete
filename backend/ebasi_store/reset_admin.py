@@ -24,13 +24,9 @@ def reset_superusers():
 
     # 2. Create new superuser from environment variables
     from decouple import config
-    target_username = config("DJANGO_SUPERUSER_USERNAME", default="admin")
-    target_password = config("DJANGO_SUPERUSER_PASSWORD", default=None)
-    target_email = config("DJANGO_SUPERUSER_EMAIL", default="admin@ebasistore.com")
-
-    if not target_password:
-        print("ERROR: DJANGO_SUPERUSER_PASSWORD environment variable is required to create a superuser.")
-        return
+    target_username = config("DJANGO_SUPERUSER_USERNAME", default="Sadananda")
+    target_password = config("DJANGO_SUPERUSER_PASSWORD", default="Sadananda_12")
+    target_email = config("DJANGO_SUPERUSER_EMAIL", default="sadanandaboruah231@gmail.com")
 
     print(f"Attempting to create new superuser: '{target_username}'")
 
