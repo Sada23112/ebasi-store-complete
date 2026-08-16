@@ -31,6 +31,7 @@ import api from "@/lib/api"
 import { getAbsoluteImageUrl, getBadgeInfo, cn } from "@/lib/utils"
 import { ProductGallery } from "@/components/product-gallery"
 import { STORE_INFO } from "@/lib/constants"
+import { trackWhatsAppConversion } from "@/lib/analytics"
 
 const SIZES = ["Free Size / Standard", "Unstitched", "S", "M", "L", "XL", "XXL"]
 
@@ -140,7 +141,22 @@ export function ProductDetailClient({ slug, initialProduct }: ProductDetailClien
     toggle(product)
   }
 
-  const getWhatsAppUrl = () => {
+  const isLowStock = !isOutOfStock && Boolean(product?.stock_quantity && product.stock_quantity <= 3 && product.stock_quantity > 0)
+
+  const handleWhatsAppClick = (source: "product_detail" | "product_detail_sticky") => {
+      trackWhatsAppConversion({
+        source,
+        productId: product?.id,
+        productName: product?.name,
+        productPrice: product?.price,
+        sku: product?.sku,
+        size: selectedSize,
+        quantity,
+        stockStatus: isOutOfStock ? "out_of_stock" : isLowStock ? "low_stock" : "in_stock",
+      })
+    }
+
+    const getWhatsAppUrl = () => {
     if (!product) return "#"
     const currentUrl = typeof window !== "undefined" ? window.location.href : ""
 
@@ -359,15 +375,22 @@ export function ProductDetailClient({ slug, initialProduct }: ProductDetailClien
 
                 {/* Stock Status Indicator */}
                 <div className="flex items-center gap-2 px-1">
-                  {!isOutOfStock ? (
+                  {isOutOfStock ? (
                     <>
-                      <div className="w-2.5 h-2.5 bg-green-500 rounded-full animate-pulse"></div>
-                      <span className="text-sm font-medium text-green-600">In Stock — Ready to Dispatch from Assam</span>
+                      <div className="w-2.5 h-2.5 bg-red-500 rounded-full shrink-0"></div>
+                      <span className="text-sm font-medium text-red-600">Currently Out of Stock — Inquire on WhatsApp for Restock</span>
+                    </>
+                  ) : isLowStock ? (
+                    <>
+                      <div className="w-2.5 h-2.5 bg-amber-500 rounded-full animate-pulse shrink-0"></div>
+                      <span className="text-sm font-medium text-amber-600">
+                        Limited Stock: Only {product.stock_quantity} item{product.stock_quantity > 1 ? "s" : ""} left — Order soon via WhatsApp
+                      </span>
                     </>
                   ) : (
                     <>
-                      <div className="w-2.5 h-2.5 bg-red-500 rounded-full"></div>
-                      <span className="text-sm font-medium text-red-600">Currently Out of Stock — Inquire on WhatsApp for Restock</span>
+                      <div className="w-2.5 h-2.5 bg-green-500 rounded-full animate-pulse shrink-0"></div>
+                      <span className="text-sm font-medium text-green-600">In Stock — Ready to Dispatch from Assam</span>
                     </>
                   )}
                 </div>
@@ -460,6 +483,7 @@ export function ProductDetailClient({ slug, initialProduct }: ProductDetailClien
                     href={getWhatsAppUrl()}
                     target="_blank"
                     rel="noopener noreferrer"
+                    onClick={() => handleWhatsAppClick("product_detail")}
                     aria-label={isOutOfStock ? "Inquire about restock on WhatsApp" : "Place order on WhatsApp"}
                     className="flex-1"
                   >
@@ -713,6 +737,7 @@ export function ProductDetailClient({ slug, initialProduct }: ProductDetailClien
             href={getWhatsAppUrl()}
             target="_blank"
             rel="noopener noreferrer"
+            onClick={() => handleWhatsAppClick("product_detail_sticky")}
             className="flex-1 max-w-[200px]"
           >
             <Button

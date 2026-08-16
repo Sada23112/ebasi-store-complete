@@ -13,6 +13,7 @@ import { useWishlist } from "@/lib/wishlist"
 
 import { triggerNavigationStart } from "@/components/navigation-progress-bar"
 import { STORE_INFO } from "@/lib/constants"
+import { trackWhatsAppConversion } from "@/lib/analytics"
 
 export function Navigation() {
   const [isOpen, setIsOpen] = useState(false)
@@ -218,6 +219,7 @@ export function Navigation() {
               href={`${STORE_INFO.whatsappUrl}?text=${encodeURIComponent("Hi! I'm interested in your products.")}`}
               target="_blank"
               rel="noopener noreferrer"
+              onClick={() => trackWhatsAppConversion({ source: "navbar" })}
               aria-label="Order via WhatsApp directly"
               className="hidden sm:inline-flex"
             >
@@ -288,7 +290,10 @@ export function Navigation() {
                       target="_blank"
                       rel="noopener noreferrer"
                       aria-label="Order via WhatsApp"
-                      onClick={() => setIsOpen(false)}
+                      onClick={() => {
+                        setIsOpen(false)
+                        trackWhatsAppConversion({ source: "mobile_menu" })
+                      }}
                     >
                       <Button size="lg" className="w-full bg-green-600 hover:bg-green-700 text-white font-medium min-h-[44px]">
                         <svg className="h-5 w-5 mr-2" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">

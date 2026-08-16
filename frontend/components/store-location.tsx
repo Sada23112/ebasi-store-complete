@@ -6,6 +6,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { ScrollReveal } from "@/components/scroll-reveal"
 import { STORE_INFO } from "@/lib/constants"
+import { trackWhatsAppConversion } from "@/lib/analytics"
 
 export function StoreLocation() {
   return (
@@ -125,6 +126,7 @@ export function StoreLocation() {
                       href={STORE_INFO.whatsappUrl}
                       target="_blank"
                       rel="noopener noreferrer"
+                      onClick={() => trackWhatsAppConversion({ source: "store_location" })}
                       aria-label="Open WhatsApp to chat with Ms Ebasi Store directly"
                       className="flex-1"
                     >

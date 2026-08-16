@@ -12,6 +12,7 @@ import Image from "next/image"
 import { ScrollReveal } from "@/components/scroll-reveal"
 import { WishlistGridSkeleton } from "@/components/skeletons"
 import { STORE_INFO } from "@/lib/constants"
+import { trackWhatsAppConversion } from "@/lib/analytics"
 
 export default function WishlistPage() {
   const { items, toggle, count } = useWishlist()
@@ -137,7 +138,16 @@ export default function WishlistPage() {
                             target="_blank"
                             rel="noopener noreferrer"
                             className="w-full"
-                            onClick={(e) => e.stopPropagation()}
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              trackWhatsAppConversion({
+                                source: "wishlist",
+                                productId: item.id,
+                                productName: item.name,
+                                productPrice: item.price,
+                                stockStatus: item.stock_status,
+                              })
+                            }}
                           >
                             <Button className={`w-full ${item.stock_status === "out_of_stock" ? "bg-amber-600 hover:bg-amber-700" : "bg-green-600 hover:bg-green-700"} text-white font-medium min-h-[44px] text-sm`}>
                               <svg className="h-4 w-4 mr-2" viewBox="0 0 24 24" fill="currentColor">

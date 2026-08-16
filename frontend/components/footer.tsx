@@ -1,7 +1,10 @@
+"use client"
+
 import Link from "next/link"
 import { Instagram, MapPin, Phone, MessageCircle, Youtube, Facebook } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { STORE_INFO } from "@/lib/constants"
+import { trackWhatsAppConversion } from "@/lib/analytics"
 
 export function Footer() {
   return (
@@ -88,6 +91,7 @@ export function Footer() {
                 href={STORE_INFO.whatsappUrl}
                 target="_blank"
                 rel="noopener noreferrer"
+                onClick={() => trackWhatsAppConversion({ source: "footer" })}
                 aria-label="Chat with Ms Ebasi Store on WhatsApp"
                 title="WhatsApp Order Support"
               >

@@ -6,6 +6,7 @@ import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { ScrollReveal } from "@/components/scroll-reveal"
 import { STORE_INFO } from "@/lib/constants"
+import { trackWhatsAppConversion } from "@/lib/analytics"
 import { Sparkles, Heart, ShieldCheck, MessageCircle, MapPin } from "lucide-react"
 
 export default function AboutPage() {
@@ -193,6 +194,7 @@ export default function AboutPage() {
                   href={STORE_INFO.whatsappUrl}
                   target="_blank"
                   rel="noopener noreferrer"
+                  onClick={() => trackWhatsAppConversion({ source: "about_page" })}
                   aria-label="Chat with Ms Ebasi Store on WhatsApp"
                 >
                   <Button variant="outline" className="border-white text-white hover:bg-white/10 transition-colors font-medium h-auto py-3 px-8 text-base active:scale-95 bg-transparent focus-visible:ring-2 focus-visible:ring-white">

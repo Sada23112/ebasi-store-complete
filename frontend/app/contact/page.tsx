@@ -10,6 +10,7 @@ import { useState } from "react"
 import { Facebook, Instagram, Loader2 } from "lucide-react"
 import { ScrollReveal } from "@/components/scroll-reveal"
 import { STORE_INFO } from "@/lib/constants"
+import { trackWhatsAppConversion } from "@/lib/analytics"
 
 export default function ContactPage() {
   const { toast } = useToast()
@@ -240,6 +241,7 @@ export default function ContactPage() {
                               href={STORE_INFO.whatsappUrl}
                               target="_blank"
                               rel="noopener noreferrer"
+                              onClick={() => trackWhatsAppConversion({ source: "contact_page" })}
                               className="text-green-600 hover:underline text-xs font-semibold inline-block mt-1"
                             >
                               Direct Chat on WhatsApp →
