@@ -13,7 +13,7 @@ import { useWishlist } from "@/lib/wishlist"
 
 import { triggerNavigationStart } from "@/components/navigation-progress-bar"
 import { STORE_INFO } from "@/lib/constants"
-import { trackWhatsAppConversion } from "@/lib/analytics"
+import { trackWhatsAppConversion, trackSearch } from "@/lib/analytics"
 
 export function Navigation() {
   const [isOpen, setIsOpen] = useState(false)

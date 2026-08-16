@@ -145,3 +145,77 @@ class Review(models.Model):
     def __str__(self):
         name = self.user_name or 'Anonymous'
         return f"{name} - {self.product.name} ({self.rating}★)"
+
+
+class AnalyticsEvent(models.Model):
+    EVENT_CHOICES = (
+        ('page_view', 'Page View'),
+        ('product_view', 'Product View'),
+        ('search', 'Search Query'),
+        ('wishlist_add', 'Wishlist Addition'),
+        ('whatsapp_click', 'WhatsApp Conversion Click'),
+        ('contact_submit', 'Contact Inquiry Submitted'),
+    )
+
+    event_type = models.CharField(max_length=50, choices=EVENT_CHOICES, db_index=True)
+    product = models.ForeignKey(
+        Product,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='analytics_events',
+        help_text="Associated product if this is a product-level event."
+    )
+    product_name = models.CharField(
+        max_length=255,
+        blank=True,
+        default='',
+        help_text="Snapshot of the product name at the time of the event."
+    )
+    path = models.CharField(
+        max_length=500,
+        blank=True,
+        default='',
+        help_text="URL path or full page where the event originated."
+    )
+    search_query = models.CharField(
+        max_length=255,
+        blank=True,
+        default='',
+        help_text="Search term submitted by the customer."
+    )
+    source = models.CharField(
+        max_length=100,
+        blank=True,
+        default='',
+        help_text="Specific CTA source or UI component (e.g. navbar, product_detail, sticky_bar, wishlist)."
+    )
+    session_id = models.CharField(
+        max_length=100,
+        blank=True,
+        default='',
+        db_index=True,
+        help_text="Anonymous visitor session identifier (privacy-safe, no personal data)."
+    )
+    metadata = models.JSONField(
+        default=dict,
+        blank=True,
+        help_text="Additional non-PII contextual details (e.g., selected size, quantity, filter categories)."
+    )
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+
+    class Meta:
+        verbose_name = 'Analytics Event'
+        verbose_name_plural = 'Analytics Events'
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['event_type', '-created_at']),
+            models.Index(fields=['product', '-created_at']),
+            models.Index(fields=['session_id', '-created_at']),
+        ]
+
+    def __str__(self):
+        target = f" - {self.product_name or (self.product.name if self.product else '')}" if self.product_name or self.product else ""
+        if self.search_query:
+            target = f" - \"{self.search_query}\""
+        return f"[{self.get_event_type_display()}] {self.path or self.source}{target} ({self.created_at.strftime('%Y-%m-%d %H:%M')})"

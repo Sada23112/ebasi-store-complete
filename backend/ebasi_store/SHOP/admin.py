@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.utils.html import format_html
-from .models import Category, Product, ProductImage, ProductVideo, Review
+from .models import Category, Product, ProductImage, ProductVideo, Review, AnalyticsEvent
 
 
 class ProductImageInline(admin.TabularInline):
@@ -134,6 +134,87 @@ class ReviewAdmin(admin.ModelAdmin):
     def display_name(self, obj):
         return obj.user_name or 'Anonymous'
     display_name.short_description = 'Reviewer'
+
+
+@admin.register(AnalyticsEvent)
+class AnalyticsEventAdmin(admin.ModelAdmin):
+    list_display = [
+        'event_type_badge',
+        'display_target',
+        'path',
+        'source',
+        'session_id_short',
+        'created_at',
+    ]
+    list_filter = ['event_type', 'source', 'created_at']
+    search_fields = ['path', 'search_query', 'product_name', 'product__name', 'source', 'session_id']
+    date_hierarchy = 'created_at'
+    readonly_fields = [
+        'event_type',
+        'product',
+        'product_name',
+        'path',
+        'search_query',
+        'source',
+        'session_id',
+        'metadata_formatted',
+        'created_at',
+    ]
+    fields = [
+        'event_type',
+        'created_at',
+        'product',
+        'product_name',
+        'path',
+        'search_query',
+        'source',
+        'session_id',
+        'metadata_formatted',
+    ]
+    list_per_page = 50
+
+    def has_add_permission(self, request):
+        return False
+
+    def event_type_badge(self, obj):
+        colors = {
+            'whatsapp_click': '#16a34a',
+            'product_view': '#2563eb',
+            'search': '#9333ea',
+            'wishlist_add': '#e11d48',
+            'page_view': '#64748b',
+            'contact_submit': '#d97706',
+        }
+        color = colors.get(obj.event_type, '#64748b')
+        return format_html(
+            '<span style="background-color: {}; color: #fff; padding: 3px 8px; border-radius: 9999px; font-size: 11px; font-weight: 600; text-transform: uppercase;">{}</span>',
+            color,
+            obj.get_event_type_display()
+        )
+    event_type_badge.short_description = 'Event Type'
+
+    def display_target(self, obj):
+        if obj.product:
+            return format_html('<a href="{}">{}</a>', obj.product.get_absolute_url(), obj.product_name or obj.product.name)
+        if obj.product_name:
+            return obj.product_name
+        if obj.search_query:
+            return format_html('Query: <em>"{}"</em>', obj.search_query)
+        return "-"
+    display_target.short_description = 'Product / Query'
+
+    def session_id_short(self, obj):
+        if not obj.session_id:
+            return "-"
+        return obj.session_id[:10] + "..." if len(obj.session_id) > 10 else obj.session_id
+    session_id_short.short_description = 'Session'
+
+    def metadata_formatted(self, obj):
+        if not obj.metadata:
+            return "No additional metadata"
+        import json
+        return format_html('<pre style="background: #f8fafc; padding: 10px; border-radius: 6px; font-size: 12px;">{}</pre>', json.dumps(obj.metadata, indent=2))
+    metadata_formatted.short_description = 'Event Metadata'
 
 
 # Unregister technical framework models from Django Admin interface for store owner cleanliness

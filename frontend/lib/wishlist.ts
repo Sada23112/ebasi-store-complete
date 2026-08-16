@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import api from '@/lib/api'
+import { trackWishlistAdd } from '@/lib/analytics'
 
 export interface WishlistItem {
   id: number
@@ -62,6 +63,7 @@ export async function toggleWishlistItem(product: WishlistItem): Promise<boolean
       },
       ...current,
     ]
+    trackWishlistAdd(product)
   }
 
   saveLocalWishlist(updated)

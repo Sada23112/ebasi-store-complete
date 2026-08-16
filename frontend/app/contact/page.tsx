@@ -10,7 +10,7 @@ import { useState } from "react"
 import { Facebook, Instagram, Loader2 } from "lucide-react"
 import { ScrollReveal } from "@/components/scroll-reveal"
 import { STORE_INFO } from "@/lib/constants"
-import { trackWhatsAppConversion } from "@/lib/analytics"
+import { trackWhatsAppConversion, trackContactSubmit } from "@/lib/analytics"
 
 export default function ContactPage() {
   const { toast } = useToast()
@@ -29,6 +29,7 @@ export default function ContactPage() {
 
     try {
       await api.submitContactForm(formData)
+      trackContactSubmit(formData.subject)
 
       toast({
         title: "Message Sent",

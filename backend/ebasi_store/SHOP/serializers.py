@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Category, Product, ProductImage, ProductVideo, Review
+from .models import Category, Product, ProductImage, ProductVideo, Review, AnalyticsEvent
 from django.db.models import Avg
 from django.conf import settings
 import logging
@@ -152,3 +152,28 @@ class ProductDetailSerializer(serializers.ModelSerializer):
         if count is None:
             count = obj.reviews.count()
         return count
+
+
+class AnalyticsEventSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AnalyticsEvent
+        fields = [
+            'id',
+            'event_type',
+            'product',
+            'product_name',
+            'path',
+            'search_query',
+            'source',
+            'session_id',
+            'metadata',
+            'created_at',
+        ]
+        read_only_fields = ['id', 'created_at']
+
+    def create(self, validated_data):
+        # Auto-fill product_name from product instance if not provided
+        product = validated_data.get('product')
+        if product and not validated_data.get('product_name'):
+            validated_data['product_name'] = product.name
+        return super().create(validated_data)

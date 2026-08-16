@@ -10,4 +10,6 @@ urlpatterns = [
     path('products/<slug:slug>/', views.ProductDetailView.as_view(), name='product-detail'),
     path('products/<slug:slug>/reviews/', views.ReviewListCreateView.as_view(), name='product-reviews'),
     path('categories/<slug:category_slug>/products/', views.CategoryProductsView.as_view(), name='category-products'),
+    path('analytics/track/', views.TrackAnalyticsEventView.as_view(), name='track-analytics-event'),
+    path('analytics/events/', views.TrackAnalyticsEventView.as_view(), name='track-analytics-events'),
 ]

@@ -2,8 +2,8 @@ from rest_framework import generics, filters, permissions, status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
-from .models import Category, Product, Review, ProductImage
-from .serializers import CategorySerializer, ProductListSerializer, ProductDetailSerializer, ReviewSerializer
+from .models import Category, Product, Review, ProductImage, AnalyticsEvent
+from .serializers import CategorySerializer, ProductListSerializer, ProductDetailSerializer, ReviewSerializer, AnalyticsEventSerializer
 from django.db.models import Q, Count, Avg, Prefetch
 from accounts.views import SensitiveAnonThrottle, SensitiveUserThrottle
 
@@ -150,3 +150,25 @@ class ReviewListCreateView(generics.ListCreateAPIView):
         slug = self.kwargs['slug']
         product = get_object_or_404(Product, slug=slug, is_active=True)
         serializer.save(product=product)
+
+
+class TrackAnalyticsEventView(generics.CreateAPIView):
+    """
+    Records customer-behavior analytics events (page_view, product_view, search,
+    wishlist_add, whatsapp_click, contact_submit) for store insights in Django Admin.
+    """
+    queryset = AnalyticsEvent.objects.all()
+    serializer_class = AnalyticsEventSerializer
+    permission_classes = [permissions.AllowAny]
+
+    def create(self, request, *args, **kwargs):
+        data = request.data
+        if isinstance(data, list):
+            serializer = self.get_serializer(data=data, many=True)
+            serializer.is_valid(raise_exception=True)
+            self.perform_create(serializer)
+            return Response(
+                {'status': 'recorded', 'count': len(serializer.data)},
+                status=status.HTTP_201_CREATED
+            )
+        return super().create(request, *args, **kwargs)

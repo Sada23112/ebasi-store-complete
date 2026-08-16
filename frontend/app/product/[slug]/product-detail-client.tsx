@@ -31,7 +31,7 @@ import api from "@/lib/api"
 import { getAbsoluteImageUrl, getBadgeInfo, cn } from "@/lib/utils"
 import { ProductGallery } from "@/components/product-gallery"
 import { STORE_INFO } from "@/lib/constants"
-import { trackWhatsAppConversion } from "@/lib/analytics"
+import { trackWhatsAppConversion, trackProductView } from "@/lib/analytics"
 
 const SIZES = ["Free Size / Standard", "Unstitched", "S", "M", "L", "XL", "XXL"]
 
@@ -93,6 +93,18 @@ export function ProductDetailClient({ slug, initialProduct }: ProductDetailClien
       fetchData()
     }
   }, [slug])
+
+  useEffect(() => {
+    if (product && product.name) {
+      trackProductView({
+        id: product.id,
+        slug: product.slug || slug,
+        name: product.name,
+        price: product.price,
+        category: product.category?.name || product.category,
+      })
+    }
+  }, [product?.id, slug])
 
   const mediaItems = product ? [
     ...(product.images || []).map((img: any) => ({

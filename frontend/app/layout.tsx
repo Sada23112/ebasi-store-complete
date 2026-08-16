@@ -5,6 +5,7 @@ import { Analytics } from "@vercel/analytics/next"
 import { Suspense } from "react"
 import "./globals.css"
 import { STORE_INFO } from "@/lib/constants"
+import { AnalyticsTracker } from "@/components/analytics-tracker"
 
 const cormorant = Cormorant_Garamond({
   subsets: ["latin"],
@@ -152,6 +153,9 @@ export default function RootLayout({
         </a>
         <NavigationProgressBar />
         <Navigation />
+        <Suspense fallback={null}>
+          <AnalyticsTracker />
+        </Suspense>
         <Suspense fallback={null}>
           <div id="main-content" tabIndex={-1} className="focus:outline-none">
             {children}

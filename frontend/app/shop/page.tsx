@@ -20,6 +20,7 @@ import { getAbsoluteImageUrl, getBadgeInfo } from "@/lib/utils"
 import { API_BASE_URL } from "@/lib/constants"
 import { api } from "@/lib/api"
 import { useWishlist } from "@/lib/wishlist"
+import { trackSearch } from "@/lib/analytics"
 
 const BADGES = [
   { key: "All", label: "All Badges" },
@@ -228,7 +229,10 @@ function ShopContent() {
     const catParam = searchParams.get("category") || "All"
     const badgeParam = searchParams.get("badge") || "All"
 
-    if (qParam) setSearchQuery(qParam)
+    if (qParam) {
+      setSearchQuery(qParam)
+      trackSearch(qParam, { source: "shop_query" })
+    }
     if (catParam) setSelectedCategory(catParam)
     if (badgeParam) setSelectedBadge(badgeParam)
 
