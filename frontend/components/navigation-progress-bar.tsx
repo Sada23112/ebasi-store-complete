@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState, useRef, useCallback } from "react"
+import { useEffect, useState, useRef, useCallback, Suspense } from "react"
 import { usePathname, useSearchParams } from "next/navigation"
 
 export function triggerNavigationStart() {
@@ -9,7 +9,7 @@ export function triggerNavigationStart() {
   }
 }
 
-export function NavigationProgressBar() {
+function NavigationProgressBarInner() {
   const pathname = usePathname()
   const searchParams = useSearchParams()
 
@@ -173,5 +173,13 @@ export function NavigationProgressBar() {
         }}
       />
     </div>
+  )
+}
+
+export function NavigationProgressBar() {
+  return (
+    <Suspense fallback={null}>
+      <NavigationProgressBarInner />
+    </Suspense>
   )
 }
