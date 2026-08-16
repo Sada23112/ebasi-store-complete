@@ -179,14 +179,15 @@ class EbasiAPI {
       });
       const queryString = queryParams.toString();
       const url = `${API_BASE_URL}/products/${queryString ? `?${queryString}` : ''}`;
-      console.log('Fetching products from:', url);
       const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error(`API error (${response.status}): ${response.statusText}`);
+      }
       const data = await response.json();
-      console.log('Products data:', data);
       return data;
     } catch (error) {
-      console.error('API Error:', error);
-      return { results: [], count: 0 };
+      console.error('API Error in getProducts:', error);
+      throw error;
     }
   }
 
@@ -195,7 +196,6 @@ class EbasiAPI {
       const response = await fetch(`${API_BASE_URL}/products/?search=${encodeURIComponent(query)}`);
       if (!response.ok) return [];
       const data = await response.json();
-      // Handle pagination if present
       return Array.isArray(data) ? data : (data.results || []);
     } catch (error) {
       console.error('Search API Error:', error);
@@ -206,21 +206,25 @@ class EbasiAPI {
   async getProductBySlug(slug) {
     try {
       const response = await fetch(`${API_BASE_URL}/products/${slug}/`);
-      if (!response.ok) return null;
+      if (response.status === 404) {
+        return null;
+      }
+      if (!response.ok) {
+        throw new Error(`API error (${response.status}): ${response.statusText}`);
+      }
       return await response.json();
     } catch (error) {
-      console.error('Product Error:', error);
-      return null;
+      console.error('Product Error in getProductBySlug:', error);
+      throw error;
     }
   }
 
   async getCategories() {
     try {
-      console.log('Fetching categories from:', `${API_BASE_URL}/categories/`);
       const response = await fetch(`${API_BASE_URL}/categories/`);
+      if (!response.ok) return [];
       const data = await response.json();
-      console.log('Categories data:', data);
-      return data;
+      return Array.isArray(data) ? data : (data.results || []);
     } catch (error) {
       console.error('Categories API Error:', error);
       return [];
@@ -230,8 +234,10 @@ class EbasiAPI {
   async getFeaturedProducts() {
     try {
       const response = await fetch(`${API_BASE_URL}/products/featured/`);
+      if (!response.ok) return { results: [] };
       return await response.json();
     } catch (error) {
+      console.error('Featured Products API Error:', error);
       return { results: [] };
     }
   }

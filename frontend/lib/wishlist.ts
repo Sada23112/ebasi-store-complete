@@ -18,7 +18,10 @@ export function getLocalWishlist(): WishlistItem[] {
   if (typeof window === 'undefined') return []
   try {
     const data = localStorage.getItem(WISHLIST_KEY)
-    return data ? JSON.parse(data) : []
+    if (!data) return []
+    const parsed = JSON.parse(data)
+    if (!Array.isArray(parsed)) return []
+    return parsed.filter(item => item && typeof item === 'object' && item.id != null)
   } catch (err) {
     console.error('Error reading wishlist from localStorage:', err)
     return []
@@ -28,7 +31,8 @@ export function getLocalWishlist(): WishlistItem[] {
 export function saveLocalWishlist(items: WishlistItem[]) {
   if (typeof window === 'undefined') return
   try {
-    localStorage.setItem(WISHLIST_KEY, JSON.stringify(items))
+    const sanitized = Array.isArray(items) ? items.filter(item => item && item.id != null) : []
+    localStorage.setItem(WISHLIST_KEY, JSON.stringify(sanitized))
     window.dispatchEvent(new Event('wishlist-updated'))
   } catch (err) {
     console.error('Error saving wishlist to localStorage:', err)
@@ -36,6 +40,8 @@ export function saveLocalWishlist(items: WishlistItem[]) {
 }
 
 export async function toggleWishlistItem(product: WishlistItem): Promise<boolean> {
+  if (!product || product.id == null) return false
+
   const current = getLocalWishlist()
   const exists = current.some(item => item.id === product.id)
   let updated: WishlistItem[]
@@ -46,12 +52,12 @@ export async function toggleWishlistItem(product: WishlistItem): Promise<boolean
     updated = [
       {
         id: product.id,
-        name: product.name,
-        slug: product.slug,
-        price: product.price,
+        name: product.name || "Traditional Item",
+        slug: product.slug || String(product.id),
+        price: product.price ?? 0,
         compare_price: product.compare_price,
-        primary_image: product.primary_image,
-        stock_status: product.stock_status,
+        primary_image: product.primary_image || null,
+        stock_status: product.stock_status || "in_stock",
         category: product.category,
       },
       ...current,

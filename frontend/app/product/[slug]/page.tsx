@@ -148,8 +148,10 @@ export default function ProductDetailPage() {
       return `https://wa.me/917399291242?text=${encodeURIComponent(message)}`
     }
 
-    const totalPrice = (parseFloat(product.price) * quantity).toLocaleString('en-IN')
-    let message = `Hi EBASI STORE! 👋\n\nI would like to order:\n\n*Product:* ${product.name}\n*Price:* ₹${product.price} each\n*Size:* ${selectedSize}\n`
+    const parsedPrice = parseFloat(String(product.price || 0))
+    const validPrice = !isNaN(parsedPrice) ? parsedPrice : 0
+    const totalPrice = (validPrice * quantity).toLocaleString('en-IN')
+    let message = `Hi EBASI STORE! 👋\n\nI would like to order:\n\n*Product:* ${product.name || 'Product'}\n*Price:* ₹${validPrice} each\n*Size:* ${selectedSize}\n`
 
     if (customNote.trim()) {
       message += `*Note/Color:* ${customNote.trim()}\n`
@@ -166,7 +168,7 @@ export default function ProductDetailPage() {
 
   const handleSubmitReview = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!reviewComment.trim() || reviewRating < 1) return
+    if (submittingReview || !reviewComment.trim() || reviewRating < 1) return
 
     setSubmittingReview(true)
     setReviewError("")

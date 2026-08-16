@@ -25,6 +25,57 @@ interface ProductGalleryProps {
     productName: string
 }
 
+function GalleryThumbnail({
+    item,
+    index,
+    isCurrent,
+    onClick,
+    onHover,
+}: {
+    item: MediaItem
+    index: number
+    isCurrent: boolean
+    onClick: () => void
+    onHover: () => void
+}) {
+    const [imgSrc, setImgSrc] = React.useState(item.url)
+
+    return (
+        <button
+            onClick={onClick}
+            onMouseEnter={onHover}
+            className={cn(
+                "relative flex-shrink-0 w-16 h-16 sm:w-20 sm:h-20 rounded-lg sm:rounded-xl overflow-hidden border-2 transition-all duration-300 cursor-pointer active:scale-95",
+                isCurrent
+                    ? "border-primary ring-2 ring-primary/30 shadow-md scale-105"
+                    : "border-transparent opacity-70 hover:opacity-100 hover:border-border hover:scale-100"
+            )}
+        >
+            {item.type === "image" ? (
+                <Image
+                    src={imgSrc}
+                    alt={`Thumbnail ${index + 1}`}
+                    fill
+                    className="object-cover transition-transform duration-500 hover:scale-110"
+                    onError={() => setImgSrc("/images/placeholders/placeholder.svg")}
+                />
+            ) : (
+                <div className="relative w-full h-full bg-gray-900 flex items-center justify-center">
+                    {item.thumbnail ? (
+                        <Image
+                            src={item.thumbnail}
+                            alt={`Video Thumbnail ${index + 1}`}
+                            fill
+                            className="object-cover opacity-70"
+                        />
+                    ) : null}
+                    <Play className="h-5 w-5 sm:h-6 sm:w-6 text-white absolute" fill="white" />
+                </div>
+            )}
+        </button>
+    )
+}
+
 export function ProductGallery({ mediaItems, productName }: ProductGalleryProps) {
     const [api, setApi] = React.useState<CarouselApi>()
     const [current, setCurrent] = React.useState(0)
@@ -61,38 +112,14 @@ export function ProductGallery({ mediaItems, productName }: ProductGalleryProps)
             {mediaItems.length > 1 && (
                 <div className="flex md:flex-col gap-2.5 sm:gap-3 overflow-x-auto md:overflow-y-auto md:w-24 md:max-h-[500px] scrollbar-hide px-0.5 py-0.5">
                     {mediaItems.map((item, index) => (
-                        <button
+                        <GalleryThumbnail
                             key={index}
+                            item={item}
+                            index={index}
+                            isCurrent={current === index}
                             onClick={() => handleThumbnailClick(index)}
-                            onMouseEnter={() => handleThumbnailHover(index)}
-                            className={cn(
-                                "relative flex-shrink-0 w-16 h-16 sm:w-20 sm:h-20 rounded-lg sm:rounded-xl overflow-hidden border-2 transition-all duration-300 cursor-pointer active:scale-95",
-                                current === index
-                                    ? "border-primary ring-2 ring-primary/30 shadow-md scale-105"
-                                    : "border-transparent opacity-70 hover:opacity-100 hover:border-border hover:scale-100"
-                            )}
-                        >
-                            {item.type === "image" ? (
-                                <Image
-                                    src={item.url}
-                                    alt={`Thumbnail ${index + 1}`}
-                                    fill
-                                    className="object-cover transition-transform duration-500 hover:scale-110"
-                                />
-                            ) : (
-                                <div className="relative w-full h-full bg-gray-900 flex items-center justify-center">
-                                    {item.thumbnail ? (
-                                        <Image
-                                            src={item.thumbnail}
-                                            alt={`Video Thumbnail ${index + 1}`}
-                                            fill
-                                            className="object-cover opacity-70"
-                                        />
-                                    ) : null}
-                                    <Play className="h-5 w-5 sm:h-6 sm:w-6 text-white absolute" fill="white" />
-                                </div>
-                            )}
-                        </button>
+                            onHover={() => handleThumbnailHover(index)}
+                        />
                     ))}
                 </div>
             )}
