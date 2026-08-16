@@ -2,6 +2,7 @@
 
 import { Card, CardContent } from "@/components/ui/card"
 import Link from "next/link"
+import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { ScrollReveal } from "@/components/scroll-reveal"
 
@@ -44,11 +45,13 @@ export default function AboutPage() {
                     selected pieces that honor our cultural roots while embracing contemporary aesthetics.
                   </p>
                 </div>
-                <div className="relative">
-                  <img
-                    src="/images/placeholders/placeholder.svg?height=500&width=600"
+                <div className="relative w-full h-96 overflow-hidden rounded-2xl shadow-lg bg-muted">
+                  <Image
+                    src="/images/placeholders/placeholder.svg"
                     alt="Our Story"
-                    className="w-full h-96 object-cover rounded-2xl shadow-lg"
+                    fill
+                    sizes="(max-width: 1024px) 100vw, 50vw"
+                    className="object-cover rounded-2xl"
                   />
                 </div>
               </div>
@@ -131,11 +134,15 @@ export default function AboutPage() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               <ScrollReveal delay={100} direction="up">
                 <div className="text-center">
-                  <img
-                    src="/images/placeholders/placeholder.svg?height=300&width=300"
-                    alt="Founder"
-                    className="w-48 h-48 object-cover rounded-full mx-auto mb-6 shadow-lg"
-                  />
+                  <div className="relative w-48 h-48 mx-auto mb-6 rounded-full overflow-hidden shadow-lg bg-muted">
+                    <Image
+                      src="/images/placeholders/placeholder.svg"
+                      alt="Founder"
+                      fill
+                      sizes="192px"
+                      className="object-cover rounded-full"
+                    />
+                  </div>
                   <h3 className="font-serif text-xl font-semibold text-foreground mb-2">Priya Sharma</h3>
                   <p className="text-primary font-medium mb-3">Founder & CEO</p>
                   <p className="text-muted-foreground text-sm leading-relaxed">
@@ -147,11 +154,15 @@ export default function AboutPage() {
 
               <ScrollReveal delay={200} direction="up">
                 <div className="text-center">
-                  <img
-                    src="/images/placeholders/placeholder.svg?height=300&width=300"
-                    alt="Creative Director"
-                    className="w-48 h-48 object-cover rounded-full mx-auto mb-6 shadow-lg"
-                  />
+                  <div className="relative w-48 h-48 mx-auto mb-6 rounded-full overflow-hidden shadow-lg bg-muted">
+                    <Image
+                      src="/images/placeholders/placeholder.svg"
+                      alt="Creative Director"
+                      fill
+                      sizes="192px"
+                      className="object-cover rounded-full"
+                    />
+                  </div>
                   <h3 className="font-serif text-xl font-semibold text-foreground mb-2">Anita Desai</h3>
                   <p className="text-primary font-medium mb-3">Creative Director</p>
                   <p className="text-muted-foreground text-sm leading-relaxed">
@@ -163,11 +174,15 @@ export default function AboutPage() {
 
               <ScrollReveal delay={300} direction="up">
                 <div className="text-center">
-                  <img
-                    src="/images/placeholders/placeholder.svg?height=300&width=300"
-                    alt="Operations Manager"
-                    className="w-48 h-48 object-cover rounded-full mx-auto mb-6 shadow-lg"
-                  />
+                  <div className="relative w-48 h-48 mx-auto mb-6 rounded-full overflow-hidden shadow-lg bg-muted">
+                    <Image
+                      src="/images/placeholders/placeholder.svg"
+                      alt="Operations Manager"
+                      fill
+                      sizes="192px"
+                      className="object-cover rounded-full"
+                    />
+                  </div>
                   <h3 className="font-serif text-xl font-semibold text-foreground mb-2">Rajesh Kumar</h3>
                   <p className="text-primary font-medium mb-3">Operations Manager</p>
                   <p className="text-muted-foreground text-sm leading-relaxed">

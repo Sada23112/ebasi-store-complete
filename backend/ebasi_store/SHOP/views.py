@@ -90,14 +90,30 @@ class ProductListView(generics.ListAPIView):
 
 
 class ProductDetailView(generics.RetrieveAPIView):
-    queryset = Product.objects.filter(is_active=True)
     serializer_class = ProductDetailSerializer
     lookup_field = 'slug'
 
+    def get_queryset(self):
+        return Product.objects.filter(is_active=True).select_related('category').annotate(
+            annotated_review_count=Count('reviews', distinct=True),
+            annotated_avg_rating=Avg('reviews__rating')
+        ).prefetch_related(
+            Prefetch('images', queryset=ProductImage.objects.order_by('-is_primary', 'order')),
+            'videos',
+            'reviews'
+        )
+
 
 class FeaturedProductsView(generics.ListAPIView):
-    queryset = Product.objects.filter(is_active=True, is_featured=True).order_by('-created_at')
     serializer_class = ProductListSerializer
+
+    def get_queryset(self):
+        return Product.objects.filter(is_active=True, is_featured=True).select_related('category').annotate(
+            annotated_review_count=Count('reviews', distinct=True),
+            annotated_avg_rating=Avg('reviews__rating')
+        ).prefetch_related(
+            Prefetch('images', queryset=ProductImage.objects.order_by('-is_primary', 'order'))
+        ).order_by('-created_at')
 
 
 class CategoryProductsView(generics.ListAPIView):
@@ -109,7 +125,12 @@ class CategoryProductsView(generics.ListAPIView):
             is_active=True,
             category__slug=category_slug,
             category__is_active=True
-        )
+        ).select_related('category').annotate(
+            annotated_review_count=Count('reviews', distinct=True),
+            annotated_avg_rating=Avg('reviews__rating')
+        ).prefetch_related(
+            Prefetch('images', queryset=ProductImage.objects.order_by('-is_primary', 'order'))
+        ).order_by('-created_at')
 
 
 class ReviewListCreateView(generics.ListCreateAPIView):

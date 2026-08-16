@@ -42,6 +42,7 @@ export function ZoomableImage({ src, alt, width, height, className, priority = f
                 src={currentSrc}
                 alt={alt}
                 fill
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 600px"
                 className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.02]"
                 priority={priority}
                 onError={() => setCurrentSrc("/images/placeholders/placeholder.svg")}

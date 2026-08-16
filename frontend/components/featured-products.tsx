@@ -129,6 +129,7 @@ export function FeaturedProducts() {
                           alt={product.name}
                           width={400}
                           height={500}
+                          sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
                           className="w-full h-44 sm:h-80 object-cover rounded-t-xl sm:rounded-t-2xl"
                         />
                         

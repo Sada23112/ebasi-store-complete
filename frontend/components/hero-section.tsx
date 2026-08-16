@@ -2,6 +2,7 @@
 
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
+import Image from "next/image"
 import { Instagram, ArrowRight, Sparkles } from "lucide-react"
 
 export function HeroSection() {
@@ -60,11 +61,14 @@ export function HeroSection() {
           <div className="relative animate-scale-in animate-stagger-3 mt-4 lg:mt-0">
             <div className="absolute inset-0 bg-gradient-to-tr from-primary/20 to-transparent blur-3xl opacity-50 transform -rotate-6 scale-105" />
             
-            <div className="relative overflow-hidden rounded-2xl premium-shadow ring-1 ring-black/5 bg-muted group cursor-pointer">
-              <img
-                src="https://images.unsplash.com/photo-1483985988355-763728e1935b?q=80&w=2070&auto=format&fit=crop"
+            <div className="relative overflow-hidden rounded-2xl premium-shadow ring-1 ring-black/5 bg-muted group cursor-pointer w-full h-[320px] xs:h-[380px] sm:h-[480px] lg:h-[540px]">
+              <Image
+                src="https://images.unsplash.com/photo-1483985988355-763728e1935b?q=80&w=1200&auto=format&fit=crop"
                 alt="New Season Collection"
-                className="w-full h-[320px] xs:h-[380px] sm:h-[480px] lg:h-[540px] object-cover transition-transform duration-1000 ease-out group-hover:scale-[1.04]"
+                fill
+                priority
+                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 600px"
+                className="object-cover transition-transform duration-1000 ease-out group-hover:scale-[1.04]"
               />
               
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent opacity-80 transition-opacity duration-500 group-hover:opacity-90" />

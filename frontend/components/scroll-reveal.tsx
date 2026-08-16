@@ -23,6 +23,12 @@ export function ScrollReveal({
     const element = ref.current
     if (!element) return
 
+    // Immediately reveal if user prefers reduced motion
+    if (typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      setIsVisible(true)
+      return
+    }
+
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
@@ -31,8 +37,8 @@ export function ScrollReveal({
         }
       },
       {
-        threshold: 0.1,
-        rootMargin: "0px 0px -40px 0px",
+        threshold: 0.05,
+        rootMargin: "0px 0px -20px 0px",
       }
     )
 
@@ -67,7 +73,8 @@ export function ScrollReveal({
       ref={ref}
       style={{ transitionDelay: `${delay}ms` }}
       className={cn(
-        "transition-all duration-700 ease-out will-change-transform",
+        "transition-all duration-700 ease-out",
+        !isVisible && "will-change-transform",
         getDirectionClass(),
         className
       )}

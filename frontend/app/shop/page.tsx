@@ -18,6 +18,7 @@ import { ProductGridSkeleton } from "@/components/skeletons"
 import Link from "next/link"
 import { getAbsoluteImageUrl, getBadgeInfo } from "@/lib/utils"
 import { API_BASE_URL } from "@/lib/constants"
+import { api } from "@/lib/api"
 import { useWishlist } from "@/lib/wishlist"
 
 const BADGES = [
@@ -231,9 +232,8 @@ function ShopContent() {
 
     async function fetchCategories() {
       try {
-        const response = await fetch(`${API_BASE_URL}/categories/`)
-        if (response.ok) {
-          const data = await response.json()
+        const data = await api.getCategories()
+        if (Array.isArray(data) && data.length > 0) {
           setCategories([{ name: "All", slug: "All" }, ...data])
         }
       } catch (error) {
@@ -545,6 +545,7 @@ function ShopContent() {
                                 alt={product.name}
                                 width={400}
                                 height={500}
+                                sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
                                 className={cn(
                                   "w-full h-full object-cover",
                                   viewMode === "list" ? "rounded-t-2xl sm:rounded-l-2xl sm:rounded-tr-none" : "rounded-t-2xl"

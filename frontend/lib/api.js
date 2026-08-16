@@ -219,15 +219,27 @@ class EbasiAPI {
     }
   }
 
+  _categoriesCache = null;
+  _categoriesCacheTime = 0;
+
   async getCategories() {
+    const now = Date.now();
+    // Cache for 5 minutes (300,000 ms)
+    if (this._categoriesCache && (now - this._categoriesCacheTime < 300000)) {
+      return this._categoriesCache;
+    }
+
     try {
       const response = await fetch(`${API_BASE_URL}/categories/`);
-      if (!response.ok) return [];
+      if (!response.ok) return this._categoriesCache || [];
       const data = await response.json();
-      return Array.isArray(data) ? data : (data.results || []);
+      const list = Array.isArray(data) ? data : (data.results || []);
+      this._categoriesCache = list;
+      this._categoriesCacheTime = now;
+      return list;
     } catch (error) {
       console.error('Categories API Error:', error);
-      return [];
+      return this._categoriesCache || [];
     }
   }
 

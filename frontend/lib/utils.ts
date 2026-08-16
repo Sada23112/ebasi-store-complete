@@ -9,16 +9,23 @@ import { API_BASE_URL } from "@/lib/constants"
 
 export function getAbsoluteImageUrl(url: string | null | undefined): string {
   if (!url) return "/images/placeholders/placeholder.svg"
-  if (url.startsWith("http")) return url
   if (url.startsWith("data:")) return url
 
-  // Remove /api/v1 suffix if present to get the root URL
-  const baseUrl = API_BASE_URL.replace(/\/api\/v1\/?$/, "")
+  let absoluteUrl = url
+  if (!url.startsWith("http")) {
+    const baseUrl = API_BASE_URL.replace(/\/api\/v1\/?$/, "")
+    const path = url.startsWith("/") ? url : `/${url}`
+    absoluteUrl = `${baseUrl}${path}`
+  }
 
-  // Ensure url starts with / if not present
-  const path = url.startsWith("/") ? url : `/${url}`
+  // Cloudinary dynamic asset delivery optimization (avif/webp auto format + quality auto)
+  if (absoluteUrl.includes("res.cloudinary.com") && absoluteUrl.includes("/upload/")) {
+    if (!absoluteUrl.includes("/upload/f_auto") && !absoluteUrl.includes("/upload/q_auto")) {
+      absoluteUrl = absoluteUrl.replace("/upload/", "/upload/f_auto,q_auto/")
+    }
+  }
 
-  return `${baseUrl}${path}`
+  return absoluteUrl
 }
 
 export interface BadgeInfo {

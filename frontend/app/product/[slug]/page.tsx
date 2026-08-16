@@ -67,16 +67,14 @@ export default function ProductDetailPage() {
       const productData = await api.getProductBySlug(slug)
       if (productData && !productData.detail && productData.id) {
         setProduct(productData)
+        if (Array.isArray(productData.reviews)) {
+          setReviews(productData.reviews)
+        } else {
+          const reviewsData = await api.getProductReviews(slug)
+          setReviews(Array.isArray(reviewsData) ? reviewsData : (reviewsData?.results || []))
+        }
       } else {
         setProduct(null)
-      }
-
-      const reviewsData = await api.getProductReviews(slug)
-      if (Array.isArray(reviewsData)) {
-        setReviews(reviewsData)
-      } else if (reviewsData && Array.isArray(reviewsData.results)) {
-        setReviews(reviewsData.results)
-      } else {
         setReviews([])
       }
     } catch (err) {
