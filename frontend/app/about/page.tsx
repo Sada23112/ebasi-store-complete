@@ -185,7 +185,7 @@ export default function AboutPage() {
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <Link href="/shop">
-                  <Button className="bg-background text-foreground hover:bg-muted transition-colors font-medium h-auto py-3 px-8 text-base active:scale-95">
+                  <Button className="bg-background text-foreground hover:bg-muted transition-colors font-medium h-auto py-3 px-8 text-base active:scale-95 focus-visible:ring-2 focus-visible:ring-white">
                     Browse Collections
                   </Button>
                 </Link>
@@ -193,9 +193,10 @@ export default function AboutPage() {
                   href={STORE_INFO.whatsappUrl}
                   target="_blank"
                   rel="noopener noreferrer"
+                  aria-label="Chat with Ms Ebasi Store on WhatsApp"
                 >
-                  <Button variant="outline" className="border-white text-white hover:bg-white/10 transition-colors font-medium h-auto py-3 px-8 text-base active:scale-95 bg-transparent">
-                    <MessageCircle className="h-4 w-4 mr-2" />
+                  <Button variant="outline" className="border-white text-white hover:bg-white/10 transition-colors font-medium h-auto py-3 px-8 text-base active:scale-95 bg-transparent focus-visible:ring-2 focus-visible:ring-white">
+                    <MessageCircle className="h-4 w-4 mr-2" aria-hidden="true" />
                     Chat with Boutique
                   </Button>
                 </a>

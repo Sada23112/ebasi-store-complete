@@ -380,7 +380,7 @@ export function ProductDetailClient({ slug, initialProduct }: ProductDetailClien
                     </label>
                     <span className="text-xs text-primary font-medium">Size Guide</span>
                   </div>
-                  <div className="flex flex-wrap gap-2">
+                  <div className="flex flex-wrap gap-2" role="group" aria-label="Available sizing options">
                     {SIZES.map((size) => {
                       const isSelected = selectedSize === size
                       return (
@@ -389,9 +389,11 @@ export function ProductDetailClient({ slug, initialProduct }: ProductDetailClien
                           type="button"
                           variant={isSelected ? "default" : "outline"}
                           size="sm"
+                          aria-pressed={isSelected}
+                          aria-label={`Select size option: ${size}`}
                           onClick={() => setSelectedSize(size)}
                           className={cn(
-                            "transition-all duration-300 active:scale-95 text-xs sm:text-sm h-9 px-3.5",
+                            "transition-all duration-300 active:scale-95 text-xs sm:text-sm h-9 px-3.5 focus-visible:ring-2 focus-visible:ring-primary",
                             isSelected
                               ? "bg-primary text-primary-foreground font-semibold shadow-xs ring-2 ring-primary/30"
                               : "bg-transparent hover:border-primary/50 hover:bg-muted/30"
@@ -406,10 +408,11 @@ export function ProductDetailClient({ slug, initialProduct }: ProductDetailClien
 
               {/* Customization / Color note */}
               <div>
-                <label className="block text-sm font-medium text-foreground mb-1">
+                <label htmlFor="custom-color-note" className="block text-sm font-medium text-foreground mb-1">
                   Color / Customization Preference <span className="text-xs text-muted-foreground">(Optional)</span>
                 </label>
                 <Input
+                  id="custom-color-note"
                   type="text"
                   placeholder="e.g. Pink border, custom blouse size 38..."
                   value={customNote}
@@ -426,21 +429,25 @@ export function ProductDetailClient({ slug, initialProduct }: ProductDetailClien
                     <Button
                       size="icon"
                       variant="outline"
+                      aria-label="Decrease quantity"
                       onClick={() => setQuantity(Math.max(1, quantity - 1))}
                       disabled={quantity <= 1}
-                      className="bg-transparent h-10 w-10 active:scale-90 transition-transform"
+                      className="bg-transparent h-10 w-10 active:scale-90 transition-transform focus-visible:ring-2 focus-visible:ring-primary"
                     >
-                      <Minus className="h-4 w-4" />
+                      <Minus className="h-4 w-4" aria-hidden="true" />
                     </Button>
-                    <span className="w-12 text-center font-bold text-lg">{quantity}</span>
+                    <span className="w-12 text-center font-bold text-lg" aria-live="polite" aria-label={`Selected quantity ${quantity}`}>
+                      {quantity}
+                    </span>
                     <Button
                       size="icon"
                       variant="outline"
+                      aria-label="Increase quantity"
                       onClick={() => setQuantity(Math.min(product.stock_quantity || 10, quantity + 1))}
                       disabled={quantity >= (product.stock_quantity || 10)}
-                      className="bg-transparent h-10 w-10 active:scale-90 transition-transform"
+                      className="bg-transparent h-10 w-10 active:scale-90 transition-transform focus-visible:ring-2 focus-visible:ring-primary"
                     >
-                      <Plus className="h-4 w-4" />
+                      <Plus className="h-4 w-4" aria-hidden="true" />
                     </Button>
                   </div>
                 </div>
@@ -453,6 +460,7 @@ export function ProductDetailClient({ slug, initialProduct }: ProductDetailClien
                     href={getWhatsAppUrl()}
                     target="_blank"
                     rel="noopener noreferrer"
+                    aria-label={isOutOfStock ? "Inquire about restock on WhatsApp" : "Place order on WhatsApp"}
                     className="flex-1"
                   >
                     <Button
@@ -460,7 +468,7 @@ export function ProductDetailClient({ slug, initialProduct }: ProductDetailClien
                         isOutOfStock ? "bg-amber-600 hover:bg-amber-700" : "bg-green-600 hover:bg-green-700"
                       }`}
                     >
-                      <svg className="h-5 w-5 mr-2.5 shrink-0" viewBox="0 0 24 24" fill="currentColor">
+                      <svg className="h-5 w-5 mr-2.5 shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                         <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
                       </svg>
                       {isOutOfStock ? "Inquire Restock on WhatsApp" : "Order via WhatsApp"}
@@ -472,19 +480,26 @@ export function ProductDetailClient({ slug, initialProduct }: ProductDetailClien
                     size="lg"
                     variant={savedInWishlist ? "default" : "outline"}
                     onClick={handleWishlistClick}
+                    aria-label={savedInWishlist ? "Remove from wishlist" : "Add to wishlist"}
                     className={cn(
-                      "h-12 px-4 transition-all duration-300 active:scale-90",
+                      "h-12 px-4 transition-all duration-300 active:scale-90 focus-visible:ring-2 focus-visible:ring-primary",
                       savedInWishlist ? "bg-red-500 text-white hover:bg-red-600" : "bg-transparent",
                       poppingHeart && "animate-heart-pop"
                     )}
                     title={savedInWishlist ? "Remove from wishlist" : "Add to wishlist"}
                   >
-                    <Heart className={`h-5 w-5 ${savedInWishlist ? "fill-current" : ""}`} />
+                    <Heart className={`h-5 w-5 ${savedInWishlist ? "fill-current" : ""}`} aria-hidden="true" />
                   </Button>
 
                   {/* Share Button */}
-                  <Button size="lg" variant="outline" onClick={handleShare} className="h-12 px-4 bg-transparent transition-all active:scale-95">
-                    {isSharing ? <Check className="h-5 w-5 text-green-500" /> : <Share2 className="h-5 w-5" />}
+                  <Button
+                    size="lg"
+                    variant="outline"
+                    onClick={handleShare}
+                    aria-label="Share this product"
+                    className="h-12 px-4 bg-transparent transition-all active:scale-95 focus-visible:ring-2 focus-visible:ring-primary"
+                  >
+                    {isSharing ? <Check className="h-5 w-5 text-green-500" aria-hidden="true" /> : <Share2 className="h-5 w-5" aria-hidden="true" />}
                   </Button>
                 </div>
               </div>
@@ -553,10 +568,11 @@ export function ProductDetailClient({ slug, initialProduct }: ProductDetailClien
                       <h3 className="text-lg font-semibold mb-4 text-foreground">Write a Customer Review</h3>
                       <form onSubmit={handleSubmitReview} className="space-y-4">
                         <div>
-                          <label className="block text-sm font-medium text-muted-foreground mb-1">
-                            Your Name <span className="text-xs">(Optional)</span>
+                          <label htmlFor="review-name-input" className="block text-sm font-medium text-foreground mb-1">
+                            Your Name <span className="text-xs text-muted-foreground">(Optional)</span>
                           </label>
                           <Input
+                            id="review-name-input"
                             value={reviewName}
                             onChange={(e) => setReviewName(e.target.value)}
                             placeholder="e.g. Priyanshu Sharma"
@@ -565,38 +581,43 @@ export function ProductDetailClient({ slug, initialProduct }: ProductDetailClien
                         </div>
 
                         <div>
-                          <label className="block text-sm font-medium text-muted-foreground mb-1">
+                          <label className="block text-sm font-medium text-foreground mb-1">
                             Rating
                           </label>
-                          <div className="flex items-center gap-1">
+                          <div className="flex items-center gap-1" role="group" aria-label="Product rating out of 5 stars">
                             {[1, 2, 3, 4, 5].map((star) => (
                               <button
                                 key={star}
                                 type="button"
+                                aria-label={`Rate ${star} out of 5 stars`}
+                                aria-pressed={reviewRating === star}
                                 onClick={() => setReviewRating(star)}
                                 onMouseEnter={() => setReviewHover(star)}
                                 onMouseLeave={() => setReviewHover(0)}
-                                className="p-1 focus:outline-none transition-transform active:scale-90"
+                                className="p-1 focus-visible:ring-2 focus-visible:ring-primary rounded-md focus:outline-none transition-transform active:scale-90"
                               >
                                 <Star
                                   className={`h-6 w-6 transition-colors ${star <= (reviewHover || reviewRating)
                                     ? "fill-yellow-400 text-yellow-400"
                                     : "text-gray-300"
                                     }`}
+                                  aria-hidden="true"
                                 />
                               </button>
                             ))}
-                            <span className="ml-2 text-sm font-medium text-muted-foreground">
+                            <span className="ml-2 text-sm font-medium text-muted-foreground" aria-live="polite">
                               {reviewRating} / 5
                             </span>
                           </div>
                         </div>
 
                         <div>
-                          <label className="block text-sm font-medium text-muted-foreground mb-1">
-                            Your Review
+                          <label htmlFor="review-comment-input" className="block text-sm font-medium text-foreground mb-1">
+                            Your Review <span className="text-xs text-primary">*</span>
                           </label>
                           <Textarea
+                            id="review-comment-input"
+                            aria-required="true"
                             value={reviewComment}
                             onChange={(e) => setReviewComment(e.target.value)}
                             placeholder="Share your experience with this saree/fabric..."
@@ -606,10 +627,15 @@ export function ProductDetailClient({ slug, initialProduct }: ProductDetailClien
                         </div>
 
                         <div className="flex items-center gap-3">
-                          <Button type="submit" disabled={submittingReview || !reviewComment.trim()} className="active:scale-95 transition-all">
+                          <Button
+                            type="submit"
+                            disabled={submittingReview || !reviewComment.trim()}
+                            aria-busy={submittingReview}
+                            className="active:scale-95 transition-all focus-visible:ring-2 focus-visible:ring-primary"
+                          >
                             {submittingReview ? (
                               <>
-                                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                <Loader2 className="h-4 w-4 mr-2 animate-spin" aria-hidden="true" />
                                 Submitting...
                               </>
                             ) : (
@@ -617,13 +643,13 @@ export function ProductDetailClient({ slug, initialProduct }: ProductDetailClien
                             )}
                           </Button>
                           {reviewSuccess && (
-                            <span className="text-sm text-green-600 font-medium flex items-center gap-1 animate-fade-up">
-                              <Check className="h-4 w-4" /> Review submitted successfully!
+                            <span role="status" aria-live="polite" className="text-sm text-green-600 font-medium flex items-center gap-1 animate-fade-up">
+                              <Check className="h-4 w-4" aria-hidden="true" /> Review submitted successfully!
                             </span>
                           )}
                           {reviewError && (
-                            <span className="text-sm text-red-600 font-medium flex items-center gap-1 animate-fade-up">
-                              <AlertTriangle className="h-4 w-4 shrink-0" /> {reviewError}
+                            <span role="alert" aria-live="assertive" className="text-sm text-red-600 font-medium flex items-center gap-1 animate-fade-up">
+                              <AlertTriangle className="h-4 w-4 shrink-0" aria-hidden="true" /> {reviewError}
                             </span>
                           )}
                         </div>

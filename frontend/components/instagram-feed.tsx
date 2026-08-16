@@ -42,11 +42,12 @@ export function InstagramFeed() {
                 href={post.permalink}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="group relative overflow-hidden rounded-lg aspect-square block"
+                aria-label={post.caption ? `View Instagram post: ${post.caption.slice(0, 60)}` : "View Instagram post on traditional attire"}
+                className="group relative overflow-hidden rounded-lg aspect-square block focus-visible:ring-2 focus-visible:ring-primary"
               >
                 <Image
                   src={post.media_type === "VIDEO" ? (post.thumbnail_url || post.media_url) : post.media_url}
-                  alt={post.caption || "Instagram post"}
+                  alt={post.caption || "Ms Ebasi Store traditional attire look on Instagram"}
                   width={300}
                   height={300}
                   sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 16vw"
@@ -55,7 +56,7 @@ export function InstagramFeed() {
                 />
                 <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
                   <div className="text-white text-center p-2">
-                    <Instagram className="h-6 w-6 mx-auto mb-2" />
+                    <Instagram className="h-6 w-6 mx-auto mb-2" aria-hidden="true" />
                     <p className="text-xs line-clamp-2 mt-1 opacity-90">{post.caption}</p>
                   </div>
                 </div>
@@ -64,7 +65,7 @@ export function InstagramFeed() {
           </div>
         ) : (
           <div className="text-center py-12 text-muted-foreground">
-            <Instagram className="h-12 w-12 mx-auto mb-4 opacity-50" />
+            <Instagram className="h-12 w-12 mx-auto mb-4 opacity-50" aria-hidden="true" />
             <p className="text-lg">Follow us on Instagram {STORE_INFO.instagram.handle} to see our latest styles!</p>
           </div>
         )}
@@ -74,9 +75,10 @@ export function InstagramFeed() {
             href={STORE_INFO.instagram.url}
             target="_blank"
             rel="noopener noreferrer"
+            aria-label={`Follow ${STORE_INFO.instagram.handle} on Instagram`}
           >
-            <Button variant="outline" size="lg" className="px-8 bg-transparent hover:bg-primary hover:text-primary-foreground min-h-[44px]">
-              <Instagram className="h-4 w-4 mr-2" />
+            <Button variant="outline" size="lg" className="px-8 bg-transparent hover:bg-primary hover:text-primary-foreground min-h-[44px] focus-visible:ring-2 focus-visible:ring-primary">
+              <Instagram className="h-4 w-4 mr-2" aria-hidden="true" />
               Follow {STORE_INFO.instagram.handle}
             </Button>
           </a>

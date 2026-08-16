@@ -139,8 +139,9 @@ export function FeaturedProducts() {
                         <Button
                           variant="ghost"
                           size="icon"
+                          aria-label={saved ? `Remove ${product.name} from wishlist` : `Add ${product.name} to wishlist`}
                           className={cn(
-                            "absolute top-2 right-2 sm:top-3 sm:right-3 z-20 h-8 w-8 rounded-full bg-background/80 backdrop-blur-sm shadow-md transition-all active:scale-90 min-h-[36px] min-w-[36px] sm:min-h-0 sm:min-w-0",
+                            "absolute top-2 right-2 sm:top-3 sm:right-3 z-20 h-8 w-8 rounded-full bg-background/80 backdrop-blur-sm shadow-md transition-all active:scale-90 min-h-[36px] min-w-[36px] sm:min-h-0 sm:min-w-0 focus-visible:ring-2 focus-visible:ring-primary",
                             saved ? "text-red-500 hover:text-red-600" : "text-muted-foreground hover:text-foreground",
                             poppingId === product.id && "animate-heart-pop"
                           )}

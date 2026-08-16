@@ -96,7 +96,8 @@ export default function WishlistPage() {
                         <Button
                           variant="destructive"
                           size="icon"
-                          className="absolute top-3 right-3 h-10 w-10 min-h-[40px] min-w-[40px] rounded-full shadow-md opacity-90 hover:opacity-100"
+                          aria-label={`Remove ${item.name} from wishlist`}
+                          className="absolute top-3 right-3 h-10 w-10 min-h-[40px] min-w-[40px] rounded-full shadow-md opacity-90 hover:opacity-100 focus-visible:ring-2 focus-visible:ring-primary"
                           onClick={(e) => {
                             e.preventDefault()
                             e.stopPropagation()
@@ -104,7 +105,7 @@ export default function WishlistPage() {
                           }}
                           title="Remove from wishlist"
                         >
-                          <Trash2 className="h-4 w-4" />
+                          <Trash2 className="h-4 w-4" aria-hidden="true" />
                         </Button>
 
                         {item.stock_status === "out_of_stock" && (

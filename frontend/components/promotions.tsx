@@ -29,16 +29,16 @@ export function Promotions() {
                   Celebrate the season with our exclusive handpicked collection of traditional sarees and Mekhela Sadors.
                 </p>
                 <div className="flex items-center gap-2 mb-6 text-white/90">
-                  <Clock className="h-4 w-4" />
+                  <Clock className="h-4 w-4" aria-hidden="true" />
                   <span className="text-sm">Available while stocks last</span>
                 </div>
                 <Link href="/shop">
-                  <Button variant="secondary" size="lg" className="font-bold transition-all duration-300 active:scale-[0.98]">
+                  <Button variant="secondary" size="lg" className="font-bold transition-all duration-300 active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-white">
                     Browse Collection
                   </Button>
                 </Link>
               </div>
-              <div className="absolute -right-8 -bottom-8 opacity-20 pointer-events-none transition-transform duration-700 group-hover:scale-110">
+              <div className="absolute -right-8 -bottom-8 opacity-20 pointer-events-none transition-transform duration-700 group-hover:scale-110" aria-hidden="true">
                 <Gift className="h-40 w-40" />
               </div>
             </div>
@@ -57,7 +57,7 @@ export function Promotions() {
               </div>
               <div>
                 <Link href="/shop">
-                  <Button variant="outline" size="lg" className="bg-transparent font-semibold transition-all duration-300 active:scale-[0.98] hover:bg-primary hover:text-white">
+                  <Button variant="outline" size="lg" className="bg-transparent font-semibold transition-all duration-300 active:scale-[0.98] hover:bg-primary hover:text-white focus-visible:ring-2 focus-visible:ring-primary">
                     Explore Collection
                   </Button>
                 </Link>
@@ -71,7 +71,7 @@ export function Promotions() {
           <ScrollReveal direction="up" delay={100}>
             <div className="flex items-center gap-4 p-6 bg-background rounded-xl border shadow-sm hover-lift">
               <div className="bg-green-500/10 p-3 rounded-full shrink-0">
-                <MessageCircle className="h-6 w-6 text-green-600" />
+                <MessageCircle className="h-6 w-6 text-green-600" aria-hidden="true" />
               </div>
               <div>
                 <h4 className="font-semibold text-foreground mb-1">WhatsApp First Order</h4>
@@ -83,7 +83,7 @@ export function Promotions() {
           <ScrollReveal direction="up" delay={200}>
             <div className="flex items-center gap-4 p-6 bg-background rounded-xl border shadow-sm hover-lift">
               <div className="bg-primary/10 p-3 rounded-full shrink-0">
-                <Sparkles className="h-6 w-6 text-primary" />
+                <Sparkles className="h-6 w-6 text-primary" aria-hidden="true" />
               </div>
               <div>
                 <h4 className="font-semibold text-foreground mb-1">Authentic Handlooms</h4>
@@ -95,7 +95,7 @@ export function Promotions() {
           <ScrollReveal direction="up" delay={300}>
             <div className="flex items-center gap-4 p-6 bg-background rounded-xl border shadow-sm hover-lift">
               <div className="bg-amber-500/10 p-3 rounded-full shrink-0">
-                <Store className="h-6 w-6 text-amber-600" />
+                <Store className="h-6 w-6 text-amber-600" aria-hidden="true" />
               </div>
               <div>
                 <h4 className="font-semibold text-foreground mb-1">Dhemaji Store Pickup</h4>

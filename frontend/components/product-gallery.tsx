@@ -29,12 +29,14 @@ function GalleryThumbnail({
     item,
     index,
     isCurrent,
+    productName,
     onClick,
     onHover,
 }: {
     item: MediaItem
     index: number
     isCurrent: boolean
+    productName: string
     onClick: () => void
     onHover: () => void
 }) {
@@ -42,10 +44,13 @@ function GalleryThumbnail({
 
     return (
         <button
+            type="button"
             onClick={onClick}
             onMouseEnter={onHover}
+            aria-label={`View ${productName} image ${index + 1}`}
+            aria-pressed={isCurrent}
             className={cn(
-                "relative flex-shrink-0 w-16 h-16 sm:w-20 sm:h-20 rounded-lg sm:rounded-xl overflow-hidden border-2 transition-all duration-300 cursor-pointer active:scale-95",
+                "relative flex-shrink-0 w-16 h-16 sm:w-20 sm:h-20 rounded-lg sm:rounded-xl overflow-hidden border-2 transition-all duration-300 cursor-pointer active:scale-95 focus-visible:ring-2 focus-visible:ring-primary",
                 isCurrent
                     ? "border-primary ring-2 ring-primary/30 shadow-md scale-105"
                     : "border-transparent opacity-70 hover:opacity-100 hover:border-border hover:scale-100"
@@ -54,7 +59,7 @@ function GalleryThumbnail({
             {item.type === "image" ? (
                 <Image
                     src={imgSrc}
-                    alt={`Thumbnail ${index + 1}`}
+                    alt={`${productName} thumbnail ${index + 1}`}
                     fill
                     className="object-cover transition-transform duration-500 hover:scale-110"
                     onError={() => setImgSrc("/images/placeholders/placeholder.svg")}
@@ -64,12 +69,12 @@ function GalleryThumbnail({
                     {item.thumbnail ? (
                         <Image
                             src={item.thumbnail}
-                            alt={`Video Thumbnail ${index + 1}`}
+                            alt={`${productName} video thumbnail ${index + 1}`}
                             fill
                             className="object-cover opacity-70"
                         />
                     ) : null}
-                    <Play className="h-5 w-5 sm:h-6 sm:w-6 text-white absolute" fill="white" />
+                    <Play className="h-5 w-5 sm:h-6 sm:w-6 text-white absolute" fill="white" aria-hidden="true" />
                 </div>
             )}
         </button>
@@ -117,6 +122,7 @@ export function ProductGallery({ mediaItems, productName }: ProductGalleryProps)
                             item={item}
                             index={index}
                             isCurrent={current === index}
+                            productName={productName}
                             onClick={() => handleThumbnailClick(index)}
                             onHover={() => handleThumbnailHover(index)}
                         />

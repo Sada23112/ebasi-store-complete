@@ -44,14 +44,15 @@ export function HeroSection() {
                 href={STORE_INFO.instagram.url}
                 target="_blank"
                 rel="noopener noreferrer"
+                aria-label="Follow Ms Ebasi Store on Instagram"
                 className="w-full sm:w-auto"
               >
                 <Button
                   variant="outline"
                   size="lg"
-                  className="w-full border-primary text-primary hover:bg-primary hover:text-primary-foreground backdrop-blur-sm transition-all duration-300 ease-out hover:-translate-y-1 active:scale-[0.98] rounded-xl font-semibold bg-transparent h-11 px-6 min-h-[44px]"
+                  className="w-full border-primary text-primary hover:bg-primary hover:text-primary-foreground backdrop-blur-sm transition-all duration-300 ease-out hover:-translate-y-1 active:scale-[0.98] rounded-xl font-semibold bg-transparent h-11 px-6 min-h-[44px] focus-visible:ring-2 focus-visible:ring-primary"
                 >
-                  <Instagram className="w-4 h-4 mr-2" />
+                  <Instagram className="w-4 h-4 mr-2" aria-hidden="true" />
                   Follow Us
                 </Button>
               </a>
@@ -65,7 +66,7 @@ export function HeroSection() {
             <div className="relative overflow-hidden rounded-2xl premium-shadow ring-1 ring-black/5 bg-muted group cursor-pointer w-full h-[320px] xs:h-[380px] sm:h-[480px] lg:h-[540px]">
               <Image
                 src="https://images.unsplash.com/photo-1483985988355-763728e1935b?q=80&w=1200&auto=format&fit=crop"
-                alt="New Season Collection"
+                alt="Authentic handcrafted Assamese Mekhela Sador and traditional boutique collection"
                 fill
                 priority
                 sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 600px"

@@ -40,14 +40,15 @@ export function Footer() {
                 href={STORE_INFO.instagram.url}
                 target="_blank"
                 rel="noopener noreferrer"
+                aria-label="Visit Ms Ebasi Store on Instagram"
                 title="Instagram @ebasistore_traditionalattire"
               >
                 <Button
                   variant="outline"
                   size="icon"
-                  className="border-primary text-primary hover:bg-primary hover:text-primary-foreground bg-transparent min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0"
+                  className="border-primary text-primary hover:bg-primary hover:text-primary-foreground bg-transparent min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 focus-visible:ring-2 focus-visible:ring-primary"
                 >
-                  <Instagram className="h-4 w-4" />
+                  <Instagram className="h-4 w-4" aria-hidden="true" />
                   <span className="sr-only">Instagram</span>
                 </Button>
               </a>
@@ -55,14 +56,15 @@ export function Footer() {
                 href={STORE_INFO.whatsappUrl}
                 target="_blank"
                 rel="noopener noreferrer"
+                aria-label="Chat with Ms Ebasi Store on WhatsApp"
                 title="WhatsApp Order Support"
               >
                 <Button
                   variant="outline"
                   size="icon"
-                  className="border-green-600 text-green-600 hover:bg-green-600 hover:text-white bg-transparent min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0"
+                  className="border-green-600 text-green-600 hover:bg-green-600 hover:text-white bg-transparent min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 focus-visible:ring-2 focus-visible:ring-primary"
                 >
-                  <MessageCircle className="h-4 w-4" />
+                  <MessageCircle className="h-4 w-4" aria-hidden="true" />
                   <span className="sr-only">WhatsApp</span>
                 </Button>
               </a>

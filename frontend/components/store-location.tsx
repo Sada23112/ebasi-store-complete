@@ -113,10 +113,11 @@ export function StoreLocation() {
                       href={STORE_INFO.maps.directionsUrl}
                       target="_blank"
                       rel="noopener noreferrer"
+                      aria-label="Get driving directions to Ms Ebasi Store in Google Maps"
                       className="flex-1"
                     >
-                      <Button className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold min-h-[44px] shadow-sm active:scale-95 transition-transform">
-                        <Navigation className="h-4 w-4 mr-2" />
+                      <Button className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold min-h-[44px] shadow-sm active:scale-95 transition-transform focus-visible:ring-2 focus-visible:ring-primary">
+                        <Navigation className="h-4 w-4 mr-2" aria-hidden="true" />
                         Get Directions
                       </Button>
                     </a>
@@ -124,10 +125,11 @@ export function StoreLocation() {
                       href={STORE_INFO.whatsappUrl}
                       target="_blank"
                       rel="noopener noreferrer"
+                      aria-label="Open WhatsApp to chat with Ms Ebasi Store directly"
                       className="flex-1"
                     >
-                      <Button variant="outline" className="w-full border-green-600 text-green-600 hover:bg-green-600 hover:text-white font-semibold min-h-[44px] bg-transparent active:scale-95 transition-transform">
-                        <MessageCircle className="h-4 w-4 mr-2" />
+                      <Button variant="outline" className="w-full border-green-600 text-green-600 hover:bg-green-600 hover:text-white font-semibold min-h-[44px] bg-transparent active:scale-95 transition-transform focus-visible:ring-2 focus-visible:ring-primary">
+                        <MessageCircle className="h-4 w-4 mr-2" aria-hidden="true" />
                         WhatsApp Store
                       </Button>
                     </a>

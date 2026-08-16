@@ -85,10 +85,12 @@ function FilterSidebar({
 
       {/* Search */}
       <div>
-        <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Search Catalog</label>
+        <label htmlFor="catalog-search-input" className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Search Catalog</label>
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" aria-hidden="true" />
           <Input
+            id="catalog-search-input"
+            aria-label="Search catalog for sarees, mekhela, and traditional attire"
             placeholder="Search silk, mekhela, saree..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
@@ -467,23 +469,27 @@ function ShopContent() {
                 </Select>
 
                 {/* View Toggle */}
-                <div className="flex border rounded-lg overflow-hidden shadow-xs shrink-0">
+                <div className="flex border rounded-lg overflow-hidden shadow-xs shrink-0" role="group" aria-label="Product display layout">
                   <Button
                     variant={viewMode === "grid" ? "default" : "ghost"}
                     size="sm"
+                    aria-pressed={viewMode === "grid"}
+                    aria-label="Switch to grid view"
                     onClick={() => setViewMode("grid")}
                     className="rounded-r-none transition-all h-10 w-10 px-0 min-h-[40px]"
                   >
-                    <Grid3X3 className="h-4 w-4" />
+                    <Grid3X3 className="h-4 w-4" aria-hidden="true" />
                     <span className="sr-only">Grid View</span>
                   </Button>
                   <Button
                     variant={viewMode === "list" ? "default" : "ghost"}
                     size="sm"
+                    aria-pressed={viewMode === "list"}
+                    aria-label="Switch to list view"
                     onClick={() => setViewMode("list")}
                     className="rounded-l-none transition-all h-10 w-10 px-0 min-h-[40px]"
                   >
-                    <List className="h-4 w-4" />
+                    <List className="h-4 w-4" aria-hidden="true" />
                     <span className="sr-only">List View</span>
                   </Button>
                 </div>
@@ -493,21 +499,21 @@ function ShopContent() {
             {loading ? (
               <ProductGridSkeleton count={8} />
             ) : hasError ? (
-              <div className="text-center py-16 bg-muted/20 rounded-2xl p-8 animate-fade-up max-w-md mx-auto">
+              <div className="text-center py-16 bg-muted/20 rounded-2xl p-8 animate-fade-up max-w-md mx-auto" role="alert">
                 <div className="mx-auto mb-4 w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
-                  <AlertTriangle className="h-6 w-6 text-primary" />
+                  <AlertTriangle className="h-6 w-6 text-primary" aria-hidden="true" />
                 </div>
                 <p className="text-lg font-medium text-foreground mb-2">Unable to Load Products</p>
                 <p className="text-sm text-muted-foreground mb-6 leading-relaxed">
                   We couldn't connect to the server to fetch the collection. Please check your connection and try again.
                 </p>
                 <Button onClick={() => setCurrentPage(1)} className="active:scale-95 transition-all min-h-[44px]">
-                  <RefreshCw className="h-4 w-4 mr-2" />
+                  <RefreshCw className="h-4 w-4 mr-2" aria-hidden="true" />
                   Retry Connection
                 </Button>
               </div>
             ) : filteredProducts.length === 0 ? (
-              <div className="text-center py-16 bg-muted/20 rounded-2xl p-8 animate-fade-up">
+              <div className="text-center py-16 bg-muted/20 rounded-2xl p-8 animate-fade-up" role="status">
                 <p className="text-lg font-medium text-foreground mb-2">No products match your current filters</p>
                 <p className="text-sm text-muted-foreground mb-4">Try clearing filters or searching with a different term.</p>
                 <Button onClick={clearAllFilters} className="active:scale-95 transition-all min-h-[44px]">Clear All Filters</Button>
@@ -528,7 +534,7 @@ function ShopContent() {
 
                     return (
                       <div key={product.id} className="relative group flex flex-col">
-                        <Link href={`/product/${product.slug || product.id}`} className="block h-full cursor-pointer">
+                        <Link href={`/product/${product.slug || product.id}`} className="block h-full cursor-pointer focus-visible:ring-2 focus-visible:ring-primary rounded-2xl">
                           <Card
                             className={cn(
                               "overflow-hidden border border-transparent hover:border-primary/20 premium-shadow hover:premium-shadow-hover hover:-translate-y-1 transition-all duration-300 h-full flex flex-col justify-between bg-card/60 backdrop-blur-xs",
@@ -556,15 +562,16 @@ function ShopContent() {
                               <Button
                                 variant="ghost"
                                 size="icon"
+                                aria-label={saved ? `Remove ${product.name} from wishlist` : `Add ${product.name} to wishlist`}
                                 className={cn(
-                                  "absolute top-2 right-2 sm:top-3 sm:right-3 z-20 h-8 w-8 rounded-full bg-background/80 backdrop-blur-sm shadow-md transition-all active:scale-90",
+                                  "absolute top-2 right-2 sm:top-3 sm:right-3 z-20 h-8 w-8 rounded-full bg-background/80 backdrop-blur-sm shadow-md transition-all active:scale-90 focus-visible:ring-2 focus-visible:ring-primary",
                                   saved ? "text-red-500 hover:text-red-600" : "text-muted-foreground hover:text-foreground",
                                   poppingId === product.id && "animate-heart-pop"
                                 )}
                                 onClick={(e) => handleWishlistToggle(e, product)}
                                 title={saved ? "Remove from wishlist" : "Save to wishlist"}
                               >
-                                <Heart className={`h-4 w-4 ${saved ? "fill-current" : ""}`} />
+                                <Heart className={`h-4 w-4 ${saved ? "fill-current" : ""}`} aria-hidden="true" />
                               </Button>
 
                               <div className="absolute top-2 left-2 sm:top-3 sm:left-3 flex flex-col gap-1 z-10 pointer-events-none">
@@ -659,10 +666,11 @@ function ShopContent() {
 
                 {/* Pagination Controls */}
                 {totalPages > 1 && (
-                  <div className="flex justify-center items-center gap-2 mt-12 pt-6 border-t">
+                  <nav aria-label="Pagination Navigation" className="flex justify-center items-center gap-2 mt-12 pt-6 border-t">
                     <Button
                       variant="outline"
                       size="sm"
+                      aria-label="Go to previous page"
                       disabled={currentPage === 1}
                       onClick={() => {
                         setCurrentPage((prev) => Math.max(prev - 1, 1))
@@ -672,12 +680,13 @@ function ShopContent() {
                     >
                       Previous
                     </Button>
-                    <span className="text-sm text-muted-foreground px-4 font-medium">
+                    <span className="text-sm text-muted-foreground px-4 font-medium" aria-current="page">
                       Page {currentPage} of {totalPages}
                     </span>
                     <Button
                       variant="outline"
                       size="sm"
+                      aria-label="Go to next page"
                       disabled={currentPage === totalPages}
                       onClick={() => {
                         setCurrentPage((prev) => Math.min(prev + 1, totalPages))
@@ -687,7 +696,7 @@ function ShopContent() {
                     >
                       Next
                     </Button>
-                  </div>
+                  </nav>
                 )}
               </>
             )}

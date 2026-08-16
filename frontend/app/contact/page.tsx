@@ -83,36 +83,38 @@ export default function ContactPage() {
               <ScrollReveal direction="up">
                 <Card className="border border-border/50 shadow-md">
                   <CardContent className="p-8">
-                  <h2 className="font-serif text-2xl font-bold text-gray-900 mb-6">Send us a Message</h2>
+                  <h2 className="font-serif text-2xl font-bold text-foreground mb-6">Send us a Message</h2>
                   <form onSubmit={handleSubmit} className="space-y-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
-                        <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
-                          Full Name *
+                        <label htmlFor="contact-name" className="block text-sm font-medium text-foreground mb-2">
+                          Full Name <span className="text-primary">*</span>
                         </label>
                         <input
                           type="text"
-                          id="name"
+                          id="contact-name"
                           name="name"
                           required
+                          aria-required="true"
                           value={formData.name}
                           onChange={handleChange}
-                          className="w-full p-3 border border-gray-300 rounded-md focus:ring-pink-500 focus:border-pink-500"
+                          className="w-full p-3 border border-border rounded-md bg-background text-foreground focus:ring-2 focus:ring-primary focus:border-transparent focus:outline-none"
                           placeholder="Your full name"
                         />
                       </div>
                       <div>
-                        <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-                          Email Address *
+                        <label htmlFor="contact-email" className="block text-sm font-medium text-foreground mb-2">
+                          Email Address <span className="text-primary">*</span>
                         </label>
                         <input
                           type="email"
-                          id="email"
+                          id="contact-email"
                           name="email"
                           required
+                          aria-required="true"
                           value={formData.email}
                           onChange={handleChange}
-                          className="w-full p-3 border border-gray-300 rounded-md focus:ring-pink-500 focus:border-pink-500"
+                          className="w-full p-3 border border-border rounded-md bg-background text-foreground focus:ring-2 focus:ring-primary focus:border-transparent focus:outline-none"
                           placeholder="your.email@example.com"
                         />
                       </div>
@@ -120,30 +122,31 @@ export default function ContactPage() {
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
-                        <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-2">
-                          Phone Number
+                        <label htmlFor="contact-phone" className="block text-sm font-medium text-foreground mb-2">
+                          Phone Number <span className="text-xs text-muted-foreground">(Optional)</span>
                         </label>
                         <input
                           type="tel"
-                          id="phone"
+                          id="contact-phone"
                           name="phone"
                           value={formData.phone}
                           onChange={handleChange}
-                          className="w-full p-3 border border-gray-300 rounded-md focus:ring-pink-500 focus:border-pink-500"
-                          placeholder="+91 98765 43210"
+                          className="w-full p-3 border border-border rounded-md bg-background text-foreground focus:ring-2 focus:ring-primary focus:border-transparent focus:outline-none"
+                          placeholder="+91 73992 91242"
                         />
                       </div>
                       <div>
-                        <label htmlFor="subject" className="block text-sm font-medium text-gray-700 mb-2">
-                          Subject *
+                        <label htmlFor="contact-subject" className="block text-sm font-medium text-foreground mb-2">
+                          Subject <span className="text-primary">*</span>
                         </label>
                         <select
-                          id="subject"
+                          id="contact-subject"
                           name="subject"
                           required
+                          aria-required="true"
                           value={formData.subject}
                           onChange={handleChange}
-                          className="w-full p-3 border border-gray-300 rounded-md focus:ring-pink-500 focus:border-pink-500"
+                          className="w-full p-3 border border-border rounded-md bg-background text-foreground focus:ring-2 focus:ring-primary focus:border-transparent focus:outline-none"
                         >
                           <option value="">Select a subject</option>
                           <option value="general">General Inquiry</option>
@@ -157,25 +160,31 @@ export default function ContactPage() {
                     </div>
 
                     <div>
-                      <label htmlFor="message" className="block text-sm font-medium text-gray-700 mb-2">
-                        Message *
+                      <label htmlFor="contact-message" className="block text-sm font-medium text-foreground mb-2">
+                        Message <span className="text-primary">*</span>
                       </label>
                       <textarea
-                        id="message"
+                        id="contact-message"
                         name="message"
                         required
+                        aria-required="true"
                         rows={6}
                         value={formData.message}
                         onChange={handleChange}
-                        className="w-full p-3 border border-gray-300 rounded-md focus:ring-pink-500 focus:border-pink-500"
+                        className="w-full p-3 border border-border rounded-md bg-background text-foreground focus:ring-2 focus:ring-primary focus:border-transparent focus:outline-none"
                         placeholder="Tell us how we can help you..."
                       />
                     </div>
 
-                    <Button type="submit" disabled={isLoading} className="w-full bg-primary hover:bg-primary/90 text-primary-foreground py-3 text-lg active:scale-95 transition-transform min-h-[44px]">
+                    <Button
+                      type="submit"
+                      disabled={isLoading}
+                      aria-busy={isLoading}
+                      className="w-full bg-primary hover:bg-primary/90 text-primary-foreground py-3 text-lg active:scale-95 transition-transform min-h-[44px] focus-visible:ring-2 focus-visible:ring-primary"
+                    >
                       {isLoading ? (
                         <>
-                          <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+                          <Loader2 className="h-5 w-5 mr-2 animate-spin" aria-hidden="true" />
                           Sending Message...
                         </>
                       ) : (
