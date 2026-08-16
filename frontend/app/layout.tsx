@@ -108,21 +108,23 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{
             __html: JSON.stringify({
               "@context": "https://schema.org",
-              "@type": "Organization",
+              "@type": "ClothingStore",
               name: "EBASI STORE",
               url: process.env.NEXT_PUBLIC_SITE_URL || "https://ebasistore.com",
-              logo: `${process.env.NEXT_PUBLIC_SITE_URL || "https://ebasistore.com"}/images/branding/logo.png`,
+              logo: `${process.env.NEXT_PUBLIC_SITE_URL || "https://ebasistore.com"}/images/branding/logo.svg`,
+              image: `${process.env.NEXT_PUBLIC_SITE_URL || "https://ebasistore.com"}/images/branding/og-image.jpg`,
               description:
-                "Premium fashion and traditional wear store specializing in sarees, Mekhela Sador, and contemporary women's fashion.",
+                "Authentic Assamese Mekhela Sadors, traditional sarees, and handcrafted women's fashion at EBASI STORE.",
+              telephone: "+91 7399291242",
+              priceRange: "₹₹",
               sameAs: [
-                "https://facebook.com/ebasistore",
                 "https://www.instagram.com/ebasistore_mekhelasador/",
-                "https://twitter.com/ebasistore",
               ],
               contactPoint: {
                 "@type": "ContactPoint",
-                telephone: "+91-XXXXXXXXXX",
+                telephone: "+91-7399291242",
                 contactType: "customer service",
+                availableLanguage: ["English", "Assamese", "Hindi"],
               },
             }),
           }}
