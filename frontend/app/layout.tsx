@@ -4,6 +4,7 @@ import { Cormorant_Garamond, Inter } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
 import { Suspense } from "react"
 import "./globals.css"
+import { STORE_INFO } from "@/lib/constants"
 
 const cormorant = Cormorant_Garamond({
   subsets: ["latin"],
@@ -128,7 +129,9 @@ export default function RootLayout({
                 addressCountry: "IN",
               },
               sameAs: [
-                "https://www.instagram.com/ebasistore_traditionalattire/",
+                STORE_INFO.instagram.url,
+                STORE_INFO.youtube.url,
+                STORE_INFO.facebook.url,
               ],
               contactPoint: {
                 "@type": "ContactPoint",

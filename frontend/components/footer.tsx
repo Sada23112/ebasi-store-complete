@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { Instagram, MapPin, Phone, MessageCircle } from "lucide-react"
+import { Instagram, MapPin, Phone, MessageCircle, Youtube, Facebook } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { STORE_INFO } from "@/lib/constants"
 
@@ -35,7 +35,7 @@ export function Footer() {
               </div>
             </div>
 
-            <div className="flex space-x-3 pt-2">
+            <div className="flex flex-wrap gap-3 pt-2">
               <a
                 href={STORE_INFO.instagram.url}
                 target="_blank"
@@ -50,6 +50,38 @@ export function Footer() {
                 >
                   <Instagram className="h-4 w-4" aria-hidden="true" />
                   <span className="sr-only">Instagram</span>
+                </Button>
+              </a>
+              <a
+                href={STORE_INFO.youtube.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Visit Ms Ebasi Store on YouTube"
+                title="YouTube Channel"
+              >
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="border-red-600 text-red-600 hover:bg-red-600 hover:text-white bg-transparent min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 focus-visible:ring-2 focus-visible:ring-primary"
+                >
+                  <Youtube className="h-4 w-4" aria-hidden="true" />
+                  <span className="sr-only">YouTube</span>
+                </Button>
+              </a>
+              <a
+                href={STORE_INFO.facebook.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Visit Ms Ebasi Store on Facebook"
+                title="Facebook @twinkledeori21"
+              >
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white bg-transparent min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 focus-visible:ring-2 focus-visible:ring-primary"
+                >
+                  <Facebook className="h-4 w-4" aria-hidden="true" />
+                  <span className="sr-only">Facebook</span>
                 </Button>
               </a>
               <a

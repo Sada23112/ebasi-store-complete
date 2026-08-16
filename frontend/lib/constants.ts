@@ -23,6 +23,14 @@ export const STORE_INFO = {
     handle: "@ebasistore_traditionalattire",
     url: "https://www.instagram.com/ebasistore_traditionalattire/",
   },
+  youtube: {
+    handle: "Ms Ebasi Store",
+    url: "https://www.youtube.com/channel/UCjcFLd3hbc2uexKAQxh7wyQ",
+  },
+  facebook: {
+    handle: "Twinkle Deori (Ebasi Store)",
+    url: "https://www.facebook.com/twinkledeori21/#",
+  },
   specialties: [
     "Deori Egu-Jokasiba",
     "Mekhela Sador",

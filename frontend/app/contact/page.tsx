@@ -266,6 +266,46 @@ export default function ContactPage() {
                             </p>
                           </div>
                         </div>
+
+                        <div className="flex items-start gap-4">
+                          <div className="w-8 h-8 bg-red-500/10 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
+                            <span className="text-red-600 text-sm">▶️</span>
+                          </div>
+                          <div>
+                            <h4 className="font-semibold text-foreground mb-1">YouTube Channel</h4>
+                            <a
+                              href={STORE_INFO.youtube.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-red-600 hover:underline font-medium text-sm"
+                            >
+                              Ms Ebasi Store on YouTube →
+                            </a>
+                            <p className="text-xs text-muted-foreground mt-0.5">
+                              Fabric tours, styling guides & drape showcases
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="flex items-start gap-4">
+                          <div className="w-8 h-8 bg-blue-500/10 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
+                            <span className="text-blue-600 text-sm">🌐</span>
+                          </div>
+                          <div>
+                            <h4 className="font-semibold text-foreground mb-1">Facebook Community</h4>
+                            <a
+                              href={STORE_INFO.facebook.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-blue-600 hover:underline font-medium text-sm"
+                            >
+                              {STORE_INFO.facebook.handle} →
+                            </a>
+                            <p className="text-xs text-muted-foreground mt-0.5">
+                              Connect with our traditional attire community
+                            </p>
+                          </div>
+                        </div>
                       </div>
                     </CardContent>
                   </Card>
