@@ -32,6 +32,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
+import { Skeleton } from "@/components/ui/skeleton"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { adminApi, AdminUser, StaffRole, AuditLogItem, CreateStaffPayload, UpdateStaffPayload } from "@/lib/admin-api"
 import { cn } from "@/lib/utils"
@@ -558,22 +559,22 @@ export default function AdminStaffPage() {
               <tbody className="divide-y divide-border/40">
                 {isLoading ? (
                   Array.from({ length: 5 }).map((_, i) => (
-                    <tr key={i} className="animate-pulse">
+                    <tr key={i}>
                       <td className="py-3.5 px-4">
                         <div className="flex items-center gap-3">
-                          <div className="w-9 h-9 rounded-xl bg-muted/70 shrink-0" />
+                          <Skeleton className="w-9 h-9 rounded-xl shrink-0" />
                           <div className="space-y-1.5">
-                            <div className="h-4 w-32 bg-muted/80 rounded" />
-                            <div className="h-3 w-40 bg-muted/50 rounded" />
+                            <Skeleton className="h-4 w-32 rounded" />
+                            <Skeleton className="h-3 w-40 rounded" />
                           </div>
                         </div>
                       </td>
-                      <td className="py-3.5 px-4"><div className="h-5 w-16 bg-muted/70 rounded-full" /></td>
-                      <td className="py-3.5 px-4"><div className="h-4 w-24 bg-muted/60 rounded" /></td>
-                      <td className="py-3.5 px-4"><div className="h-5 w-14 bg-muted/70 rounded-full" /></td>
-                      <td className="py-3.5 px-4"><div className="h-4 w-20 bg-muted/60 rounded" /></td>
-                      <td className="py-3.5 px-4"><div className="h-4 w-20 bg-muted/60 rounded" /></td>
-                      <td className="py-3.5 px-4 text-right"><div className="h-8 w-16 bg-muted/70 rounded ml-auto" /></td>
+                      <td className="py-3.5 px-4"><Skeleton className="h-5 w-16 rounded-full" /></td>
+                      <td className="py-3.5 px-4"><Skeleton className="h-4 w-24 rounded" /></td>
+                      <td className="py-3.5 px-4"><Skeleton className="h-5 w-14 rounded-full" /></td>
+                      <td className="py-3.5 px-4"><Skeleton className="h-4 w-20 rounded" /></td>
+                      <td className="py-3.5 px-4"><Skeleton className="h-4 w-20 rounded" /></td>
+                      <td className="py-3.5 px-4 text-right"><Skeleton className="h-8 w-16 rounded-lg ml-auto" /></td>
                     </tr>
                   ))
                 ) : staffList.length === 0 ? (

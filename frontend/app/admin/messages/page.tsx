@@ -20,6 +20,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
+import { Skeleton } from "@/components/ui/skeleton"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { adminApi, AdminContactMessage } from "@/lib/admin-api"
 import { STORE_INFO } from "@/lib/constants"
@@ -210,15 +211,15 @@ export default function AdminMessagesPage() {
           <div className="divide-y divide-border/40">
             {isLoading ? (
               Array.from({ length: 5 }).map((_, i) => (
-                <div key={i} className="p-4 sm:p-5 flex items-center justify-between gap-3 animate-pulse">
+                <div key={i} className="p-4 sm:p-5 flex items-center justify-between gap-3">
                   <div className="flex items-center gap-3.5 min-w-0 flex-1">
-                    <div className="w-10 h-10 rounded-xl bg-muted/70 shrink-0" />
+                    <Skeleton className="w-10 h-10 rounded-xl shrink-0" />
                     <div className="space-y-1.5 flex-1 min-w-0">
-                      <div className="h-4 w-40 bg-muted/80 rounded" />
-                      <div className="h-3 w-64 bg-muted/50 rounded" />
+                      <Skeleton className="h-4 w-40 rounded" />
+                      <Skeleton className="h-3 w-64 rounded" />
                     </div>
                   </div>
-                  <div className="h-4 w-20 bg-muted/60 rounded hidden sm:block" />
+                  <Skeleton className="h-4 w-20 rounded hidden sm:block" />
                 </div>
               ))
             ) : messages.length === 0 ? (

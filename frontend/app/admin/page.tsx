@@ -26,6 +26,7 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { Skeleton } from "@/components/ui/skeleton"
 import { adminApi, AdminDashboardData, AdminInsight } from "@/lib/admin-api"
 import { cn } from "@/lib/utils"
 
@@ -62,19 +63,81 @@ export default function AdminOverviewPage() {
 
   if (isLoading) {
     return (
-      <div className="space-y-6">
-        <div className="flex justify-between items-center">
-          <div className="h-8 w-48 bg-muted rounded-xl animate-pulse" />
-          <div className="h-9 w-28 bg-muted rounded-xl animate-pulse" />
+      <div className="space-y-6 sm:space-y-8 animate-fade-in">
+        {/* Header Skeleton */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="space-y-2">
+            <Skeleton className="h-8 w-56 rounded-xl" />
+            <Skeleton className="h-4 w-80 rounded-lg" />
+          </div>
+          <div className="flex items-center gap-2.5">
+            <Skeleton className="h-9 w-24 rounded-xl" />
+            <Skeleton className="h-9 w-36 rounded-xl" />
+          </div>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="h-32 bg-card border border-border/70 rounded-2xl p-5 animate-pulse" />
-          ))}
+
+        {/* 4 KPI Cards Skeleton */}
+        <div>
+          <div className="flex items-center justify-between mb-3.5">
+            <Skeleton className="h-4 w-44 rounded-md" />
+            <Skeleton className="h-4 w-28 rounded-md" />
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {[1, 2, 3, 4].map((i) => (
+              <Card key={i} className="rounded-2xl border-border/80 shadow-sm bg-card p-5 space-y-3">
+                <div className="flex items-center justify-between">
+                  <Skeleton className="h-3.5 w-24 rounded" />
+                  <Skeleton className="w-8 h-8 rounded-xl" />
+                </div>
+                <Skeleton className="h-8 w-28 rounded-lg" />
+                <div className="pt-2 border-t border-border/40 flex items-center justify-between">
+                  <Skeleton className="h-3 w-20 rounded" />
+                  <Skeleton className="h-3 w-14 rounded" />
+                </div>
+              </Card>
+            ))}
+          </div>
         </div>
+
+        {/* Charts & Quick Insights Grid Skeleton */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2 h-96 bg-card border border-border/70 rounded-2xl animate-pulse" />
-          <div className="h-96 bg-card border border-border/70 rounded-2xl animate-pulse" />
+          <Card className="lg:col-span-2 rounded-2xl border-border/80 shadow-sm bg-card p-6 space-y-6">
+            <div className="flex items-center justify-between">
+              <div className="space-y-1.5">
+                <Skeleton className="h-5 w-44 rounded" />
+                <Skeleton className="h-3.5 w-64 rounded" />
+              </div>
+              <Skeleton className="h-8 w-28 rounded-xl" />
+            </div>
+            {/* Simulated Chart Bars */}
+            <div className="h-64 flex items-end gap-3 sm:gap-6 pt-8 px-2 border-b border-border/40">
+              {[40, 65, 30, 85, 55, 95, 70].map((height, idx) => (
+                <div key={idx} className="flex-1 flex flex-col items-center gap-2 h-full justify-end">
+                  <Skeleton className={`w-full rounded-t-lg`} style={{ height: `${height}%` }} />
+                  <Skeleton className="h-3 w-6 rounded" />
+                </div>
+              ))}
+            </div>
+          </Card>
+
+          <Card className="rounded-2xl border-border/80 shadow-sm bg-card p-6 space-y-5">
+            <div className="space-y-1.5">
+              <Skeleton className="h-5 w-36 rounded" />
+              <Skeleton className="h-3.5 w-48 rounded" />
+            </div>
+            <div className="space-y-3 pt-2">
+              {[1, 2, 3, 4].map((i) => (
+                <div key={i} className="p-3.5 rounded-xl border border-border/60 bg-muted/20 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Skeleton className="h-4 w-32 rounded" />
+                    <Skeleton className="h-3.5 w-12 rounded-full" />
+                  </div>
+                  <Skeleton className="h-3 w-full rounded" />
+                </div>
+              ))}
+            </div>
+          </Card>
         </div>
       </div>
     )

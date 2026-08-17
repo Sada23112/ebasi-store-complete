@@ -1,18 +1,58 @@
 // lib/api.js
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000/api/v1';
 
+function getCookie(name) {
+  if (typeof document === 'undefined') return null;
+  const match = document.cookie.match(new RegExp('(^|;\\s*)(' + name + ')=([^;]*)'));
+  return match ? decodeURIComponent(match[3]) : null;
+}
+
+function setCookie(name, value, days = 30) {
+  if (typeof document === 'undefined') return;
+  const maxAge = days * 24 * 60 * 60;
+  const isSecure = typeof window !== 'undefined' && window.location.protocol === 'https:';
+  document.cookie = `${name}=${encodeURIComponent(value)}; path=/; max-age=${maxAge}; SameSite=Lax${isSecure ? '; Secure' : ''}`;
+}
+
+function removeCookie(name) {
+  if (typeof document === 'undefined') return;
+  document.cookie = `${name}=; path=/; max-age=0; SameSite=Lax`;
+}
+
 class EbasiAPI {
   // Token management
   getToken() {
-    return localStorage.getItem('authToken');
+    if (typeof window === 'undefined') return null;
+    let token = null;
+    try {
+      token = localStorage.getItem('authToken');
+    } catch (e) {}
+
+    if (!token) {
+      token = getCookie('authToken');
+      if (token) {
+        try {
+          localStorage.setItem('authToken', token);
+        } catch (e) {}
+      }
+    }
+    return token;
   }
 
   setToken(token) {
-    localStorage.setItem('authToken', token);
+    if (typeof window === 'undefined') return;
+    try {
+      localStorage.setItem('authToken', token);
+    } catch (e) {}
+    setCookie('authToken', token, 30);
   }
 
   removeToken() {
-    localStorage.removeItem('authToken');
+    if (typeof window === 'undefined') return;
+    try {
+      localStorage.removeItem('authToken');
+    } catch (e) {}
+    removeCookie('authToken');
   }
 
   // Get headers with auth token

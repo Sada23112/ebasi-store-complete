@@ -107,9 +107,17 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   if (isAuthChecking) {
     return (
-      <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-3">
-        <div className="w-8 h-8 border-3 border-primary border-t-transparent rounded-full animate-spin" />
-        <p className="text-xs text-muted-foreground font-medium">Verifying Administrator Session...</p>
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-4 p-4 animate-fade-in">
+        <div className="relative flex items-center justify-center">
+          <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-primary to-primary/80 flex items-center justify-center text-white shadow-xl shadow-primary/20">
+            <Store className="w-7 h-7" />
+          </div>
+          <div className="absolute -inset-1.5 rounded-2xl border-2 border-primary/30 animate-pulse" />
+        </div>
+        <div className="text-center space-y-1">
+          <p className="text-sm font-semibold text-foreground tracking-tight">Verifying Administrator Session...</p>
+          <p className="text-xs text-muted-foreground">Securing your store command center</p>
+        </div>
       </div>
     )
   }

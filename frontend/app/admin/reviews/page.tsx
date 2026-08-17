@@ -18,6 +18,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
+import { Skeleton } from "@/components/ui/skeleton"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { adminApi, AdminReview } from "@/lib/admin-api"
 import { cn } from "@/lib/utils"
@@ -197,13 +198,13 @@ export default function AdminReviewsPage() {
               <tbody className="divide-y divide-border/40">
                 {isLoading ? (
                   Array.from({ length: 5 }).map((_, i) => (
-                    <tr key={i} className="animate-pulse">
-                      <td className="py-3.5 px-4"><div className="h-4 w-32 bg-muted/80 rounded" /></td>
-                      <td className="py-3.5 px-4"><div className="h-4 w-24 bg-muted/70 rounded" /></td>
-                      <td className="py-3.5 px-4"><div className="h-4 w-16 bg-muted/70 rounded" /></td>
-                      <td className="py-3.5 px-4"><div className="h-4 w-52 bg-muted/60 rounded" /></td>
-                      <td className="py-3.5 px-4"><div className="h-4 w-20 bg-muted/60 rounded" /></td>
-                      <td className="py-3.5 px-4 text-right"><div className="h-8 w-16 bg-muted/70 rounded ml-auto" /></td>
+                    <tr key={i}>
+                      <td className="py-3.5 px-4"><Skeleton className="h-4 w-32 rounded" /></td>
+                      <td className="py-3.5 px-4"><Skeleton className="h-4 w-24 rounded" /></td>
+                      <td className="py-3.5 px-4"><Skeleton className="h-4 w-16 rounded" /></td>
+                      <td className="py-3.5 px-4"><Skeleton className="h-4 w-52 rounded" /></td>
+                      <td className="py-3.5 px-4"><Skeleton className="h-4 w-20 rounded" /></td>
+                      <td className="py-3.5 px-4 text-right"><Skeleton className="h-8 w-16 rounded-lg ml-auto" /></td>
                     </tr>
                   ))
                 ) : reviews.length === 0 ? (

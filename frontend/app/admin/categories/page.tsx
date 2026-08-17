@@ -20,6 +20,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
+import { Skeleton } from "@/components/ui/skeleton"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { adminApi, AdminCategory } from "@/lib/admin-api"
 import { cn } from "@/lib/utils"
@@ -232,18 +233,18 @@ export default function AdminCategoriesPage() {
               <tbody className="divide-y divide-border/40">
                 {isLoading ? (
                   Array.from({ length: 5 }).map((_, i) => (
-                    <tr key={i} className="animate-pulse">
+                    <tr key={i}>
                       <td className="py-3 px-4">
                         <div className="flex items-center gap-2.5">
-                          <div className="w-8 h-8 rounded-lg bg-muted/70 shrink-0" />
-                          <div className="h-4 w-32 bg-muted/80 rounded" />
+                          <Skeleton className="w-8 h-8 rounded-lg shrink-0" />
+                          <Skeleton className="h-4 w-32 rounded" />
                         </div>
                       </td>
-                      <td className="py-3 px-4"><div className="h-4 w-24 bg-muted/70 rounded" /></td>
-                      <td className="py-3 px-4"><div className="h-4 w-44 bg-muted/60 rounded" /></td>
-                      <td className="py-3 px-4 text-center"><div className="h-4 w-8 bg-muted/70 rounded mx-auto" /></td>
-                      <td className="py-3 px-4 text-center"><div className="h-5 w-16 bg-muted/70 rounded-full mx-auto" /></td>
-                      <td className="py-3 px-4 text-right"><div className="h-8 w-16 bg-muted/70 rounded ml-auto" /></td>
+                      <td className="py-3 px-4"><Skeleton className="h-4 w-24 rounded" /></td>
+                      <td className="py-3 px-4"><Skeleton className="h-4 w-44 rounded" /></td>
+                      <td className="py-3 px-4 text-center"><Skeleton className="h-4 w-8 rounded mx-auto" /></td>
+                      <td className="py-3 px-4 text-center"><Skeleton className="h-5 w-16 rounded-full mx-auto" /></td>
+                      <td className="py-3 px-4 text-right"><Skeleton className="h-8 w-16 rounded-lg ml-auto" /></td>
                     </tr>
                   ))
                 ) : categories.length === 0 ? (

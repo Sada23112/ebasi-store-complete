@@ -351,6 +351,24 @@ export interface AdminContactMessage {
   created_at: string
 }
 
+function getCookie(name: string): string | null {
+  if (typeof document === "undefined") return null
+  const match = document.cookie.match(new RegExp("(^|;\\s*)(" + name + ")=([^;]*)"))
+  return match ? decodeURIComponent(match[3]) : null
+}
+
+function setCookie(name: string, value: string, days = 30): void {
+  if (typeof document === "undefined") return
+  const maxAge = days * 24 * 60 * 60
+  const isSecure = typeof window !== "undefined" && window.location.protocol === "https:"
+  document.cookie = `${name}=${encodeURIComponent(value)}; path=/; max-age=${maxAge}; SameSite=Lax${isSecure ? "; Secure" : ""}`
+}
+
+function removeCookie(name: string): void {
+  if (typeof document === "undefined") return
+  document.cookie = `${name}=; path=/; max-age=0; SameSite=Lax`
+}
+
 const TOKEN_KEY = "ebasi_admin_token"
 const USER_KEY = "ebasi_admin_user"
 
@@ -361,12 +379,38 @@ class EbasiAdminAPI {
 
   getToken(): string | null {
     if (typeof window === "undefined") return null
-    return localStorage.getItem(TOKEN_KEY)
+    let token: string | null = null
+    try {
+      token = localStorage.getItem(TOKEN_KEY)
+    } catch {}
+
+    if (!token) {
+      token = getCookie(TOKEN_KEY)
+      if (token) {
+        try {
+          localStorage.setItem(TOKEN_KEY, token)
+        } catch {}
+      }
+    }
+    return token
   }
 
   getUser(): AdminUser | null {
     if (typeof window === "undefined") return null
-    const stored = localStorage.getItem(USER_KEY)
+    let stored: string | null = null
+    try {
+      stored = localStorage.getItem(USER_KEY)
+    } catch {}
+
+    if (!stored) {
+      stored = getCookie(USER_KEY)
+      if (stored) {
+        try {
+          localStorage.setItem(USER_KEY, stored)
+        } catch {}
+      }
+    }
+
     if (!stored) return null
     try {
       return JSON.parse(stored)
@@ -377,14 +421,22 @@ class EbasiAdminAPI {
 
   setAuth(token: string, user: AdminUser): void {
     if (typeof window === "undefined") return
-    localStorage.setItem(TOKEN_KEY, token)
-    localStorage.setItem(USER_KEY, JSON.stringify(user))
+    try {
+      localStorage.setItem(TOKEN_KEY, token)
+      localStorage.setItem(USER_KEY, JSON.stringify(user))
+    } catch {}
+    setCookie(TOKEN_KEY, token, 30)
+    setCookie(USER_KEY, JSON.stringify(user), 30)
   }
 
   removeAuth(): void {
     if (typeof window === "undefined") return
-    localStorage.removeItem(TOKEN_KEY)
-    localStorage.removeItem(USER_KEY)
+    try {
+      localStorage.removeItem(TOKEN_KEY)
+      localStorage.removeItem(USER_KEY)
+    } catch {}
+    removeCookie(TOKEN_KEY)
+    removeCookie(USER_KEY)
   }
 
   isAuthenticated(): boolean {
