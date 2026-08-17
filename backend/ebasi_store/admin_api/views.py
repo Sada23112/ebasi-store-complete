@@ -3,15 +3,26 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
+from rest_framework.authtoken.models import Token
 from django.contrib.auth.models import User
 from django.utils import timezone
 from django.db.models import Count, Avg, Q, F, Max, Min, Prefetch
+from django.db import transaction
 from datetime import timedelta, datetime
 
 from SHOP.models import Product, Category, Review, ProductImage, ProductVideo, AnalyticsEvent
 from SHOP.serializers import get_complete_url
-from accounts.models import ContactMessage
+from accounts.models import ContactMessage, StaffProfile
 from orders.models import Wishlist
+from .models import AuditLog, log_audit
+from .permissions import (
+    Roles,
+    RequireStaffPermission,
+    IsOwnerUser,
+    get_user_role,
+    get_user_permissions,
+    has_staff_permission
+)
 from .serializers import (
     AdminProductSerializer,
     AdminProductImageSerializer,
@@ -19,20 +30,52 @@ from .serializers import (
     AdminCategorySerializer,
     AdminReviewSerializer,
     AdminContactMessageSerializer,
-    AdminUserSerializer
+    StaffUserSerializer,
+    StaffCreateSerializer,
+    StaffUpdateSerializer,
+    StaffRoleChangeSerializer,
+    StaffPasswordResetSerializer,
+    AuditLogSerializer
 )
 
 
-class IsAdminUser(permissions.BasePermission):
+def is_last_active_owner(user):
     """
-    Strict permission class: Allows access only to authenticated staff or superusers.
+    Safety check: Returns True if the given user is the only remaining active Owner/Superuser.
     """
-    def has_permission(self, request, view):
-        return bool(request.user and request.user.is_authenticated and (request.user.is_staff or request.user.is_superuser))
+    if not user.is_active:
+        return False
+
+    is_owner = user.is_superuser or (
+        hasattr(user, 'staff_profile') and user.staff_profile.role == Roles.OWNER
+    )
+    if not is_owner:
+        return False
+
+    # Count other active superusers or staff members with the 'owner' role
+    active_superusers = User.objects.filter(is_superuser=True, is_active=True).exclude(pk=user.pk).count()
+    active_profile_owners = User.objects.filter(
+        is_active=True,
+        staff_profile__role=Roles.OWNER
+    ).exclude(pk=user.pk).count()
+
+    return (active_superusers + active_profile_owners) == 0
+
+
+class AdminMeView(APIView):
+    """
+    Returns the currently authenticated staff member's profile, role, and explicit permissions.
+    """
+    permission_classes = [RequireStaffPermission]
+
+    def get(self, request):
+        serializer = StaffUserSerializer(request.user, context={'request': request})
+        return Response(serializer.data)
 
 
 class AdminDashboardView(APIView):
-    permission_classes = [IsAdminUser]
+    permission_classes = [RequireStaffPermission]
+    required_permission = 'dashboard.view'
 
     def get(self, request):
         now = timezone.now()
@@ -50,8 +93,7 @@ class AdminDashboardView(APIView):
         unread_messages = ContactMessage.objects.filter(is_read=False).count()
         total_messages = ContactMessage.objects.count()
 
-        # 2. Activity Metrics (Last 7 days vs Previous 7 days for real trend indicators)
-        # Page Views
+        # 2. Activity Metrics (Last 7 days vs Previous 7 days for trend indicators)
         current_page_views = AnalyticsEvent.objects.filter(
             event_type='page_view',
             created_at__gte=seven_days_ago
@@ -62,7 +104,6 @@ class AdminDashboardView(APIView):
             created_at__lt=seven_days_ago
         ).count()
 
-        # Product Views
         current_product_views = AnalyticsEvent.objects.filter(
             event_type='product_view',
             created_at__gte=seven_days_ago
@@ -73,7 +114,6 @@ class AdminDashboardView(APIView):
             created_at__lt=seven_days_ago
         ).count()
 
-        # WhatsApp Clicks (Highest Purchase Intent)
         current_whatsapp_clicks = AnalyticsEvent.objects.filter(
             event_type='whatsapp_click',
             created_at__gte=seven_days_ago
@@ -84,7 +124,6 @@ class AdminDashboardView(APIView):
             created_at__lt=seven_days_ago
         ).count()
 
-        # Wishlist Adds
         current_wishlist_adds = AnalyticsEvent.objects.filter(
             event_type='wishlist_add',
             created_at__gte=seven_days_ago
@@ -142,11 +181,9 @@ class AdminDashboardView(APIView):
                 'created_at': wa.created_at
             })
 
-        # Sort combined activity timeline by date descending
         recent_activity.sort(key=lambda x: x['created_at'], reverse=True)
         recent_activity = recent_activity[:10]
 
-        # 4. Top WhatsApp Interest Products (Immediate business visibility)
         top_whatsapp_products_raw = AnalyticsEvent.objects.filter(
             event_type='whatsapp_click',
             product__isnull=False
@@ -194,7 +231,8 @@ class AdminDashboardView(APIView):
 
 
 class AdminAnalyticsView(APIView):
-    permission_classes = [IsAdminUser]
+    permission_classes = [RequireStaffPermission]
+    required_permission = 'analytics.view'
 
     def get(self, request):
         days = int(request.query_params.get('days', 7))
@@ -227,8 +265,7 @@ class AdminAnalyticsView(APIView):
                 'wishlist_adds': wl_adds
             })
 
-        # 2. Product Performance Breakdown (Views vs Wishlist vs WhatsApp Clicks)
-        # Real aggregation per product
+        # 2. Product Performance Breakdown
         all_products = Product.objects.all()
         product_performance = []
 
@@ -239,10 +276,8 @@ class AdminAnalyticsView(APIView):
             total_p_wa = AnalyticsEvent.objects.filter(product=prod, event_type='whatsapp_click').count()
             p_wl = prod.wishlisted_by.count()
 
-            # Calculate conversion intent %
             conv_pct = round((p_wa / p_views * 100), 1) if p_views > 0 else 0.0
 
-            # Get primary image url
             primary_img = None
             try:
                 imgs = list(prod.images.all())
@@ -269,7 +304,6 @@ class AdminAnalyticsView(APIView):
                 'conversion_intent_pct': conv_pct
             })
 
-        # Sort products by period whatsapp clicks, then period views
         product_performance.sort(key=lambda x: (x['period_whatsapp_clicks'], x['period_views']), reverse=True)
 
         # 3. Search Behavior Analytics
@@ -310,12 +344,10 @@ class AdminAnalyticsView(APIView):
 
 
 class AdminInsightsView(APIView):
-    permission_classes = [IsAdminUser]
+    permission_classes = [RequireStaffPermission]
+    required_permission = 'dashboard.view'
 
     def get(self, request):
-        """
-        Derives real, high-value business insights strictly from tracked database activity.
-        """
         insights = []
 
         # 1. Top WhatsApp High Performers
@@ -337,7 +369,7 @@ class AdminInsightsView(APIView):
                 'product_slug': top_prod['product__slug']
             })
 
-        # 2. High Views but Low WhatsApp Clicks (Conversion Bottleneck Opportunity)
+        # 2. High Views but Low WhatsApp Clicks
         bottleneck_candidates = []
         for prod in Product.objects.filter(is_active=True):
             views = AnalyticsEvent.objects.filter(product=prod, event_type='product_view').count()
@@ -398,13 +430,27 @@ class AdminInsightsView(APIView):
 
 
 class AdminProductViewSet(viewsets.ModelViewSet):
-    permission_classes = [IsAdminUser]
+    permission_classes = [RequireStaffPermission]
     serializer_class = AdminProductSerializer
     parser_classes = [MultiPartParser, FormParser, JSONParser]
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['name', 'sku', 'description', 'short_description', 'category__name']
     ordering_fields = ['created_at', 'price', 'name', 'stock_quantity', 'stock_status']
     ordering = ['-created_at']
+
+    action_permissions = {
+        'list': 'products.view',
+        'retrieve': 'products.view',
+        'create': 'products.create',
+        'update': 'products.update',
+        'partial_update': 'products.update',
+        'destroy': 'products.delete',
+        'toggle_active': 'products.update',
+        'toggle_featured': 'products.update',
+        'upload_image': 'products.update',
+        'delete_image': 'products.update',
+        'set_primary_image': 'products.update',
+    }
 
     def get_queryset(self):
         queryset = Product.objects.all().select_related('category').prefetch_related(
@@ -439,11 +485,50 @@ class AdminProductViewSet(viewsets.ModelViewSet):
 
         return queryset
 
+    def perform_create(self, serializer):
+        product = serializer.save()
+        log_audit(
+            self.request,
+            action='product.create',
+            target=product,
+            target_repr=product.name,
+            details={'sku': product.sku, 'price': float(product.price)}
+        )
+
+    def perform_update(self, serializer):
+        product = serializer.save()
+        log_audit(
+            self.request,
+            action='product.update',
+            target=product,
+            target_repr=product.name,
+            details={'sku': product.sku, 'price': float(product.price)}
+        )
+
+    def perform_destroy(self, instance):
+        name = instance.name
+        sku = instance.sku
+        log_audit(
+            self.request,
+            action='product.delete',
+            target=instance,
+            target_repr=name,
+            details={'sku': sku}
+        )
+        instance.delete()
+
     @action(detail=True, methods=['patch'], url_path='toggle-active')
     def toggle_active(self, request, pk=None):
         product = self.get_object()
         product.is_active = not product.is_active
         product.save(update_fields=['is_active'])
+        log_audit(
+            request,
+            action='product.toggle_active',
+            target=product,
+            target_repr=product.name,
+            details={'is_active': product.is_active}
+        )
         return Response({'status': 'success', 'is_active': product.is_active})
 
     @action(detail=True, methods=['patch'], url_path='toggle-featured')
@@ -451,6 +536,13 @@ class AdminProductViewSet(viewsets.ModelViewSet):
         product = self.get_object()
         product.is_featured = not product.is_featured
         product.save(update_fields=['is_featured'])
+        log_audit(
+            request,
+            action='product.toggle_featured',
+            target=product,
+            target_repr=product.name,
+            details={'is_featured': product.is_featured}
+        )
         return Response({'status': 'success', 'is_featured': product.is_featured})
 
     @action(detail=True, methods=['post'], url_path='upload-image', parser_classes=[MultiPartParser, FormParser])
@@ -480,6 +572,14 @@ class AdminProductViewSet(viewsets.ModelViewSet):
             order=order
         )
 
+        log_audit(
+            request,
+            action='product.upload_image',
+            target=product,
+            target_repr=product.name,
+            details={'image_id': img.id, 'is_primary': is_primary}
+        )
+
         serializer = AdminProductImageSerializer(img, context={'request': request})
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
@@ -491,12 +591,19 @@ class AdminProductViewSet(viewsets.ModelViewSet):
             was_primary = img.is_primary
             img.delete()
 
-            # If deleted image was primary, make the first remaining image primary
             if was_primary:
                 first_img = ProductImage.objects.filter(product=product).first()
                 if first_img:
                     first_img.is_primary = True
                     first_img.save(update_fields=['is_primary'])
+
+            log_audit(
+                request,
+                action='product.delete_image',
+                target=product,
+                target_repr=product.name,
+                details={'image_id': image_id}
+            )
 
             return Response({'status': 'success', 'message': 'Image deleted successfully'})
         except ProductImage.DoesNotExist:
@@ -510,13 +617,22 @@ class AdminProductViewSet(viewsets.ModelViewSet):
             ProductImage.objects.filter(product=product).update(is_primary=False)
             target_img.is_primary = True
             target_img.save(update_fields=['is_primary'])
+
+            log_audit(
+                request,
+                action='product.set_primary_image',
+                target=product,
+                target_repr=product.name,
+                details={'image_id': target_img.id}
+            )
+
             return Response({'status': 'success', 'primary_image_id': target_img.id})
         except ProductImage.DoesNotExist:
             return Response({'error': 'Image not found'}, status=status.HTTP_404_NOT_FOUND)
 
 
 class AdminCategoryViewSet(viewsets.ModelViewSet):
-    permission_classes = [IsAdminUser]
+    permission_classes = [RequireStaffPermission]
     serializer_class = AdminCategorySerializer
     parser_classes = [MultiPartParser, FormParser, JSONParser]
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
@@ -524,10 +640,38 @@ class AdminCategoryViewSet(viewsets.ModelViewSet):
     ordering_fields = ['name', 'created_at', 'products_count']
     ordering = ['name']
 
+    action_permissions = {
+        'list': 'categories.view',
+        'retrieve': 'categories.view',
+        'create': 'categories.create',
+        'update': 'categories.update',
+        'partial_update': 'categories.update',
+        'destroy': 'categories.delete',
+        'toggle_active': 'categories.update',
+    }
+
     def get_queryset(self):
         return Category.objects.annotate(
             products_count=Count('products', distinct=True),
             active_products_count=Count('products', filter=Q(products__is_active=True), distinct=True)
+        )
+
+    def perform_create(self, serializer):
+        category = serializer.save()
+        log_audit(
+            self.request,
+            action='category.create',
+            target=category,
+            target_repr=category.name
+        )
+
+    def perform_update(self, serializer):
+        category = serializer.save()
+        log_audit(
+            self.request,
+            action='category.update',
+            target=category,
+            target_repr=category.name
         )
 
     @action(detail=True, methods=['patch'], url_path='toggle-active')
@@ -535,6 +679,13 @@ class AdminCategoryViewSet(viewsets.ModelViewSet):
         category = self.get_object()
         category.is_active = not category.is_active
         category.save(update_fields=['is_active'])
+        log_audit(
+            request,
+            action='category.toggle_active',
+            target=category,
+            target_repr=category.name,
+            details={'is_active': category.is_active}
+        )
         return Response({'status': 'success', 'is_active': category.is_active})
 
     def destroy(self, request, *args, **kwargs):
@@ -544,16 +695,33 @@ class AdminCategoryViewSet(viewsets.ModelViewSet):
             return Response({
                 'error': f"Cannot delete category '{category.name}' because it contains {linked_products_count} product(s). Please reassign or delete these products first."
             }, status=status.HTTP_400_BAD_REQUEST)
+        
+        name = category.name
+        log_audit(
+            request,
+            action='category.delete',
+            target=category,
+            target_repr=name
+        )
         return super().destroy(request, *args, **kwargs)
 
 
 class AdminReviewViewSet(viewsets.ModelViewSet):
-    permission_classes = [IsAdminUser]
+    permission_classes = [RequireStaffPermission]
     serializer_class = AdminReviewSerializer
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['product__name', 'user_name', 'comment']
     ordering_fields = ['created_at', 'rating']
     ordering = ['-created_at']
+
+    action_permissions = {
+        'list': 'reviews.view',
+        'retrieve': 'reviews.view',
+        'create': 'reviews.moderate',
+        'update': 'reviews.moderate',
+        'partial_update': 'reviews.moderate',
+        'destroy': 'reviews.moderate',
+    }
 
     def get_queryset(self):
         queryset = Review.objects.select_related('product').all()
@@ -565,14 +733,35 @@ class AdminReviewViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(product_id=product_id)
         return queryset
 
+    def perform_destroy(self, instance):
+        repr_str = f"Review by {instance.user_name} ({instance.rating}★) on {instance.product.name if instance.product else 'Unknown'}"
+        log_audit(
+            self.request,
+            action='review.delete',
+            target=instance,
+            target_repr=repr_str
+        )
+        instance.delete()
+
 
 class AdminContactMessageViewSet(viewsets.ModelViewSet):
-    permission_classes = [IsAdminUser]
+    permission_classes = [RequireStaffPermission]
     serializer_class = AdminContactMessageSerializer
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['name', 'email', 'phone', 'subject', 'message']
     ordering_fields = ['created_at', 'is_read', 'name']
     ordering = ['-created_at']
+
+    action_permissions = {
+        'list': 'messages.view',
+        'retrieve': 'messages.view',
+        'create': 'messages.update',
+        'update': 'messages.update',
+        'partial_update': 'messages.update',
+        'destroy': 'messages.delete',
+        'mark_read': 'messages.update',
+        'mark_unread': 'messages.update',
+    }
 
     def get_queryset(self):
         queryset = ContactMessage.objects.all()
@@ -581,11 +770,27 @@ class AdminContactMessageViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(is_read=(is_read.lower() == 'true'))
         return queryset
 
+    def perform_destroy(self, instance):
+        repr_str = f"Inquiry from {instance.name} ({instance.email})"
+        log_audit(
+            self.request,
+            action='message.delete',
+            target=instance,
+            target_repr=repr_str
+        )
+        instance.delete()
+
     @action(detail=True, methods=['patch'], url_path='mark-read')
     def mark_read(self, request, pk=None):
         message = self.get_object()
         message.is_read = True
         message.save(update_fields=['is_read'])
+        log_audit(
+            request,
+            action='message.mark_read',
+            target=message,
+            target_repr=f"{message.name} - {message.subject}"
+        )
         return Response({'status': 'success', 'is_read': True})
 
     @action(detail=True, methods=['patch'], url_path='mark-unread')
@@ -593,23 +798,275 @@ class AdminContactMessageViewSet(viewsets.ModelViewSet):
         message = self.get_object()
         message.is_read = False
         message.save(update_fields=['is_read'])
+        log_audit(
+            request,
+            action='message.mark_unread',
+            target=message,
+            target_repr=f"{message.name} - {message.subject}"
+        )
         return Response({'status': 'success', 'is_read': False})
 
 
-class AdminUserViewSet(viewsets.ModelViewSet):
-    permission_classes = [IsAdminUser]
-    serializer_class = AdminUserSerializer
-    queryset = User.objects.all().order_by('-date_joined')
+class AdminStaffViewSet(viewsets.ModelViewSet):
+    """
+    Authoritative Staff Management ViewSet for Owner / Super Admin.
+    Enforces safeguards against:
+    - Non-owner role assignments and privilege escalation
+    - Self-deactivation
+    - Deactivating or demoting the final active Owner/Superuser
+    - Exposing password hashes or tokens
+    """
+    permission_classes = [RequireStaffPermission]
+    serializer_class = StaffUserSerializer
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
-    search_fields = ['username', 'email', 'first_name', 'last_name']
-    ordering_fields = ['date_joined', 'username']
+    search_fields = ['username', 'email', 'first_name', 'last_name', 'staff_profile__phone']
+    ordering_fields = ['date_joined', 'username', 'last_login']
+    ordering = ['-date_joined']
+
+    action_permissions = {
+        'list': 'staff.view',
+        'retrieve': 'staff.view',
+        'create': 'staff.create',
+        'update': 'staff.update',
+        'partial_update': 'staff.update',
+        'destroy': 'staff.deactivate',
+        'deactivate': 'staff.deactivate',
+        'activate': 'staff.deactivate',
+        'change_role': 'staff.change_role',
+        'reset_password': 'staff.update',
+        'activity': 'staff.view',
+        'toggle_status': 'staff.deactivate',
+    }
+
+    def get_queryset(self):
+        queryset = User.objects.filter(is_staff=True).select_related('staff_profile').prefetch_related('audit_logs')
+        role = self.request.query_params.get('role', None)
+        if role:
+            if role == Roles.OWNER:
+                queryset = queryset.filter(Q(is_superuser=True) | Q(staff_profile__role=Roles.OWNER))
+            else:
+                queryset = queryset.filter(staff_profile__role=role, is_superuser=False)
+
+        is_active = self.request.query_params.get('is_active', None)
+        if is_active is not None and is_active != '':
+            queryset = queryset.filter(is_active=(is_active.lower() == 'true'))
+
+        return queryset
+
+    def create(self, request, *args, **kwargs):
+        # Strict Owner authorization for creating staff
+        if not (request.user.is_superuser or get_user_role(request.user) == Roles.OWNER):
+            return Response(
+                {'error': 'Only Owner accounts may create new staff members.'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        serializer = StaffCreateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = serializer.save()
+
+        log_audit(
+            request,
+            action='staff.create',
+            target=user,
+            target_repr=user.username,
+            details={
+                'username': user.username,
+                'email': user.email,
+                'role': serializer.validated_data.get('role', Roles.STAFF),
+                'is_active': user.is_active
+            }
+        )
+
+        out_serializer = StaffUserSerializer(user, context={'request': request})
+        return Response(out_serializer.data, status=status.HTTP_201_CREATED)
+
+    def update(self, request, *args, **kwargs):
+        user = self.get_object()
+        serializer = StaffUpdateSerializer(user, data=request.data, partial=kwargs.get('partial', False))
+        serializer.is_valid(raise_exception=True)
+        user = serializer.save()
+
+        log_audit(
+            request,
+            action='staff.update',
+            target=user,
+            target_repr=user.username,
+            details={'email': user.email, 'first_name': user.first_name, 'last_name': user.last_name}
+        )
+
+        out_serializer = StaffUserSerializer(user, context={'request': request})
+        return Response(out_serializer.data)
+
+    @action(detail=True, methods=['patch'], url_path='deactivate')
+    def deactivate(self, request, pk=None):
+        user = self.get_object()
+
+        # Safeguard 1: Cannot deactivate yourself
+        if user.pk == request.user.pk:
+            return Response(
+                {'error': 'You cannot deactivate your own account.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Safeguard 2: Cannot deactivate the last active owner
+        if is_last_active_owner(user):
+            return Response(
+                {'error': 'Cannot deactivate the only active Owner account. Please promote or assign another Owner first.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        with transaction.atomic():
+            user.is_active = False
+            user.save(update_fields=['is_active'])
+            # Immediately revoke any active tokens for this user
+            Token.objects.filter(user=user).delete()
+
+        log_audit(
+            request,
+            action='staff.deactivate',
+            target=user,
+            target_repr=user.username,
+            details={'username': user.username, 'email': user.email}
+        )
+
+        return Response({
+            'status': 'success',
+            'message': f"Account '{user.username}' has been deactivated.",
+            'is_active': False
+        })
+
+    @action(detail=True, methods=['patch'], url_path='activate')
+    def activate(self, request, pk=None):
+        user = self.get_object()
+        user.is_active = True
+        user.save(update_fields=['is_active'])
+
+        log_audit(
+            request,
+            action='staff.activate',
+            target=user,
+            target_repr=user.username,
+            details={'username': user.username, 'email': user.email}
+        )
+
+        return Response({
+            'status': 'success',
+            'message': f"Account '{user.username}' has been activated.",
+            'is_active': True
+        })
+
+    @action(detail=True, methods=['patch'], url_path='role')
+    def change_role(self, request, pk=None):
+        user = self.get_object()
+        serializer = StaffRoleChangeSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        new_role = serializer.validated_data['role']
+        old_role = get_user_role(user)
+
+        if old_role == new_role:
+            return Response({'status': 'success', 'role': new_role, 'message': 'Role unchanged.'})
+
+        # Safeguard: If demoting an owner, verify they are not the last active owner
+        if old_role == Roles.OWNER and new_role != Roles.OWNER:
+            if is_last_active_owner(user):
+                return Response(
+                    {'error': 'Cannot demote the only active Owner account. Promote another staff member to Owner first.'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+        with transaction.atomic():
+            profile, _ = StaffProfile.objects.get_or_create(user=user)
+            profile.role = new_role
+            profile.save(update_fields=['role'])
+
+            # Sync superuser status
+            is_owner = (new_role == Roles.OWNER)
+            user.is_superuser = is_owner
+            user.save(update_fields=['is_superuser'])
+
+        log_audit(
+            request,
+            action='staff.role_change',
+            target=user,
+            target_repr=user.username,
+            details={'username': user.username, 'old_role': old_role, 'new_role': new_role}
+        )
+
+        out_serializer = StaffUserSerializer(user, context={'request': request})
+        return Response({
+            'status': 'success',
+            'message': f"Role for '{user.username}' updated to {dict(Roles.CHOICES).get(new_role, new_role)}.",
+            'user': out_serializer.data
+        })
+
+    @action(detail=True, methods=['post'], url_path='reset-password')
+    def reset_password(self, request, pk=None):
+        user = self.get_object()
+        serializer = StaffPasswordResetSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        new_password = serializer.validated_data['new_password']
+
+        with transaction.atomic():
+            user.set_password(new_password)
+            user.save(update_fields=['password'])
+            # Clear old tokens to force re-login
+            Token.objects.filter(user=user).delete()
+
+        log_audit(
+            request,
+            action='staff.reset_password',
+            target=user,
+            target_repr=user.username,
+            details={'username': user.username}
+        )
+
+        return Response({
+            'status': 'success',
+            'message': f"Password for '{user.username}' has been successfully reset."
+        })
+
+    @action(detail=True, methods=['get'], url_path='activity')
+    def activity(self, request, pk=None):
+        user = self.get_object()
+        logs = AuditLog.objects.filter(Q(actor=user) | Q(target_type='User', target_id=str(user.pk)))[:20]
+        serializer = AuditLogSerializer(logs, many=True)
+        return Response(serializer.data)
 
     @action(detail=True, methods=['patch'], url_path='toggle-status')
     def toggle_status(self, request, pk=None):
         user = self.get_object()
-        # Protect against self-deactivation
-        if user == request.user:
-            return Response({'error': 'You cannot deactivate your own account.'}, status=status.HTTP_400_BAD_REQUEST)
-        user.is_active = not user.is_active
-        user.save(update_fields=['is_active'])
-        return Response({'status': 'success', 'is_active': user.is_active})
+        if user.is_active:
+            return self.deactivate(request, pk=pk)
+        else:
+            return self.activate(request, pk=pk)
+
+
+class AdminAuditLogViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    Read-only audit log endpoint for administrative tracking.
+    """
+    permission_classes = [RequireStaffPermission]
+    required_permission = 'audit.view'
+    serializer_class = AuditLogSerializer
+    queryset = AuditLog.objects.all().select_related('actor')
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ['actor_username', 'action', 'target_repr']
+    ordering_fields = ['created_at', 'action']
+    ordering = ['-created_at']
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        action_param = self.request.query_params.get('action', None)
+        if action_param:
+            qs = qs.filter(action__icontains=action_param)
+        actor_id = self.request.query_params.get('actor', None)
+        if actor_id:
+            qs = qs.filter(actor_id=actor_id)
+        return qs
+
+
+# Backward compatibility alias
+AdminUserViewSet = AdminStaffViewSet

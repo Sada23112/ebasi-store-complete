@@ -17,7 +17,8 @@ import {
   Lock,
   UserCheck,
   CheckCircle2,
-  Server
+  Server,
+  Users
 } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -179,12 +180,24 @@ export default function AdminSettingsPage() {
       {/* 3. STAFF ACCOUNTS & PERMISSIONS */}
       <Card className="rounded-2xl border-border/70 shadow-sm bg-card">
         <CardHeader className="pb-3 border-b border-border/50">
-          <CardTitle className="text-base sm:text-lg font-serif font-bold text-foreground">
-            Active Staff & Administrator Accounts
-          </CardTitle>
-          <CardDescription className="text-xs text-muted-foreground">
-            Users authorized to access the Ebasi Business Dashboard
-          </CardDescription>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="text-base sm:text-lg font-serif font-bold text-foreground">
+                Active Staff & Administrator Accounts
+              </CardTitle>
+              <CardDescription className="text-xs text-muted-foreground">
+                Users authorized to access the Ebasi Business Dashboard
+              </CardDescription>
+            </div>
+            {adminApi.hasPermission("staff.view") && (
+              <Link href="/admin/staff">
+                <Button variant="outline" size="sm" className="h-8 text-xs rounded-xl gap-1.5">
+                  <Users className="w-3.5 h-3.5" />
+                  <span>Manage Team</span>
+                </Button>
+              </Link>
+            )}
+          </div>
         </CardHeader>
 
         <CardContent className="p-0">
@@ -209,13 +222,21 @@ export default function AdminSettingsPage() {
                 </div>
 
                 <div className="flex items-center gap-2">
-                  {u.is_superuser ? (
-                    <Badge className="bg-primary/15 text-primary border-primary/30 text-[10px]">
-                      Superuser
+                  {u.is_superuser || u.role === "owner" ? (
+                    <Badge className="bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/30 text-[10px]">
+                      Owner
+                    </Badge>
+                  ) : u.role === "manager" ? (
+                    <Badge className="bg-indigo-500/15 text-indigo-600 dark:text-indigo-400 border-indigo-500/30 text-[10px]">
+                      Manager
+                    </Badge>
+                  ) : u.role === "viewer" ? (
+                    <Badge className="bg-zinc-500/15 text-zinc-600 dark:text-zinc-400 border-zinc-500/30 text-[10px]">
+                      Viewer
                     </Badge>
                   ) : (
                     <Badge variant="secondary" className="text-[10px]">
-                      Staff Member
+                      Staff
                     </Badge>
                   )}
                 </div>

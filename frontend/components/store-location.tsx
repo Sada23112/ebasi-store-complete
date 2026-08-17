@@ -6,14 +6,22 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { ScrollReveal } from "@/components/scroll-reveal"
-import { STORE_INFO } from "@/lib/constants"
+import { useStore } from "@/lib/store-context"
 import { trackWhatsAppConversion } from "@/lib/analytics"
 
 export function StoreLocation() {
   const pathname = usePathname()
+  const { store, getSocialUrl } = useStore()
+
   if (pathname?.startsWith('/admin')) {
     return null
   }
+
+  const instagramUrl = getSocialUrl('instagram')
+  const whatsappUrl = getSocialUrl('whatsapp')
+  const mapsEmbed = store.google_maps_embed_url || "https://maps.google.com/maps?q=Railway,+Station+Rd,+opposite+Parmananda+Academy,+Nagakhelia+No.2,+Dhemaji,+Assam+787057&t=&z=15&ie=UTF8&iwloc=&output=embed"
+  const mapsDirections = store.google_maps_directions_url || "https://www.google.com/maps/dir/?api=1&destination=Railway,+Station+Rd,+opposite+Parmananda+Academy,+Nagakhelia+No.2,+Dhemaji,+Assam+787057"
+
   return (
     <section className="py-12 sm:py-16 px-4 bg-muted/40 border-t border-border/50">
       <div className="max-w-7xl mx-auto">
@@ -27,7 +35,7 @@ export function StoreLocation() {
               Our Store Location
             </h2>
             <p className="text-sm sm:text-base text-muted-foreground mt-2">
-              Experience the authentic weave of Assamese handlooms at our boutique in Dhemaji, Assam.
+              Experience the authentic weave of Assamese handlooms at our boutique in {store.address_city || "Dhemaji"}, {store.address_state || "Assam"}.
             </p>
           </div>
         </ScrollReveal>
@@ -40,13 +48,13 @@ export function StoreLocation() {
                 <CardContent className="p-6 sm:p-8 space-y-6">
                   <div>
                     <Badge variant="outline" className="text-primary border-primary/30 text-xs font-semibold mb-2">
-                      {STORE_INFO.businessType}
+                      {store.business_type || "Boutique / Clothing brand"}
                     </Badge>
                     <h3 className="font-serif text-xl sm:text-2xl font-bold text-foreground">
-                      {STORE_INFO.name}
+                      {store.name}
                     </h3>
                     <p className="text-xs sm:text-sm text-primary font-medium mt-0.5">
-                      {STORE_INFO.enterpriseName}
+                      {store.enterprise_name}
                     </p>
                   </div>
 
@@ -62,15 +70,17 @@ export function StoreLocation() {
                           Store Address
                         </span>
                         <p className="text-foreground mt-0.5 leading-relaxed">
-                          {STORE_INFO.address.street}
+                          {store.address_street}
                           <br />
-                          {STORE_INFO.address.locality}, {STORE_INFO.address.city}
+                          {store.address_locality}, {store.address_city}
                           <br />
-                          {STORE_INFO.address.state} — {STORE_INFO.address.postalCode}, {STORE_INFO.address.country}
+                          {store.address_state} — {store.address_postal_code}, {store.address_country}
                         </p>
-                        <span className="inline-block mt-1.5 text-[11px] font-mono bg-muted px-2 py-0.5 rounded text-muted-foreground">
-                          Plus Code: {STORE_INFO.address.plusCode}
-                        </span>
+                        {store.plus_code && (
+                          <span className="inline-block mt-1.5 text-[11px] font-mono bg-muted px-2 py-0.5 rounded text-muted-foreground">
+                            Plus Code: {store.plus_code}
+                          </span>
+                        )}
                       </div>
                     </div>
 
@@ -84,39 +94,41 @@ export function StoreLocation() {
                           Phone & WhatsApp
                         </span>
                         <a
-                          href={`tel:${STORE_INFO.phoneRaw}`}
+                          href={`tel:${store.phone_raw}`}
                           className="text-foreground hover:text-primary transition-colors font-medium mt-0.5 inline-block"
                         >
-                          {STORE_INFO.phoneDisplay}
+                          {store.phone_display || store.phone}
                         </a>
                       </div>
                     </div>
 
                     {/* Instagram */}
-                    <div className="flex items-start gap-3">
-                      <div className="w-8 h-8 rounded-full bg-pink-500/10 text-pink-600 flex items-center justify-center shrink-0 mt-0.5">
-                        <Instagram className="h-4 w-4" />
+                    {instagramUrl && (
+                      <div className="flex items-start gap-3">
+                        <div className="w-8 h-8 rounded-full bg-pink-500/10 text-pink-600 flex items-center justify-center shrink-0 mt-0.5">
+                          <Instagram className="h-4 w-4" />
+                        </div>
+                        <div>
+                          <span className="font-semibold text-foreground block text-xs uppercase tracking-wider text-muted-foreground">
+                            Official Instagram
+                          </span>
+                          <a
+                            href={instagramUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-primary hover:underline font-medium mt-0.5 inline-block"
+                          >
+                            @ebasistore_traditionalattire
+                          </a>
+                        </div>
                       </div>
-                      <div>
-                        <span className="font-semibold text-foreground block text-xs uppercase tracking-wider text-muted-foreground">
-                          Official Instagram
-                        </span>
-                        <a
-                          href={STORE_INFO.instagram.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-primary hover:underline font-medium mt-0.5 inline-block"
-                        >
-                          {STORE_INFO.instagram.handle}
-                        </a>
-                      </div>
-                    </div>
+                    )}
                   </div>
 
                   {/* Actions */}
                   <div className="pt-2 flex flex-col sm:flex-row gap-3">
                     <a
-                      href={STORE_INFO.maps.directionsUrl}
+                      href={mapsDirections}
                       target="_blank"
                       rel="noopener noreferrer"
                       aria-label="Get driving directions to Ms Ebasi Store in Google Maps"
@@ -128,7 +140,7 @@ export function StoreLocation() {
                       </Button>
                     </a>
                     <a
-                      href={STORE_INFO.whatsappUrl}
+                      href={whatsappUrl}
                       target="_blank"
                       rel="noopener noreferrer"
                       onClick={() => trackWhatsAppConversion({ source: "store_location" })}
@@ -152,7 +164,7 @@ export function StoreLocation() {
               <div className="relative w-full h-[300px] sm:h-[380px] lg:h-full min-h-[300px] rounded-2xl overflow-hidden border border-border/60 shadow-sm bg-muted">
                 <iframe
                   title="Ms Ebasi Store Location Map"
-                  src={STORE_INFO.maps.embedUrl}
+                  src={mapsEmbed}
                   width="100%"
                   height="100%"
                   style={{ border: 0 }}

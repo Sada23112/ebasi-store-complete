@@ -1,9 +1,13 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
 from django.db.models import Avg, Count
+from django.contrib.auth.password_validation import validate_password
+from django.db import transaction
 from SHOP.models import Category, Product, ProductImage, ProductVideo, Review, AnalyticsEvent
-from accounts.models import ContactMessage
+from accounts.models import ContactMessage, StaffProfile
 from SHOP.serializers import get_complete_url
+from .models import AuditLog
+from .permissions import Roles, get_user_role, get_user_permissions
 
 
 class AdminProductImageSerializer(serializers.ModelSerializer):
@@ -181,11 +185,181 @@ class AdminContactMessageSerializer(serializers.ModelSerializer):
         read_only_fields = ['created_at']
 
 
-class AdminUserSerializer(serializers.ModelSerializer):
+class StaffUserSerializer(serializers.ModelSerializer):
+    """
+    Comprehensive serializer for staff accounts.
+    Never exposes password hashes or tokens.
+    """
+    role = serializers.SerializerMethodField()
+    role_display = serializers.SerializerMethodField()
+    permissions = serializers.SerializerMethodField()
+    phone = serializers.SerializerMethodField()
+    notes = serializers.SerializerMethodField()
+    activity_count = serializers.SerializerMethodField()
+
     class Meta:
         model = User
         fields = [
             'id', 'username', 'email', 'first_name', 'last_name',
-            'is_staff', 'is_superuser', 'is_active', 'date_joined', 'last_login'
+            'role', 'role_display', 'permissions', 'phone', 'notes',
+            'is_staff', 'is_superuser', 'is_active', 'date_joined', 'last_login',
+            'activity_count'
         ]
-        read_only_fields = ['date_joined', 'last_login']
+        read_only_fields = ['date_joined', 'last_login', 'is_staff', 'is_superuser']
+
+    def get_role(self, obj):
+        return get_user_role(obj)
+
+    def get_role_display(self, obj):
+        role = get_user_role(obj)
+        role_map = dict(Roles.CHOICES)
+        return role_map.get(role, role.capitalize())
+
+    def get_permissions(self, obj):
+        return sorted(list(get_user_permissions(obj)))
+
+    def get_phone(self, obj):
+        profile = getattr(obj, 'staff_profile', None)
+        return profile.phone if profile else ''
+
+    def get_notes(self, obj):
+        profile = getattr(obj, 'staff_profile', None)
+        return profile.notes if profile else ''
+
+    def get_activity_count(self, obj):
+        return getattr(obj, 'audit_logs', None).count() if hasattr(obj, 'audit_logs') else 0
+
+
+class StaffCreateSerializer(serializers.Serializer):
+    """
+    Serializer for creating new staff accounts with RBAC validation.
+    """
+    username = serializers.CharField(max_length=150)
+    email = serializers.EmailField()
+    password = serializers.CharField(write_only=True, min_length=6)
+    first_name = serializers.CharField(max_length=150, required=False, allow_blank=True, default='')
+    last_name = serializers.CharField(max_length=150, required=False, allow_blank=True, default='')
+    role = serializers.ChoiceField(choices=Roles.CHOICES, default=Roles.STAFF)
+    is_active = serializers.BooleanField(default=True)
+    phone = serializers.CharField(max_length=20, required=False, allow_blank=True, default='')
+    notes = serializers.CharField(required=False, allow_blank=True, default='')
+
+    def validate_username(self, value):
+        username = value.strip()
+        if User.objects.filter(username__iexact=username).exists():
+            raise serializers.ValidationError("A user with this username already exists.")
+        return username
+
+    def validate_email(self, value):
+        email = value.strip().lower()
+        if User.objects.filter(email__iexact=email).exists():
+            raise serializers.ValidationError("A user with this email address already exists.")
+        return email
+
+    def validate_password(self, value):
+        try:
+            validate_password(value)
+        except Exception as e:
+            raise serializers.ValidationError(list(e.messages) if hasattr(e, 'messages') else str(e))
+        return value
+
+    def create(self, validated_data):
+        role = validated_data.get('role', Roles.STAFF)
+        is_owner = (role == Roles.OWNER)
+
+        with transaction.atomic():
+            user = User.objects.create_user(
+                username=validated_data['username'],
+                email=validated_data['email'],
+                password=validated_data['password'],
+                first_name=validated_data.get('first_name', ''),
+                last_name=validated_data.get('last_name', ''),
+                is_staff=True,
+                is_superuser=is_owner,
+                is_active=validated_data.get('is_active', True)
+            )
+
+            StaffProfile.objects.create(
+                user=user,
+                role=role,
+                phone=validated_data.get('phone', ''),
+                notes=validated_data.get('notes', '')
+            )
+
+        return user
+
+
+class StaffUpdateSerializer(serializers.ModelSerializer):
+    """
+    Serializer for updating basic staff details.
+    """
+    phone = serializers.CharField(max_length=20, required=False, allow_blank=True)
+    notes = serializers.CharField(required=False, allow_blank=True)
+
+    class Meta:
+        model = User
+        fields = ['first_name', 'last_name', 'email', 'phone', 'notes']
+
+    def validate_email(self, value):
+        email = value.strip().lower()
+        if User.objects.filter(email__iexact=email).exclude(pk=self.instance.pk).exists():
+            raise serializers.ValidationError("A user with this email address already exists.")
+        return email
+
+    def update(self, instance, validated_data):
+        phone = validated_data.pop('phone', None)
+        notes = validated_data.pop('notes', None)
+
+        with transaction.atomic():
+            for attr, val in validated_data.items():
+                setattr(instance, attr, val)
+            instance.save()
+
+            profile, _ = StaffProfile.objects.get_or_create(user=instance)
+            if phone is not None:
+                profile.phone = phone
+            if notes is not None:
+                profile.notes = notes
+            profile.save()
+
+        return instance
+
+
+class StaffRoleChangeSerializer(serializers.Serializer):
+    """
+    Serializer for updating a staff member's role.
+    """
+    role = serializers.ChoiceField(choices=Roles.CHOICES)
+
+
+class StaffPasswordResetSerializer(serializers.Serializer):
+    """
+    Serializer for Owner resetting a staff member's password.
+    """
+    new_password = serializers.CharField(write_only=True, min_length=6)
+
+    def validate_new_password(self, value):
+        try:
+            validate_password(value)
+        except Exception as e:
+            raise serializers.ValidationError(list(e.messages) if hasattr(e, 'messages') else str(e))
+        return value
+
+
+class AuditLogSerializer(serializers.ModelSerializer):
+    """
+    Serializer for business & staff audit logs.
+    """
+    class Meta:
+        model = AuditLog
+        fields = [
+            'id', 'actor', 'actor_username', 'action',
+            'target_type', 'target_id', 'target_repr',
+            'details', 'ip_address', 'created_at'
+        ]
+        read_only_fields = fields
+
+
+# Backward compatibility alias
+AdminUserSerializer = StaffUserSerializer
+

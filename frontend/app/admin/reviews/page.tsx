@@ -28,9 +28,9 @@ export default function AdminReviewsPage() {
   const [error, setError] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState("")
   const [ratingFilter, setRatingFilter] = useState<string>("all")
-
   const [deletingReview, setDeletingReview] = useState<AdminReview | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
+  const isInitialMount = React.useRef(true)
 
   const loadReviews = async () => {
     setIsLoading(true)
@@ -49,6 +49,12 @@ export default function AdminReviewsPage() {
   }
 
   useEffect(() => {
+    if (isInitialMount.current) {
+      isInitialMount.current = false
+      loadReviews()
+      return
+    }
+
     const timer = setTimeout(() => {
       loadReviews()
     }, 200)
@@ -176,31 +182,39 @@ export default function AdminReviewsPage() {
       {/* Reviews Table */}
       <Card className="rounded-2xl border-border/70 shadow-sm bg-card overflow-hidden">
         <CardContent className="p-0">
-          {isLoading ? (
-            <div className="p-12 text-center text-xs text-muted-foreground">
-              <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-2" />
-              Loading reviews...
-            </div>
-          ) : reviews.length === 0 ? (
-            <div className="p-12 text-center text-xs text-muted-foreground space-y-2">
-              <Star className="w-8 h-8 mx-auto text-muted-foreground/40" />
-              <p className="font-semibold text-foreground">No customer reviews match your filters.</p>
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs">
-                <thead className="bg-muted/40 text-muted-foreground uppercase text-[10px] tracking-wider border-b border-border/50">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs">
+              <thead className="bg-muted/40 text-muted-foreground uppercase text-[10px] tracking-wider border-b border-border/50">
+                <tr>
+                  <th className="py-3.5 px-4 font-semibold">Product</th>
+                  <th className="py-3.5 px-4 font-semibold">Customer</th>
+                  <th className="py-3.5 px-4 font-semibold">Rating</th>
+                  <th className="py-3.5 px-4 font-semibold">Review Comment</th>
+                  <th className="py-3.5 px-4 font-semibold">Date</th>
+                  <th className="py-3.5 px-4 font-semibold text-right">Moderate</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border/40">
+                {isLoading ? (
+                  Array.from({ length: 5 }).map((_, i) => (
+                    <tr key={i} className="animate-pulse">
+                      <td className="py-3.5 px-4"><div className="h-4 w-32 bg-muted/80 rounded" /></td>
+                      <td className="py-3.5 px-4"><div className="h-4 w-24 bg-muted/70 rounded" /></td>
+                      <td className="py-3.5 px-4"><div className="h-4 w-16 bg-muted/70 rounded" /></td>
+                      <td className="py-3.5 px-4"><div className="h-4 w-52 bg-muted/60 rounded" /></td>
+                      <td className="py-3.5 px-4"><div className="h-4 w-20 bg-muted/60 rounded" /></td>
+                      <td className="py-3.5 px-4 text-right"><div className="h-8 w-16 bg-muted/70 rounded ml-auto" /></td>
+                    </tr>
+                  ))
+                ) : reviews.length === 0 ? (
                   <tr>
-                    <th className="py-3.5 px-4 font-semibold">Product</th>
-                    <th className="py-3.5 px-4 font-semibold">Customer</th>
-                    <th className="py-3.5 px-4 font-semibold">Rating</th>
-                    <th className="py-3.5 px-4 font-semibold">Review Comment</th>
-                    <th className="py-3.5 px-4 font-semibold">Date</th>
-                    <th className="py-3.5 px-4 font-semibold text-right">Moderate</th>
+                    <td colSpan={6} className="p-12 text-center text-xs text-muted-foreground space-y-2">
+                      <Star className="w-8 h-8 mx-auto text-muted-foreground/40" />
+                      <p className="font-semibold text-foreground">No customer reviews match your filters.</p>
+                    </td>
                   </tr>
-                </thead>
-                <tbody className="divide-y divide-border/40">
-                  {reviews.map((r) => (
+                ) : (
+                  reviews.map((r) => (
                     <tr key={r.id} className="hover:bg-muted/30 transition-colors">
                       <td className="py-3.5 px-4 font-semibold text-foreground">
                         <Link
@@ -244,22 +258,25 @@ export default function AdminReviewsPage() {
                       </td>
 
                       <td className="py-3.5 px-4 text-right">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => setDeletingReview(r)}
-                          className="h-8 w-8 rounded-lg text-destructive hover:bg-destructive/10"
-                          title="Delete / Dismiss Review"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </Button>
+                        {adminApi.hasPermission("reviews.moderate") ? (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => setDeletingReview(r)}
+                            className="h-8 w-8 rounded-lg text-destructive hover:bg-destructive/10"
+                            title="Delete / Dismiss Review"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </Button>
+                        ) : (
+                          <span className="text-[10px] text-muted-foreground italic">Read-only</span>
+                        )}
                       </td>
                     </tr>
-                  ))}
+                  )))}
                 </tbody>
               </table>
             </div>
-          )}
         </CardContent>
       </Card>
 

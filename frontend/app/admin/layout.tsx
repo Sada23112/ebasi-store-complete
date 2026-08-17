@@ -10,6 +10,7 @@ import {
   Star,
   Inbox,
   BarChart3,
+  Users,
   Settings,
   ExternalLink,
   LogOut,
@@ -20,9 +21,12 @@ import {
   AlertCircle,
   ShieldCheck,
   Store,
-  ChevronRight
+  ChevronRight,
+  ShieldAlert,
+  Globe
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { cn } from "@/lib/utils"
 import { adminApi, AdminUser } from "@/lib/admin-api"
@@ -51,11 +55,19 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       return
     }
 
+    // Set cached user immediately
     const currentUser = adminApi.getUser()
     setUser(currentUser)
     setIsAuthChecking(false)
 
-    // Load initial unread count
+    // Refresh profile & permissions dynamically in background
+    adminApi.getMe()
+      .then((freshUser) => {
+        setUser(freshUser)
+      })
+      .catch(() => {})
+
+    // Load initial unread count in background
     adminApi.getDashboard().then((data) => {
       setUnreadCount(data?.inventory_summary?.unread_messages || 0)
     }).catch(() => {})
@@ -68,7 +80,21 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     updateTime()
     const timer = setInterval(updateTime, 30000)
     return () => clearInterval(timer)
-  }, [pathname, isLoginPage, router])
+  }, [isLoginPage])
+
+  // Periodic subtle refresh of unread count (every 60s)
+  useEffect(() => {
+    if (isLoginPage) return
+    const refreshUnread = () => {
+      if (adminApi.isAuthenticated()) {
+        adminApi.getDashboard().then((data) => {
+          setUnreadCount(data?.inventory_summary?.unread_messages || 0)
+        }).catch(() => {})
+      }
+    }
+    const interval = setInterval(refreshUnread, 60000)
+    return () => clearInterval(interval)
+  }, [isLoginPage])
 
   const handleLogout = () => {
     adminApi.logout()
@@ -88,15 +114,24 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     )
   }
 
-  const navItems = [
-    { name: "Overview", href: "/admin", icon: LayoutDashboard, exact: true },
-    { name: "Products", href: "/admin/products", icon: Package },
-    { name: "Categories", href: "/admin/categories", icon: FolderTree },
-    { name: "Reviews", href: "/admin/reviews", icon: Star },
-    { name: "Messages", href: "/admin/messages", icon: Inbox, badge: unreadCount },
-    { name: "Analytics", href: "/admin/analytics", icon: BarChart3 },
-    { name: "Settings", href: "/admin/settings", icon: Settings },
+  const allNavItems = [
+    { name: "Overview", href: "/admin", icon: LayoutDashboard, exact: true, permission: "dashboard.view" },
+    { name: "Products", href: "/admin/products", icon: Package, permission: "products.view" },
+    { name: "Categories", href: "/admin/categories", icon: FolderTree, permission: "categories.view" },
+    { name: "Reviews", href: "/admin/reviews", icon: Star, permission: "reviews.view" },
+    { name: "Messages", href: "/admin/messages", icon: Inbox, badge: unreadCount, permission: "messages.view" },
+    { name: "Analytics", href: "/admin/analytics", icon: BarChart3, permission: "analytics.view" },
+    { name: "Staff & Team", href: "/admin/staff", icon: Users, permission: "staff.view" },
+    { name: "Store Content", href: "/admin/content", icon: Globe, permission: "content.view" },
+    { name: "Settings", href: "/admin/settings", icon: Settings, permission: "settings.view" },
   ]
+
+  // Filter navigation items strictly by active permissions
+  const navItems = allNavItems.filter((item) => {
+    if (!user) return false
+    if (user.is_superuser || user.role === "owner") return true
+    return user.permissions?.includes(item.permission)
+  })
 
   const getPageTitle = () => {
     if (pathname === "/admin") return "Business Overview"
@@ -105,8 +140,39 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     if (pathname.startsWith("/admin/reviews")) return "Review Moderation"
     if (pathname.startsWith("/admin/messages")) return "Inquiries & Messages"
     if (pathname.startsWith("/admin/analytics")) return "Analytics & Conversions"
+    if (pathname.startsWith("/admin/staff")) return "Staff & Access Control"
+    if (pathname.startsWith("/admin/content")) return "Store Content & CMS"
     if (pathname.startsWith("/admin/settings")) return "Store Settings"
     return "Admin Workspace"
+  }
+
+  const getRoleBadge = (role?: string, isSuper?: boolean) => {
+    if (isSuper || role === "owner") {
+      return (
+        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30">
+          Owner
+        </span>
+      )
+    }
+    if (role === "manager") {
+      return (
+        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-500/15 text-blue-600 dark:text-blue-400 border border-blue-500/30">
+          Manager
+        </span>
+      )
+    }
+    if (role === "staff") {
+      return (
+        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">
+          Staff
+        </span>
+      )
+    }
+    return (
+      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-500/15 text-purple-600 dark:text-purple-400 border border-purple-500/30">
+        Viewer
+      </span>
+    )
   }
 
   const renderNavLinks = (onItemClick?: () => void) => (
@@ -121,6 +187,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <Link
             key={item.href}
             href={item.href}
+            prefetch={true}
             onClick={onItemClick}
             className={cn(
               "flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all group",
@@ -195,14 +262,19 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <span className="text-[10px] bg-muted-foreground/10 px-1.5 py-0.5 rounded text-muted-foreground font-mono">Live ↗</span>
           </Link>
 
-          {/* Admin User Card */}
+          {/* Admin User Card with RBAC Badge */}
           <div className="pt-2 px-2 flex items-center justify-between border-t border-border/40">
             <div className="flex items-center gap-2.5 overflow-hidden">
-              <div className="w-8 h-8 rounded-full bg-primary/10 border border-primary/20 text-primary flex items-center justify-center text-xs font-bold shrink-0">
+              <div className="w-9 h-9 rounded-full bg-primary/10 border border-primary/20 text-primary flex items-center justify-center text-xs font-bold shrink-0">
                 {user?.username ? user.username.charAt(0).toUpperCase() : "A"}
               </div>
               <div className="min-w-0">
-                <p className="text-xs font-semibold text-foreground truncate">{user?.username || "Admin"}</p>
+                <div className="flex items-center gap-1.5">
+                  <p className="text-xs font-semibold text-foreground truncate max-w-[90px]">
+                    {user?.username || "Admin"}
+                  </p>
+                  {getRoleBadge(user?.role, user?.is_superuser)}
+                </div>
                 <p className="text-[10px] text-muted-foreground truncate">{user?.email || "Staff Member"}</p>
               </div>
             </div>
@@ -232,7 +304,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                   <Menu className="w-5 h-5" />
                 </Button>
               </SheetTrigger>
-              <SheetContent side="left" className="p-0 w-72 bg-card border-r border-border">
+              <SheetContent side="left" className="p-0 w-72 bg-card border-r border-border flex flex-col">
                 <div className="p-5 border-b border-border/60 flex items-center justify-between">
                   <div className="flex items-center gap-2.5">
                     <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center text-white font-bold text-sm">
@@ -244,10 +316,25 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                     </div>
                   </div>
                 </div>
+
                 <div className="flex-1 overflow-y-auto">
                   {renderNavLinks(() => setIsMobileOpen(false))}
                 </div>
-                <div className="p-3 border-t border-border/60">
+
+                <div className="p-4 border-t border-border/60 space-y-3 bg-muted/10">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-full bg-primary/10 text-primary font-bold flex items-center justify-center text-xs">
+                      {user?.username ? user.username.charAt(0).toUpperCase() : "A"}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-xs font-semibold truncate">{user?.username}</span>
+                        {getRoleBadge(user?.role, user?.is_superuser)}
+                      </div>
+                      <div className="text-[10px] text-muted-foreground truncate">{user?.email}</div>
+                    </div>
+                  </div>
+
                   <Button
                     variant="outline"
                     onClick={handleLogout}
@@ -275,6 +362,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
           {/* Right Header Badges & Actions */}
           <div className="flex items-center gap-2 sm:gap-3">
+            {/* Role indicator in header */}
+            <div className="hidden sm:flex items-center">
+              {getRoleBadge(user?.role, user?.is_superuser)}
+            </div>
+
             {/* Current Time Badge */}
             {currentTime && (
               <div className="hidden lg:flex items-center gap-1.5 px-3 py-1 rounded-full bg-muted/60 text-xs font-medium text-muted-foreground border border-border/50">
@@ -284,24 +376,26 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             )}
 
             {/* Inquiries Notification Link */}
-            <Link href="/admin/messages">
-              <Button
-                variant="outline"
-                size="sm"
-                className={cn(
-                  "relative h-9 px-3 rounded-xl border-border/70 text-xs font-medium transition-colors",
-                  unreadCount > 0 ? "text-primary border-primary/30 bg-primary/5" : "text-muted-foreground"
-                )}
-              >
-                <Inbox className="w-4 h-4 mr-1.5" />
-                <span className="hidden sm:inline">Inquiries</span>
-                {unreadCount > 0 && (
-                  <span className="ml-1.5 px-1.5 py-0.2 rounded-full bg-primary text-white text-[10px] font-bold">
-                    {unreadCount}
-                  </span>
-                )}
-              </Button>
-            </Link>
+            {adminApi.hasPermission("messages.view") && (
+              <Link href="/admin/messages">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className={cn(
+                    "relative h-9 px-3 rounded-xl border-border/70 text-xs font-medium transition-colors",
+                    unreadCount > 0 ? "text-primary border-primary/30 bg-primary/5" : "text-muted-foreground"
+                  )}
+                >
+                  <Inbox className="w-4 h-4 mr-1.5" />
+                  <span className="hidden sm:inline">Inquiries</span>
+                  {unreadCount > 0 && (
+                    <span className="ml-1.5 px-1.5 py-0.2 rounded-full bg-primary text-white text-[10px] font-bold">
+                      {unreadCount}
+                    </span>
+                  )}
+                </Button>
+              </Link>
+            )}
 
             {/* View Store Button */}
             <Link href="/" target="_blank">

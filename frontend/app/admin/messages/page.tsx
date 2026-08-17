@@ -38,6 +38,7 @@ export default function AdminMessagesPage() {
   // Deleting message
   const [deletingMessage, setDeletingMessage] = useState<AdminContactMessage | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
+  const isInitialMount = React.useRef(true)
 
   const loadMessages = async () => {
     setIsLoading(true)
@@ -56,6 +57,12 @@ export default function AdminMessagesPage() {
   }
 
   useEffect(() => {
+    if (isInitialMount.current) {
+      isInitialMount.current = false
+      loadMessages()
+      return
+    }
+
     const timer = setTimeout(() => {
       loadMessages()
     }, 200)
@@ -200,19 +207,27 @@ export default function AdminMessagesPage() {
       {/* Messages List */}
       <Card className="rounded-2xl border-border/70 shadow-sm bg-card overflow-hidden">
         <CardContent className="p-0">
-          {isLoading ? (
-            <div className="p-12 text-center text-xs text-muted-foreground">
-              <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-2" />
-              Loading messages...
-            </div>
-          ) : messages.length === 0 ? (
-            <div className="p-12 text-center text-xs text-muted-foreground space-y-2">
-              <Inbox className="w-8 h-8 mx-auto text-muted-foreground/40" />
-              <p className="font-semibold text-foreground">No customer inquiries found.</p>
-            </div>
-          ) : (
-            <div className="divide-y divide-border/40">
-              {messages.map((msg) => (
+          <div className="divide-y divide-border/40">
+            {isLoading ? (
+              Array.from({ length: 5 }).map((_, i) => (
+                <div key={i} className="p-4 sm:p-5 flex items-center justify-between gap-3 animate-pulse">
+                  <div className="flex items-center gap-3.5 min-w-0 flex-1">
+                    <div className="w-10 h-10 rounded-xl bg-muted/70 shrink-0" />
+                    <div className="space-y-1.5 flex-1 min-w-0">
+                      <div className="h-4 w-40 bg-muted/80 rounded" />
+                      <div className="h-3 w-64 bg-muted/50 rounded" />
+                    </div>
+                  </div>
+                  <div className="h-4 w-20 bg-muted/60 rounded hidden sm:block" />
+                </div>
+              ))
+            ) : messages.length === 0 ? (
+              <div className="p-12 text-center text-xs text-muted-foreground space-y-2">
+                <Inbox className="w-8 h-8 mx-auto text-muted-foreground/40" />
+                <p className="font-semibold text-foreground">No customer inquiries found.</p>
+              </div>
+            ) : (
+              messages.map((msg) => (
                 <div
                   key={msg.id}
                   onClick={() => openMessageModal(msg)}
@@ -275,33 +290,36 @@ export default function AdminMessagesPage() {
                     </span>
 
                     <div className="flex items-center gap-1">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={(e) => handleToggleRead(msg, e)}
-                        className="h-8 w-8 rounded-lg text-muted-foreground hover:text-foreground"
-                        title={msg.is_read ? "Mark as unread" : "Mark as read"}
-                      >
-                        <CheckCircle2 className={cn("w-4 h-4", msg.is_read && "text-emerald-500")} />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          setDeletingMessage(msg)
-                        }}
-                        className="h-8 w-8 rounded-lg text-muted-foreground hover:text-destructive"
-                        title="Delete message"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
+                      {adminApi.hasPermission("messages.update") && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={(e) => handleToggleRead(msg, e)}
+                          className="h-8 w-8 rounded-lg text-muted-foreground hover:text-foreground"
+                          title={msg.is_read ? "Mark as unread" : "Mark as read"}
+                        >
+                          <CheckCircle2 className={cn("w-4 h-4", msg.is_read && "text-emerald-500")} />
+                        </Button>
+                      )}
+                      {adminApi.hasPermission("messages.delete") && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setDeletingMessage(msg)
+                          }}
+                          className="h-8 w-8 rounded-lg text-muted-foreground hover:text-destructive"
+                          title="Delete message"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      )}
                     </div>
                   </div>
                 </div>
-              ))}
-            </div>
-          )}
+              )))}
+          </div>
         </CardContent>
       </Card>
 

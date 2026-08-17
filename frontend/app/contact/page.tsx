@@ -11,8 +11,10 @@ import { Facebook, Instagram, Loader2 } from "lucide-react"
 import { ScrollReveal } from "@/components/scroll-reveal"
 import { STORE_INFO } from "@/lib/constants"
 import { trackWhatsAppConversion, trackContactSubmit } from "@/lib/analytics"
+import { useStore } from "@/lib/store-context"
 
 export default function ContactPage() {
+  const { store, getSocialUrl } = useStore()
   const { toast } = useToast()
   const [isLoading, setIsLoading] = useState(false)
   const [formData, setFormData] = useState({
@@ -212,17 +214,19 @@ export default function ContactPage() {
                           <div>
                             <h4 className="font-semibold text-foreground mb-1">Official Address</h4>
                             <p className="text-muted-foreground text-sm leading-relaxed">
-                              {STORE_INFO.name} ({STORE_INFO.enterpriseName})
+                              {store.name} ({store.enterprise_name})
                               <br />
-                              {STORE_INFO.address.street}
+                              {store.address_street}
                               <br />
-                              {STORE_INFO.address.locality}, {STORE_INFO.address.city}
+                              {store.address_locality}, {store.address_city}
                               <br />
-                              {STORE_INFO.address.state} — {STORE_INFO.address.postalCode}, {STORE_INFO.address.country}
+                              {store.address_state} — {store.address_postal_code}, {store.address_country}
                             </p>
-                            <span className="inline-block mt-2 text-xs font-mono bg-muted px-2 py-0.5 rounded text-muted-foreground">
-                              Plus Code: {STORE_INFO.address.plusCode}
-                            </span>
+                            {store.plus_code && (
+                              <span className="inline-block mt-2 text-xs font-mono bg-muted px-2 py-0.5 rounded text-muted-foreground">
+                                Plus Code: {store.plus_code}
+                              </span>
+                            )}
                           </div>
                         </div>
 
@@ -233,13 +237,13 @@ export default function ContactPage() {
                           <div>
                             <h4 className="font-semibold text-foreground mb-1">Phone & WhatsApp Support</h4>
                             <a
-                              href={`tel:${STORE_INFO.phoneRaw}`}
+                              href={`tel:${store.phone_raw}`}
                               className="text-foreground hover:text-primary transition-colors font-medium text-sm block"
                             >
-                              {STORE_INFO.phoneDisplay} ({STORE_INFO.phone})
+                              {store.phone_display || store.phone}
                             </a>
                             <a
-                              href={STORE_INFO.whatsappUrl}
+                              href={getSocialUrl("whatsapp") || `https://wa.me/${store.phone_raw}`}
                               target="_blank"
                               rel="noopener noreferrer"
                               onClick={() => trackWhatsAppConversion({ source: "contact_page" })}
@@ -250,65 +254,71 @@ export default function ContactPage() {
                           </div>
                         </div>
 
-                        <div className="flex items-start gap-4">
-                          <div className="w-8 h-8 bg-pink-500/10 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
-                            <span className="text-pink-600 text-sm">📷</span>
+                        {getSocialUrl("instagram") && (
+                          <div className="flex items-start gap-4">
+                            <div className="w-8 h-8 bg-pink-500/10 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
+                              <span className="text-pink-600 text-sm">📷</span>
+                            </div>
+                            <div>
+                              <h4 className="font-semibold text-foreground mb-1">Instagram Community</h4>
+                              <a
+                                href={getSocialUrl("instagram")}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-primary hover:underline font-medium text-sm"
+                              >
+                                @ebasistore_traditionalattire
+                              </a>
+                              <p className="text-xs text-muted-foreground mt-0.5">
+                                1000+ Happy Clients • Daily Collections
+                              </p>
+                            </div>
                           </div>
-                          <div>
-                            <h4 className="font-semibold text-foreground mb-1">Instagram Community</h4>
-                            <a
-                              href={STORE_INFO.instagram.url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-primary hover:underline font-medium text-sm"
-                            >
-                              {STORE_INFO.instagram.handle}
-                            </a>
-                            <p className="text-xs text-muted-foreground mt-0.5">
-                              1000+ Happy Clients • Daily Collections
-                            </p>
-                          </div>
-                        </div>
+                        )}
 
-                        <div className="flex items-start gap-4">
-                          <div className="w-8 h-8 bg-red-500/10 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
-                            <span className="text-red-600 text-sm">▶️</span>
+                        {getSocialUrl("youtube") && (
+                          <div className="flex items-start gap-4">
+                            <div className="w-8 h-8 bg-red-500/10 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
+                              <span className="text-red-600 text-sm">▶️</span>
+                            </div>
+                            <div>
+                              <h4 className="font-semibold text-foreground mb-1">YouTube Channel</h4>
+                              <a
+                                href={getSocialUrl("youtube")}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-red-600 hover:underline font-medium text-sm"
+                              >
+                                Ms Ebasi Store on YouTube →
+                              </a>
+                              <p className="text-xs text-muted-foreground mt-0.5">
+                                Fabric tours, styling guides & drape showcases
+                              </p>
+                            </div>
                           </div>
-                          <div>
-                            <h4 className="font-semibold text-foreground mb-1">YouTube Channel</h4>
-                            <a
-                              href={STORE_INFO.youtube.url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-red-600 hover:underline font-medium text-sm"
-                            >
-                              Ms Ebasi Store on YouTube →
-                            </a>
-                            <p className="text-xs text-muted-foreground mt-0.5">
-                              Fabric tours, styling guides & drape showcases
-                            </p>
-                          </div>
-                        </div>
+                        )}
 
-                        <div className="flex items-start gap-4">
-                          <div className="w-8 h-8 bg-blue-500/10 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
-                            <span className="text-blue-600 text-sm">🌐</span>
+                        {getSocialUrl("facebook") && (
+                          <div className="flex items-start gap-4">
+                            <div className="w-8 h-8 bg-blue-500/10 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
+                              <span className="text-blue-600 text-sm">🌐</span>
+                            </div>
+                            <div>
+                              <h4 className="font-semibold text-foreground mb-1">Facebook Community</h4>
+                              <a
+                                href={getSocialUrl("facebook")}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-blue-600 hover:underline font-medium text-sm"
+                              >
+                                Twinkle Deori (Ebasi Store) →
+                              </a>
+                              <p className="text-xs text-muted-foreground mt-0.5">
+                                Connect with our traditional attire community
+                              </p>
+                            </div>
                           </div>
-                          <div>
-                            <h4 className="font-semibold text-foreground mb-1">Facebook Community</h4>
-                            <a
-                              href={STORE_INFO.facebook.url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-blue-600 hover:underline font-medium text-sm"
-                            >
-                              {STORE_INFO.facebook.handle} →
-                            </a>
-                            <p className="text-xs text-muted-foreground mt-0.5">
-                              Connect with our traditional attire community
-                            </p>
-                          </div>
-                        </div>
+                        )}
                       </div>
                     </CardContent>
                   </Card>

@@ -1,178 +1,148 @@
+"use client"
+
+import React, { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Shield, MapPin, Phone, Instagram } from "lucide-react"
-import { STORE_INFO } from "@/lib/constants"
+import { useStore } from "@/lib/store-context"
+import { adminApi, PageContentData } from "@/lib/admin-api"
 
 export default function PrivacyPolicyPage() {
+  const { store, getSocialUrl } = useStore()
+  const [pageData, setPageData] = useState<PageContentData | null>(null)
+
+  useEffect(() => {
+    adminApi.getPublicCmsPage("privacy-policy")
+      .then((data) => {
+        if (data) setPageData(data)
+      })
+      .catch(() => {})
+  }, [])
+
+  const instagramUrl = getSocialUrl("instagram")
+  const sections = pageData?.content_json?.sections || [
+    {
+      heading: "1. Information We Collect",
+      content: "We collect information you provide directly to us when browsing products, initiating orders, and contacting our boutique.",
+      bullets: [
+        "Personal Information: Name, email address, contact phone number, shipping address.",
+        "Usage Data: Browsing behavior, product inquiries, wishlist selections, device info and IP address.",
+        "Communication Records: WhatsApp inquiries and contact form submissions."
+      ]
+    },
+    {
+      heading: "2. How We Use Your Information",
+      content: "We utilize your information to provide personalized shopping and direct customer support.",
+      bullets: [
+        "Process and fulfill your handloom orders and direct deliveries.",
+        "Provide direct 1-on-1 WhatsApp customer assistance and order status updates.",
+        "Send product recommendations, new arrivals, and boutique notices.",
+        "Improve store performance, inventory availability, and customer satisfaction."
+      ]
+    },
+    {
+      heading: "3. Information Sharing and Disclosure",
+      content: "We do not sell, rent, or trade your personal information to third parties. Information is only shared with verified courier partners to deliver parcels directly from Dhemaji, Assam, or when required by legal regulations.",
+      bullets: []
+    },
+    {
+      heading: "4. Data Security & Storage",
+      content: "We implement appropriate technical measures including SSL encryption, secure tokens, and access controls to safeguard your data against unauthorized access or alteration.",
+      bullets: []
+    },
+    {
+      heading: "5. Your Rights and Choices",
+      content: "You have the right to request access, correction, or deletion of your personal data stored with us at any time by contacting our support team.",
+      bullets: []
+    }
+  ]
+
   return (
     <div className="min-h-screen bg-background">
-      
-
       <main className="pt-20">
         <div className="max-w-4xl mx-auto p-6">
           <div className="mb-8">
-            <h1 className="text-3xl font-bold text-foreground mb-2">Privacy Policy</h1>
-            <p className="text-muted-foreground">Last updated: January 15, 2024 • Effective Date: January 15, 2024</p>
+            <h1 className="text-3xl font-bold text-foreground mb-2">
+              {pageData?.title || "Privacy Policy"}
+            </h1>
+            <p className="text-muted-foreground">
+              Last updated: {pageData?.last_updated_date || "January 15, 2024"}
+            </p>
           </div>
 
           <div className="space-y-8">
+            {/* Header / Intro Card */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center space-x-2">
                   <Shield className="w-5 h-5 text-primary" />
-                  <span>Our Commitment to Your Privacy</span>
+                  <span>{pageData?.subtitle || "Our Commitment to Your Privacy"}</span>
                 </CardTitle>
-                <CardDescription>
-                  At EBASI STORE, we are committed to protecting your privacy and ensuring the security of your personal
-                  information. This Privacy Policy explains how we collect, use, disclose, and safeguard your
-                  information when you visit our website and use our services.
+                <CardDescription className="text-sm leading-relaxed">
+                  {pageData?.intro || `At ${store.brand_name || "EBASI STORE"}, we are committed to protecting your privacy and ensuring the security of your personal information. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you visit our website and use our services.`}
                 </CardDescription>
               </CardHeader>
             </Card>
 
-            <Card>
-              <CardHeader>
-                <CardTitle>1. Information We Collect</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <h4 className="font-semibold mb-2">Personal Information</h4>
-                  <ul className="list-disc list-inside space-y-1 text-muted-foreground">
-                    <li>Name, email address, phone number</li>
-                    <li>Billing and shipping addresses</li>
-                    <li>Payment information (processed securely by our payment partners)</li>
-                    <li>Account credentials and preferences</li>
-                  </ul>
-                </div>
-                <div>
-                  <h4 className="font-semibold mb-2">Usage Information</h4>
-                  <ul className="list-disc list-inside space-y-1 text-muted-foreground">
-                    <li>Browsing behavior and purchase history</li>
-                    <li>Device information and IP address</li>
-                    <li>Cookies and similar tracking technologies</li>
-                    <li>Communication preferences and interactions</li>
-                  </ul>
-                </div>
-              </CardContent>
-            </Card>
+            {/* Dynamic Policy Sections */}
+            {sections.map((section: any, idx: number) => (
+              <Card key={idx}>
+                <CardHeader>
+                  <CardTitle className="text-lg font-serif font-bold text-foreground">
+                    {section.heading}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3 text-sm leading-relaxed text-muted-foreground">
+                  {section.content && <p>{section.content}</p>}
+                  {section.bullets && section.bullets.length > 0 && (
+                    <ul className="list-disc list-inside space-y-1.5 pt-1">
+                      {section.bullets.map((b: string, bIdx: number) => (
+                        <li key={bIdx}>{b}</li>
+                      ))}
+                    </ul>
+                  )}
+                </CardContent>
+              </Card>
+            ))}
 
+            {/* Contact Information & Grievance Officer */}
             <Card>
               <CardHeader>
-                <CardTitle>2. How We Use Your Information</CardTitle>
+                <CardTitle className="text-lg font-serif font-bold text-foreground">
+                  Contact Us & Grievance Assistance
+                </CardTitle>
               </CardHeader>
               <CardContent>
-                <ul className="list-disc list-inside space-y-2 text-muted-foreground">
-                  <li>Process and fulfill your orders</li>
-                  <li>Provide customer support and respond to inquiries</li>
-                  <li>Send order confirmations, shipping updates, and important notices</li>
-                  <li>Personalize your shopping experience and product recommendations</li>
-                  <li>Send marketing communications (with your consent)</li>
-                  <li>Improve our website, products, and services</li>
-                  <li>Prevent fraud and ensure security</li>
-                  <li>Comply with legal obligations</li>
-                </ul>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>3. Information Sharing and Disclosure</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <p className="text-muted-foreground">
-                  We do not sell, trade, or rent your personal information to third parties. We may share your
-                  information in the following circumstances:
-                </p>
-                <ul className="list-disc list-inside space-y-2 text-muted-foreground">
-                  <li>With service providers who assist in our operations (payment processors, shipping companies)</li>
-                  <li>When required by law or to protect our rights and safety</li>
-                  <li>In connection with a business transfer or merger</li>
-                  <li>With your explicit consent</li>
-                </ul>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>4. Data Security</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground mb-4">
-                  We implement appropriate technical and organizational measures to protect your personal information
-                  against unauthorized access, alteration, disclosure, or destruction.
-                </p>
-                <ul className="list-disc list-inside space-y-2 text-muted-foreground">
-                  <li>SSL encryption for data transmission</li>
-                  <li>Secure payment processing</li>
-                  <li>Regular security audits and updates</li>
-                  <li>Access controls and employee training</li>
-                </ul>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>5. Your Rights and Choices</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ul className="list-disc list-inside space-y-2 text-muted-foreground">
-                  <li>Access and update your personal information</li>
-                  <li>Request deletion of your data (subject to legal requirements)</li>
-                  <li>Opt-out of marketing communications</li>
-                  <li>Control cookie preferences</li>
-                  <li>Request data portability</li>
-                  <li>Lodge complaints with supervisory authorities</li>
-                </ul>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>6. International Data Transfers</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground">
-                  Your information may be transferred to and processed in countries other than your own. We ensure
-                  appropriate safeguards are in place to protect your data in accordance with applicable privacy laws.
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>7. Contact Us & Grievance Officer</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground mb-4">
-                  If you have any questions about this Privacy Policy or your personal data, please contact our store:
+                <p className="text-muted-foreground text-sm mb-4">
+                  If you have questions regarding this Privacy Policy or your personal data, please reach out to our boutique directly:
                 </p>
                 <div className="space-y-3 text-sm">
                   <div className="flex items-center space-x-2 text-foreground font-medium">
-                    <span>{STORE_INFO.name} ({STORE_INFO.enterpriseName})</span>
+                    <span>{store.name} ({store.enterprise_name})</span>
                   </div>
                   <div className="flex items-center space-x-2 text-muted-foreground">
                     <MapPin className="w-4 h-4 text-primary shrink-0" />
-                    <span>{STORE_INFO.address.full}</span>
+                    <span>{store.address_full}</span>
                   </div>
                   <div className="flex items-center space-x-2 text-muted-foreground">
                     <Phone className="w-4 h-4 text-green-600 shrink-0" />
-                    <a href={`tel:${STORE_INFO.phoneRaw}`} className="text-primary hover:underline">
-                      {STORE_INFO.phoneDisplay}
+                    <a href={`tel:${store.phone_raw}`} className="text-primary hover:underline font-medium">
+                      {store.phone_display || store.phone}
                     </a>
                   </div>
-                  <div className="flex items-center space-x-2 text-muted-foreground">
-                    <Instagram className="w-4 h-4 text-pink-600 shrink-0" />
-                    <a href={STORE_INFO.instagram.url} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
-                      {STORE_INFO.instagram.handle}
-                    </a>
-                  </div>
+                  {instagramUrl && (
+                    <div className="flex items-center space-x-2 text-muted-foreground">
+                      <Instagram className="w-4 h-4 text-pink-600 shrink-0" />
+                      <a href={instagramUrl} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+                        @ebasistore_traditionalattire
+                      </a>
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
           </div>
         </div>
       </main>
-
-      
     </div>
   )
 }

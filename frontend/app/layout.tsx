@@ -97,6 +97,7 @@ import { Footer } from "@/components/footer"
 import { Toaster } from "@/components/ui/toaster"
 import { NavigationProgressBar } from "@/components/navigation-progress-bar"
 import { StoreLocation } from "@/components/store-location"
+import { StoreProvider } from "@/lib/store-context"
 
 export default function RootLayout({
   children,
@@ -145,26 +146,28 @@ export default function RootLayout({
         />
       </head>
       <body className={`${inter.variable} ${cormorant.variable} ${inter.className} antialiased`}>
-        <a
-          href="#main-content"
-          className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2.5 focus:bg-primary focus:text-primary-foreground focus:rounded-lg focus:shadow-xl focus:outline-none focus:ring-2 focus:ring-primary-foreground text-sm font-semibold transition-all"
-        >
-          Skip to main content
-        </a>
-        <NavigationProgressBar />
-        <Navigation />
-        <Suspense fallback={null}>
-          <AnalyticsTracker />
-        </Suspense>
-        <Suspense fallback={null}>
-          <div id="main-content" tabIndex={-1} className="focus:outline-none">
-            {children}
-          </div>
-        </Suspense>
-        <StoreLocation />
-        <Footer />
-        <Toaster />
-        <Analytics />
+        <StoreProvider>
+          <a
+            href="#main-content"
+            className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2.5 focus:bg-primary focus:text-primary-foreground focus:rounded-lg focus:shadow-xl focus:outline-none focus:ring-2 focus:ring-primary-foreground text-sm font-semibold transition-all"
+          >
+            Skip to main content
+          </a>
+          <NavigationProgressBar />
+          <Navigation />
+          <Suspense fallback={null}>
+            <AnalyticsTracker />
+          </Suspense>
+          <Suspense fallback={null}>
+            <div id="main-content" tabIndex={-1} className="focus:outline-none">
+              {children}
+            </div>
+          </Suspense>
+          <StoreLocation />
+          <Footer />
+          <Toaster />
+          <Analytics />
+        </StoreProvider>
       </body>
     </html>
   )

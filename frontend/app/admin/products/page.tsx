@@ -78,6 +78,8 @@ export default function AdminProductsPage() {
   const [formIsActive, setFormIsActive] = useState(true)
   const [formIsFeatured, setFormIsFeatured] = useState(false)
 
+  const isInitialMount = React.useRef(true)
+
   const loadData = async () => {
     setIsLoading(true)
     setError(null)
@@ -102,9 +104,15 @@ export default function AdminProductsPage() {
   }
 
   useEffect(() => {
+    if (isInitialMount.current) {
+      isInitialMount.current = false
+      loadData()
+      return
+    }
+
     const timer = setTimeout(() => {
       loadData()
-    }, 250)
+    }, 200)
     return () => clearTimeout(timer)
   }, [searchQuery, selectedCategory, selectedStockStatus, selectedBadge, isFeaturedFilter])
 
@@ -289,6 +297,10 @@ export default function AdminProductsPage() {
     }
   }
 
+  const canCreate = adminApi.hasPermission("products.create")
+  const canUpdate = adminApi.hasPermission("products.update")
+  const canDelete = adminApi.hasPermission("products.delete")
+
   return (
     <div className="space-y-6">
       {/* Header & New Product Button */}
@@ -313,14 +325,16 @@ export default function AdminProductsPage() {
             Refresh
           </Button>
 
-          <Button
-            size="sm"
-            onClick={openAddModal}
-            className="h-9 px-3.5 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground font-semibold text-xs shadow-sm shadow-primary/20"
-          >
-            <Plus className="w-3.5 h-3.5 mr-1.5" />
-            Add Product
-          </Button>
+          {canCreate && (
+            <Button
+              size="sm"
+              onClick={openAddModal}
+              className="h-9 px-3.5 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground font-semibold text-xs shadow-sm shadow-primary/20"
+            >
+              <Plus className="w-3.5 h-3.5 mr-1.5" />
+              Add Product
+            </Button>
+          )}
         </div>
       </div>
 
@@ -385,36 +399,54 @@ export default function AdminProductsPage() {
       {/* PRODUCT LIST TABLE */}
       <Card className="rounded-2xl border-border/70 shadow-sm bg-card overflow-hidden">
         <CardContent className="p-0">
-          {isLoading ? (
-            <div className="p-12 text-center text-xs text-muted-foreground">
-              <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-2" />
-              Loading products...
-            </div>
-          ) : products.length === 0 ? (
-            <div className="p-12 text-center text-xs text-muted-foreground space-y-3">
-              <Package className="w-8 h-8 mx-auto text-muted-foreground/40" />
-              <p className="font-semibold text-foreground">No products match the selected filters.</p>
-              <Button size="sm" variant="outline" onClick={() => { setSearchQuery(""); setSelectedCategory("all"); setSelectedStockStatus("all"); setSelectedBadge("all"); }}>
-                Clear Filters
-              </Button>
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs">
-                <thead className="bg-muted/40 text-muted-foreground uppercase text-[10px] tracking-wider border-b border-border/50">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs">
+              <thead className="bg-muted/40 text-muted-foreground uppercase text-[10px] tracking-wider border-b border-border/50">
+                <tr>
+                  <th className="py-3.5 px-4 font-semibold">Product</th>
+                  <th className="py-3.5 px-4 font-semibold">Category</th>
+                  <th className="py-3.5 px-4 font-semibold">Price</th>
+                  <th className="py-3.5 px-4 font-semibold">Status</th>
+                  <th className="py-3.5 px-4 font-semibold">Badge</th>
+                  <th className="py-3.5 px-4 font-semibold text-center">Engagement</th>
+                  <th className="py-3.5 px-4 font-semibold text-center">Active</th>
+                  <th className="py-3.5 px-4 font-semibold text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border/40">
+                {isLoading ? (
+                  Array.from({ length: 6 }).map((_, i) => (
+                    <tr key={i} className="animate-pulse">
+                      <td className="py-3 px-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-11 h-11 rounded-xl bg-muted/70 shrink-0" />
+                          <div className="space-y-1.5 flex-1 min-w-0">
+                            <div className="h-4 w-40 bg-muted/80 rounded" />
+                            <div className="h-3 w-24 bg-muted/50 rounded" />
+                          </div>
+                        </div>
+                      </td>
+                      <td className="py-3 px-4"><div className="h-4 w-20 bg-muted/70 rounded" /></td>
+                      <td className="py-3 px-4"><div className="h-4 w-16 bg-muted/70 rounded" /></td>
+                      <td className="py-3 px-4"><div className="h-5 w-20 bg-muted/70 rounded-full" /></td>
+                      <td className="py-3 px-4"><div className="h-5 w-16 bg-muted/70 rounded-full" /></td>
+                      <td className="py-3 px-4 text-center"><div className="h-4 w-12 bg-muted/70 rounded mx-auto" /></td>
+                      <td className="py-3 px-4 text-center"><div className="h-4 w-8 bg-muted/70 rounded mx-auto" /></td>
+                      <td className="py-3 px-4 text-right"><div className="h-8 w-16 bg-muted/70 rounded ml-auto" /></td>
+                    </tr>
+                  ))
+                ) : products.length === 0 ? (
                   <tr>
-                    <th className="py-3.5 px-4 font-semibold">Product</th>
-                    <th className="py-3.5 px-4 font-semibold">Category</th>
-                    <th className="py-3.5 px-4 font-semibold">Price</th>
-                    <th className="py-3.5 px-4 font-semibold">Status</th>
-                    <th className="py-3.5 px-4 font-semibold">Badge</th>
-                    <th className="py-3.5 px-4 font-semibold text-center">Engagement</th>
-                    <th className="py-3.5 px-4 font-semibold text-center">Active</th>
-                    <th className="py-3.5 px-4 font-semibold text-right">Actions</th>
+                    <td colSpan={8} className="p-12 text-center text-xs text-muted-foreground space-y-3">
+                      <Package className="w-8 h-8 mx-auto text-muted-foreground/40" />
+                      <p className="font-semibold text-foreground">No products match the selected filters.</p>
+                      <Button size="sm" variant="outline" onClick={() => { setSearchQuery(""); setSelectedCategory("all"); setSelectedStockStatus("all"); setSelectedBadge("all"); }}>
+                        Clear Filters
+                      </Button>
+                    </td>
                   </tr>
-                </thead>
-                <tbody className="divide-y divide-border/40">
-                  {products.map((p) => {
+                ) : (
+                  products.map((p) => {
                     const isOutOfStock = p.stock_status === "out_of_stock"
                     const isLimited = p.stock_status === "limited_stock"
 
@@ -520,14 +552,20 @@ export default function AdminProductsPage() {
                         <td className="py-3 px-4 text-center">
                           <button
                             type="button"
-                            onClick={() => handleToggleActive(p)}
+                            onClick={() => canUpdate && handleToggleActive(p)}
+                            disabled={!canUpdate}
                             className={cn(
                               "w-7 h-7 rounded-lg inline-flex items-center justify-center transition-colors",
                               p.is_active
                                 ? "bg-emerald-500/15 text-emerald-600 hover:bg-emerald-500/25"
-                                : "bg-muted text-muted-foreground hover:bg-muted/80"
+                                : "bg-muted text-muted-foreground hover:bg-muted/80",
+                              !canUpdate && "cursor-not-allowed opacity-70"
                             )}
-                            title={p.is_active ? "Active on site (Click to hide)" : "Hidden from site (Click to show)"}
+                            title={
+                              !canUpdate
+                                ? (p.is_active ? "Active" : "Inactive")
+                                : (p.is_active ? "Active on site (Click to hide)" : "Hidden from site (Click to show)")
+                            }
                           >
                             {p.is_active ? <CheckCircle2 className="w-4 h-4" /> : <XCircle className="w-4 h-4" />}
                           </button>
@@ -537,37 +575,42 @@ export default function AdminProductsPage() {
                         <td className="py-3 px-4 text-right">
                           <div className="flex items-center justify-end gap-1.5">
                             <Link href={`/product/${p.slug}`} target="_blank">
-                              <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg text-muted-foreground hover:text-foreground">
+                              <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg text-muted-foreground hover:text-foreground" title="View in Store">
                                 <ExternalLink className="w-3.5 h-3.5" />
                               </Button>
                             </Link>
-                            <Button
-                              variant="outline"
-                              size="icon"
-                              onClick={() => openEditModal(p)}
-                              className="h-8 w-8 rounded-lg text-foreground hover:bg-muted"
-                              title="Edit Product"
-                            >
-                              <Edit2 className="w-3.5 h-3.5" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => setDeletingProduct(p)}
-                              className="h-8 w-8 rounded-lg text-destructive hover:bg-destructive/10"
-                              title="Delete Product"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </Button>
+
+                            {canUpdate && (
+                              <Button
+                                variant="outline"
+                                size="icon"
+                                onClick={() => openEditModal(p)}
+                                className="h-8 w-8 rounded-lg text-foreground hover:bg-muted"
+                                title="Edit Product"
+                              >
+                                <Edit2 className="w-3.5 h-3.5" />
+                              </Button>
+                            )}
+
+                            {canDelete && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => setDeletingProduct(p)}
+                                className="h-8 w-8 rounded-lg text-destructive hover:bg-destructive/10"
+                                title="Delete Product"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </Button>
+                            )}
                           </div>
                         </td>
                       </tr>
                     )
-                  })}
+                  }))}
                 </tbody>
               </table>
             </div>
-          )}
         </CardContent>
       </Card>
 

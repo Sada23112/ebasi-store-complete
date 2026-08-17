@@ -14,9 +14,11 @@ import { useWishlist } from "@/lib/wishlist"
 import { triggerNavigationStart } from "@/components/navigation-progress-bar"
 import { STORE_INFO } from "@/lib/constants"
 import { trackWhatsAppConversion, trackSearch } from "@/lib/analytics"
+import { useStore } from "@/lib/store-context"
 
 export function Navigation() {
   const pathname = usePathname()
+  const { store } = useStore()
   const [isOpen, setIsOpen] = useState(false)
   const [isSearchExpanded, setIsSearchExpanded] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
@@ -119,7 +121,7 @@ export function Navigation() {
           <div className="flex-shrink-0">
             <Link href="/" aria-label="Ms Ebasi Store Home">
               <span className="text-xl sm:text-2xl font-serif font-bold text-foreground hover:text-primary transition-colors cursor-pointer tracking-tight">
-                EBASI STORE
+                {store.brand_name || "EBASI STORE"}
               </span>
             </Link>
           </div>

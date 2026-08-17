@@ -4,9 +4,18 @@ import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import Image from "next/image"
 import { Instagram, ArrowRight, Sparkles } from "lucide-react"
-import { STORE_INFO } from "@/lib/constants"
+import { useStore } from "@/lib/store-context"
 
 export function HeroSection() {
+  const { hero, getSocialUrl } = useStore()
+
+  if (hero.is_active === false) {
+    return null
+  }
+
+  const instagramUrl = getSocialUrl("instagram")
+  const heroImageSrc = hero.image_url || hero.image_url_fallback || "https://images.unsplash.com/photo-1483985988355-763728e1935b?q=80&w=1200&auto=format&fit=crop"
+
   return (
     <section className="relative bg-background pt-24 pb-12 lg:pt-28 lg:pb-14 overflow-hidden">
       {/* Subtle background glow */}
@@ -20,42 +29,54 @@ export function HeroSection() {
             <div className="space-y-4">
               <div className="inline-flex items-center rounded-full border border-primary/20 bg-primary/5 px-3 py-1 text-xs sm:text-sm text-primary font-medium transition-all duration-300 hover:border-primary/40 hover:bg-primary/10">
                 <Sparkles className="h-3.5 w-3.5 mr-2 animate-pulse" />
-                New Season Arrivals
+                {hero.badge_text || "New Season Arrivals"}
               </div>
               
               <h1 className="text-3xl sm:text-5xl lg:text-6xl font-serif font-bold text-foreground leading-[1.15] text-balance tracking-tight">
-                Style that Speaks. <br className="hidden xs:inline"/>
-                <span className="text-primary drop-shadow-sm">Fashion that Lasts.</span>
+                {hero.heading ? (
+                  hero.heading.includes(".") ? (
+                    <>
+                      {hero.heading.split(".")[0]}. <br className="hidden xs:inline"/>
+                      <span className="text-primary drop-shadow-sm">{hero.heading.split(".").slice(1).join(".")}</span>
+                    </>
+                  ) : (
+                    hero.heading
+                  )
+                ) : (
+                  <>Style that Speaks. <br className="hidden xs:inline"/><span className="text-primary drop-shadow-sm">Fashion that Lasts.</span></>
+                )}
               </h1>
               
               <p className="text-sm sm:text-lg text-muted-foreground max-w-lg text-pretty leading-relaxed">
-                Discover the perfect blend of traditional elegance and modern style at EBASI STORE. Your destination for authentic Assamese Mekhela Sadors, sarees, and handcrafted fashion.
+                {hero.subheading || "Discover the perfect blend of traditional elegance and modern style at EBASI STORE. Your destination for authentic Assamese Mekhela Sadors, sarees, and handcrafted fashion."}
               </p>
             </div>
 
             <div className="flex flex-col sm:flex-row gap-3.5 animate-fade-up animate-stagger-2">
-              <Link href="/shop" className="w-full sm:w-auto group">
+              <Link href={hero.cta_link || "/shop"} className="w-full sm:w-auto group">
                 <Button size="lg" className="w-full bg-primary hover:bg-primary/90 text-primary-foreground premium-shadow hover:premium-shadow-hover transition-all duration-300 ease-out hover:-translate-y-1 active:scale-[0.98] rounded-xl font-semibold h-11 px-6 min-h-[44px]">
-                  Shop Collection
+                  {hero.cta_text || "Shop Collection"}
                   <ArrowRight className="w-4 h-4 ml-2 transition-transform duration-300 group-hover:translate-x-1.5" />
                 </Button>
               </Link>
-              <a
-                href={STORE_INFO.instagram.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="Follow Ms Ebasi Store on Instagram"
-                className="w-full sm:w-auto"
-              >
-                <Button
-                  variant="outline"
-                  size="lg"
-                  className="w-full border-primary text-primary hover:bg-primary hover:text-primary-foreground backdrop-blur-sm transition-all duration-300 ease-out hover:-translate-y-1 active:scale-[0.98] rounded-xl font-semibold bg-transparent h-11 px-6 min-h-[44px] focus-visible:ring-2 focus-visible:ring-primary"
+              {hero.secondary_cta_link && (
+                <a
+                  href={hero.secondary_cta_link.startsWith("http") ? hero.secondary_cta_link : instagramUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="Follow Ms Ebasi Store on Instagram"
+                  className="w-full sm:w-auto"
                 >
-                  <Instagram className="w-4 h-4 mr-2" aria-hidden="true" />
-                  Follow Us
-                </Button>
-              </a>
+                  <Button
+                    variant="outline"
+                    size="lg"
+                    className="w-full border-primary text-primary hover:bg-primary hover:text-primary-foreground backdrop-blur-sm transition-all duration-300 ease-out hover:-translate-y-1 active:scale-[0.98] rounded-xl font-semibold bg-transparent h-11 px-6 min-h-[44px] focus-visible:ring-2 focus-visible:ring-primary"
+                  >
+                    <Instagram className="w-4 h-4 mr-2" aria-hidden="true" />
+                    {hero.secondary_cta_text || "Follow Us"}
+                  </Button>
+                </a>
+              )}
             </div>
           </div>
 
@@ -65,8 +86,8 @@ export function HeroSection() {
             
             <div className="relative overflow-hidden rounded-2xl premium-shadow ring-1 ring-black/5 bg-muted group cursor-pointer w-full h-[320px] xs:h-[380px] sm:h-[480px] lg:h-[540px]">
               <Image
-                src="https://images.unsplash.com/photo-1483985988355-763728e1935b?q=80&w=1200&auto=format&fit=crop"
-                alt="Authentic handcrafted Assamese Mekhela Sador and traditional boutique collection"
+                src={heroImageSrc}
+                alt={hero.image_alt || "Authentic handcrafted Assamese Mekhela Sador and traditional boutique collection"}
                 fill
                 priority
                 sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 600px"
@@ -77,8 +98,12 @@ export function HeroSection() {
               
               <div className="absolute bottom-3 left-3 right-3 sm:bottom-6 sm:left-6 sm:right-6 transform transition-all duration-500 ease-out group-hover:-translate-y-1">
                 <div className="bg-white/95 dark:bg-gray-900/95 backdrop-blur-md rounded-xl p-3 sm:p-4 premium-shadow border border-white/20">
-                  <h3 className="text-base sm:text-lg font-serif font-semibold text-foreground">Handcrafted Mekhela Sador</h3>
-                  <p className="text-[11px] sm:text-xs text-muted-foreground mt-0.5">Explore our handpicked curation of elegant Assamese wear.</p>
+                  <h3 className="text-base sm:text-lg font-serif font-semibold text-foreground">
+                    {hero.floating_card_title || "Handcrafted Mekhela Sador"}
+                  </h3>
+                  <p className="text-[11px] sm:text-xs text-muted-foreground mt-0.5">
+                    {hero.floating_card_subtitle || "Explore our handpicked curation of elegant Assamese wear."}
+                  </p>
                 </div>
               </div>
             </div>

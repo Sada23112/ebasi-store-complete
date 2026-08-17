@@ -66,6 +66,7 @@ INSTALLED_APPS = [
     'accounts',
     'orders',
     'admin_api',
+    'cms',
 ]
 
 SITE_ID = 1
