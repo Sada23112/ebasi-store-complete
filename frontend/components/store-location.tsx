@@ -1,5 +1,6 @@
 "use client"
 
+import { usePathname } from "next/navigation"
 import { MapPin, Navigation, Phone, Instagram, Sparkles, MessageCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -9,6 +10,10 @@ import { STORE_INFO } from "@/lib/constants"
 import { trackWhatsAppConversion } from "@/lib/analytics"
 
 export function StoreLocation() {
+  const pathname = usePathname()
+  if (pathname?.startsWith('/admin')) {
+    return null
+  }
   return (
     <section className="py-12 sm:py-16 px-4 bg-muted/40 border-t border-border/50">
       <div className="max-w-7xl mx-auto">

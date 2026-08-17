@@ -1,12 +1,17 @@
 "use client"
 
 import Link from "next/link"
+import { usePathname } from "next/navigation"
 import { Instagram, MapPin, Phone, MessageCircle, Youtube, Facebook } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { STORE_INFO } from "@/lib/constants"
 import { trackWhatsAppConversion } from "@/lib/analytics"
 
 export function Footer() {
+  const pathname = usePathname()
+  if (pathname?.startsWith('/admin')) {
+    return null
+  }
   return (
     <footer className="bg-muted py-12 border-t border-border">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">

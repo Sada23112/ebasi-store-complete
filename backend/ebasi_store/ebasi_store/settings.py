@@ -31,7 +31,7 @@ DEBUG = config('DEBUG', default=True, cast=bool)
 SECRET_KEY = config('SECRET_KEY', default='django-insecure-local-dev-key-change-in-production')
 
 # ALLOWED_HOSTS
-ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='127.0.0.1,localhost,ebasi-store.onrender.com', cast=Csv())
+ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='127.0.0.1,localhost,testserver,ebasi-store.onrender.com', cast=Csv())
 
 
 
@@ -248,13 +248,13 @@ SOCIALACCOUNT_PROVIDERS = {
 CORS_ALLOW_ALL_ORIGINS = False
 CORS_ALLOWED_ORIGINS = config(
     'CORS_ALLOWED_ORIGINS',
-    default='http://localhost:3000,http://127.0.0.1:3000',
+    default='http://localhost:3000,http://127.0.0.1:3000,https://ebasi-store-complete.vercel.app',
     cast=Csv()
 )
 
 CSRF_TRUSTED_ORIGINS = config(
     'CSRF_TRUSTED_ORIGINS',
-    default='http://localhost:3000,http://127.0.0.1:3000',
+    default='http://localhost:3000,http://127.0.0.1:3000,https://ebasi-store-complete.vercel.app',
     cast=Csv()
 )
 

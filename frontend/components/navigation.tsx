@@ -4,7 +4,7 @@ import type React from "react"
 
 import { useState, useRef, useEffect } from "react"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
+import { useRouter, usePathname } from "next/navigation"
 import { Search, Menu, X, Heart } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
@@ -16,6 +16,7 @@ import { STORE_INFO } from "@/lib/constants"
 import { trackWhatsAppConversion, trackSearch } from "@/lib/analytics"
 
 export function Navigation() {
+  const pathname = usePathname()
   const [isOpen, setIsOpen] = useState(false)
   const [isSearchExpanded, setIsSearchExpanded] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
@@ -25,6 +26,10 @@ export function Navigation() {
   const searchContainerRef = useRef<HTMLDivElement>(null)
   const router = useRouter()
   const { count: wishlistCount } = useWishlist()
+
+  if (pathname?.startsWith('/admin')) {
+    return null
+  }
 
   useEffect(() => {
     const handleScroll = () => {

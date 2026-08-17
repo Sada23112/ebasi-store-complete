@@ -10,7 +10,7 @@ export function AnalyticsTracker() {
   const lastTrackedPath = useRef<string>("")
 
   useEffect(() => {
-    if (!pathname) return
+    if (!pathname || pathname.startsWith('/admin')) return
     const queryString = searchParams?.toString()
     const fullPath = queryString ? `${pathname}?${queryString}` : pathname
 

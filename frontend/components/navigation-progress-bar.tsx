@@ -22,6 +22,10 @@ function NavigationProgressBarInner() {
   const safetyTimerRef = useRef<NodeJS.Timeout | null>(null)
   const isNavigatingRef = useRef(false)
 
+  if (pathname?.startsWith('/admin')) {
+    return null
+  }
+
   const cleanup = useCallback(() => {
     if (timerRef.current) clearInterval(timerRef.current)
     if (fadeTimerRef.current) clearTimeout(fadeTimerRef.current)
