@@ -209,7 +209,7 @@ class PageContentSerializer(serializers.ModelSerializer):
             'is_published',
             'updated_at',
         ]
-        read_only_fields = ['id', 'slug', 'updated_at']
+        read_only_fields = ['id', 'slug', 'updated_at', 'hero_image', 'story_image']
 
     def get_hero_image_url(self, obj):
         if obj.hero_image:

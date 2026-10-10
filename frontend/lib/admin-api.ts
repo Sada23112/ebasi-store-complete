@@ -1001,9 +1001,10 @@ class EbasiAdminAPI {
   }
 
   async updateCmsPage(slug: string, data: Partial<PageContentData>): Promise<PageContentData> {
+    const { hero_image, story_image, hero_image_url, story_image_url, page_name, ...cleanData } = data as any
     return this.request<PageContentData>(`/admin/cms/pages/${slug}/`, {
       method: "PATCH",
-      body: JSON.stringify(data),
+      body: JSON.stringify(cleanData),
     })
   }
 

@@ -14,11 +14,15 @@ import { Sparkles, Heart, ShieldCheck, MessageCircle, MapPin } from "lucide-reac
 export default function AboutPage() {
   const { store, getSocialUrl } = useStore()
   const [pageData, setPageData] = useState<PageContentData | null>(null)
+  const [imageError, setImageError] = useState(false)
 
   useEffect(() => {
     adminApi.getPublicCmsPage("about")
       .then((data) => {
-        if (data) setPageData(data)
+        if (data) {
+          setPageData(data)
+          setImageError(false)
+        }
       })
       .catch(() => {})
   }, [])
@@ -61,7 +65,8 @@ export default function AboutPage() {
     }
   ]
 
-  const heroImageSrc = pageData?.hero_image_url || pageData?.story_image_url || "/images/branding/og-image.jpg"
+  const fallbackImage = "/images/branding/og-image.jpg"
+  const heroImageSrc = (!imageError && (pageData?.story_image_url || pageData?.hero_image_url)) || fallbackImage
 
   return (
     <div className="min-h-screen bg-background">
@@ -111,6 +116,8 @@ export default function AboutPage() {
                     fill
                     sizes="(max-width: 1024px) 100vw, 50vw"
                     className="object-cover rounded-2xl"
+                    onError={() => setImageError(true)}
+                    priority
                   />
                 </div>
               </div>

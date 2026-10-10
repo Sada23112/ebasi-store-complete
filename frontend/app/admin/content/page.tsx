@@ -1328,7 +1328,7 @@ export default function AdminContentPage() {
                   <div className="flex flex-col sm:flex-row items-center gap-4">
                     <div className="relative w-40 h-28 rounded-xl overflow-hidden bg-muted border border-border shrink-0">
                       <img
-                        src={aboutPage.hero_image_url || aboutPage.story_image_url || "/images/branding/og-image.jpg"}
+                        src={aboutPage.story_image_url || aboutPage.hero_image_url || "/images/branding/og-image.jpg"}
                         alt="About Story Preview"
                         className="w-full h-full object-cover"
                       />
