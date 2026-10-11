@@ -840,6 +840,18 @@ class EbasiAdminAPI {
     })
   }
 
+  async createReview(data: {
+    product_id: number | string
+    user_name: string
+    rating: number
+    comment: string
+  }): Promise<AdminReview> {
+    return this.request<AdminReview>("/admin/reviews/", {
+      method: "POST",
+      body: JSON.stringify(data),
+    })
+  }
+
   // Contact Inquiries
   async getContactMessages(params: Record<string, any> = {}): Promise<{ count: number; results: AdminContactMessage[] }> {
     const query = new URLSearchParams()

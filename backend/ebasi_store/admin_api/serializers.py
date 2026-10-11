@@ -78,7 +78,8 @@ class AdminProductSerializer(serializers.ModelSerializer):
     category_id = serializers.PrimaryKeyRelatedField(
         queryset=Category.objects.all(),
         source='category',
-        write_only=True
+        write_only=True,
+        required=False
     )
     category = AdminCategorySerializer(read_only=True)
     images = AdminProductImageSerializer(many=True, read_only=True)

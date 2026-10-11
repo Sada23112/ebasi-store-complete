@@ -25,6 +25,7 @@ import {
   Layers,
   Image as ImageIcon,
   Check,
+  X,
   Video,
   Film,
   Play
@@ -69,6 +70,13 @@ export default function AdminProductsPage() {
   const [isUploadingVideo, setIsUploadingVideo] = useState(false)
   const [pendingVideo, setPendingVideo] = useState<{ file: File; preview: string; name: string } | null>(null)
   const [saveProgress, setSaveProgress] = useState<string>("")
+
+  // Inline Quick Editing State
+  const [updatingProductId, setUpdatingProductId] = useState<number | null>(null)
+  const [editingPriceId, setEditingPriceId] = useState<number | null>(null)
+  const [editingPriceValue, setEditingPriceValue] = useState<string>("")
+  const [editingQtyId, setEditingQtyId] = useState<number | null>(null)
+  const [editingQtyValue, setEditingQtyValue] = useState<string>("")
 
   // Form Fields
   const [formName, setFormName] = useState("")
@@ -450,6 +458,122 @@ export default function AdminProductsPage() {
     }
   }
 
+  // 1-Click Stock Status Toggle
+  const handleToggleStockStatus = async (p: AdminProduct) => {
+    if (!canUpdate) return
+    const nextStatus = p.stock_status === "out_of_stock" ? "in_stock" : "out_of_stock"
+    setUpdatingProductId(p.id)
+    setProducts((prev) =>
+      prev.map((item) => (item.id === p.id ? { ...item, stock_status: nextStatus } : item))
+    )
+    try {
+      await adminApi.updateProduct(p.id, { stock_status: nextStatus })
+    } catch (err: any) {
+      alert(`Failed to update stock status: ${err.message}`)
+      loadData()
+    } finally {
+      setUpdatingProductId(null)
+    }
+  }
+
+  // Quick Quantity Stepper (+ / -)
+  const handleQuickQuantityChange = async (p: AdminProduct, delta: number) => {
+    if (!canUpdate) return
+    const currentQty = p.stock_quantity ?? 0
+    const newQty = Math.max(0, currentQty + delta)
+    if (newQty === currentQty) return
+
+    let nextStatus = p.stock_status
+    if (newQty === 0) {
+      nextStatus = "out_of_stock"
+    } else if (p.stock_status === "out_of_stock" && newQty > 0) {
+      nextStatus = "in_stock"
+    }
+
+    setUpdatingProductId(p.id)
+    setProducts((prev) =>
+      prev.map((item) =>
+        item.id === p.id
+          ? { ...item, stock_quantity: newQty, stock_status: nextStatus }
+          : item
+      )
+    )
+
+    try {
+      await adminApi.updateProduct(p.id, {
+        stock_quantity: newQty,
+        stock_status: nextStatus,
+      })
+    } catch (err: any) {
+      alert(`Failed to update quantity: ${err.message}`)
+      loadData()
+    } finally {
+      setUpdatingProductId(null)
+    }
+  }
+
+  // Save Inline Quantity from text input
+  const handleSaveInlineQty = async (productId: number) => {
+    if (!canUpdate) return
+    const qty = Math.max(0, parseInt(editingQtyValue, 10) || 0)
+    setEditingQtyId(null)
+    setUpdatingProductId(productId)
+
+    const targetProduct = products.find((p) => p.id === productId)
+    let nextStatus = targetProduct?.stock_status || "in_stock"
+    if (qty === 0) {
+      nextStatus = "out_of_stock"
+    } else if (targetProduct?.stock_status === "out_of_stock" && qty > 0) {
+      nextStatus = "in_stock"
+    }
+
+    setProducts((prev) =>
+      prev.map((item) =>
+        item.id === productId
+          ? { ...item, stock_quantity: qty, stock_status: nextStatus }
+          : item
+      )
+    )
+
+    try {
+      await adminApi.updateProduct(productId, {
+        stock_quantity: qty,
+        stock_status: nextStatus,
+      })
+    } catch (err: any) {
+      alert(`Failed to save quantity: ${err.message}`)
+      loadData()
+    } finally {
+      setUpdatingProductId(null)
+    }
+  }
+
+  // Save Inline Price
+  const handleSaveInlinePrice = async (productId: number) => {
+    if (!canUpdate) return
+    const val = parseFloat(editingPriceValue)
+    if (isNaN(val) || val <= 0) {
+      alert("Please enter a valid price greater than 0.")
+      return
+    }
+
+    setEditingPriceId(null)
+    setUpdatingProductId(productId)
+
+    setProducts((prev) =>
+      prev.map((item) => (item.id === productId ? { ...item, price: val } : item))
+    )
+
+    try {
+      await adminApi.updateProduct(productId, { price: val })
+    } catch (err: any) {
+      alert(`Failed to update price: ${err.message}`)
+      loadData()
+    } finally {
+      setUpdatingProductId(null)
+    }
+  }
+
   const canCreate = adminApi.hasPermission("products.create")
   const canUpdate = adminApi.hasPermission("products.update")
   const canDelete = adminApi.hasPermission("products.delete")
@@ -646,34 +770,151 @@ export default function AdminProductsPage() {
                           </Badge>
                         </td>
 
-                        {/* Price */}
+                        {/* Price (Inline Editable) */}
                         <td className="py-3 px-4 font-mono">
-                          <div className="font-bold text-foreground">
-                            ₹{Number(p.price).toLocaleString()}
-                          </div>
-                          {p.compare_price && Number(p.compare_price) > Number(p.price) && (
-                            <div className="text-[10px] text-muted-foreground line-through">
-                              ₹{Number(p.compare_price).toLocaleString()}
+                          {editingPriceId === p.id ? (
+                            <div className="flex items-center gap-1">
+                              <span className="text-xs font-mono text-muted-foreground">₹</span>
+                              <Input
+                                type="number"
+                                value={editingPriceValue}
+                                onChange={(e) => setEditingPriceValue(e.target.value)}
+                                onKeyDown={(e) => {
+                                  if (e.key === "Enter") handleSaveInlinePrice(p.id)
+                                  if (e.key === "Escape") setEditingPriceId(null)
+                                }}
+                                autoFocus
+                                className="h-7 w-20 px-1.5 py-0 text-xs font-mono font-bold bg-background"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => handleSaveInlinePrice(p.id)}
+                                disabled={updatingProductId === p.id}
+                                className="p-1 text-emerald-600 hover:bg-emerald-500/10 rounded transition-colors"
+                                title="Save price (Enter)"
+                              >
+                                <Check className="w-3.5 h-3.5" />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setEditingPriceId(null)}
+                                className="p-1 text-muted-foreground hover:bg-muted rounded transition-colors"
+                                title="Cancel (Esc)"
+                              >
+                                <X className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          ) : (
+                            <div
+                              onClick={() => {
+                                if (!canUpdate) return
+                                setEditingPriceId(p.id)
+                                setEditingPriceValue(String(p.price))
+                              }}
+                              className={cn(
+                                "group/price flex items-center gap-1.5 py-0.5 rounded px-1 -mx-1 transition-colors",
+                                canUpdate && "cursor-pointer hover:bg-muted/50"
+                              )}
+                              title={canUpdate ? "Click to quick-edit price" : undefined}
+                            >
+                              <div>
+                                <div className="font-bold text-foreground flex items-center gap-1">
+                                  <span>₹{Number(p.price).toLocaleString()}</span>
+                                  {canUpdate && (
+                                    <Edit2 className="w-2.5 h-2.5 text-muted-foreground/40 group-hover/price:text-primary transition-colors opacity-0 group-hover/price:opacity-100" />
+                                  )}
+                                </div>
+                                {p.compare_price && Number(p.compare_price) > Number(p.price) && (
+                                  <div className="text-[10px] text-muted-foreground line-through">
+                                    ₹{Number(p.compare_price).toLocaleString()}
+                                  </div>
+                                )}
+                              </div>
                             </div>
                           )}
                         </td>
 
-                        {/* Stock Status */}
+                        {/* Stock Status & Quantity Stepper */}
                         <td className="py-3 px-4">
-                          <Badge
+                          <button
+                            type="button"
+                            onClick={() => canUpdate && handleToggleStockStatus(p)}
+                            disabled={!canUpdate || updatingProductId === p.id}
                             className={cn(
-                              "text-[10px] font-medium uppercase tracking-wider",
+                              "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium uppercase tracking-wider border transition-all active:scale-95",
                               isOutOfStock
-                                ? "bg-destructive/15 text-destructive border-destructive/20"
+                                ? "bg-destructive/15 text-destructive border-destructive/20 hover:bg-destructive/25"
                                 : isLimited
-                                ? "bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/20"
-                                : "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
+                                ? "bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/20 hover:bg-amber-500/25"
+                                : "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/20 hover:bg-emerald-500/25",
+                              (!canUpdate || updatingProductId === p.id) && "cursor-not-allowed opacity-70"
                             )}
+                            title={canUpdate ? `Click to toggle ${isOutOfStock ? "In Stock" : "Out of Stock"}` : undefined}
                           >
-                            {isOutOfStock ? "Out of Stock" : isLimited ? "Limited" : "In Stock"}
-                          </Badge>
-                          <div className="text-[10px] text-muted-foreground font-mono mt-0.5">
-                            Qty: {p.stock_quantity}
+                            <span>{isOutOfStock ? "Out of Stock" : isLimited ? "Limited" : "In Stock"}</span>
+                            {updatingProductId === p.id ? (
+                              <RefreshCw className="w-2.5 h-2.5 animate-spin ml-0.5" />
+                            ) : canUpdate ? (
+                              <span className="text-[9px] opacity-60">⇄</span>
+                            ) : null}
+                          </button>
+
+                          {/* Quick quantity stepper */}
+                          <div className="flex items-center gap-1 mt-1 text-[11px] font-mono">
+                            <span className="text-muted-foreground text-[10px]">Qty:</span>
+                            {canUpdate && (
+                              <button
+                                type="button"
+                                onClick={() => handleQuickQuantityChange(p, -1)}
+                                disabled={p.stock_quantity <= 0 || updatingProductId === p.id}
+                                className="w-4 h-4 rounded flex items-center justify-center bg-muted/80 hover:bg-muted text-foreground text-xs font-bold border border-border/60 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                                title="Decrease stock by 1"
+                              >
+                                -
+                              </button>
+                            )}
+
+                            {editingQtyId === p.id ? (
+                              <input
+                                type="number"
+                                value={editingQtyValue}
+                                onChange={(e) => setEditingQtyValue(e.target.value)}
+                                onBlur={() => handleSaveInlineQty(p.id)}
+                                onKeyDown={(e) => {
+                                  if (e.key === "Enter") handleSaveInlineQty(p.id)
+                                  if (e.key === "Escape") setEditingQtyId(null)
+                                }}
+                                autoFocus
+                                className="w-9 h-5 text-center text-xs font-mono font-bold border rounded bg-background px-0 py-0"
+                              />
+                            ) : (
+                              <span
+                                onClick={() => {
+                                  if (!canUpdate) return
+                                  setEditingQtyId(p.id)
+                                  setEditingQtyValue(String(p.stock_quantity))
+                                }}
+                                className={cn(
+                                  "px-1 font-bold text-foreground rounded text-center min-w-[16px]",
+                                  canUpdate && "cursor-pointer hover:bg-muted/60"
+                                )}
+                                title={canUpdate ? "Click to type exact stock quantity" : undefined}
+                              >
+                                {p.stock_quantity}
+                              </span>
+                            )}
+
+                            {canUpdate && (
+                              <button
+                                type="button"
+                                onClick={() => handleQuickQuantityChange(p, 1)}
+                                disabled={updatingProductId === p.id}
+                                className="w-4 h-4 rounded flex items-center justify-center bg-muted/80 hover:bg-muted text-foreground text-xs font-bold border border-border/60 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                                title="Increase stock by 1"
+                              >
+                                +
+                              </button>
+                            )}
                           </div>
                         </td>
 

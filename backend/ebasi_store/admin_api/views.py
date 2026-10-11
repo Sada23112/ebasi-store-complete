@@ -788,6 +788,16 @@ class AdminReviewViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(product_id=product_id)
         return queryset
 
+    def perform_create(self, serializer):
+        review = serializer.save()
+        log_audit(
+            self.request,
+            action='review.create',
+            target=review,
+            target_repr=f"Testimonial by {review.user_name} ({review.rating}★)",
+            details={'product_id': review.product_id, 'rating': review.rating}
+        )
+
     def perform_destroy(self, instance):
         repr_str = f"Review by {instance.user_name} ({instance.rating}★) on {instance.product.name if instance.product else 'Unknown'}"
         log_audit(
