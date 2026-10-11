@@ -24,7 +24,10 @@ import {
   MoreVertical,
   Layers,
   Image as ImageIcon,
-  Check
+  Check,
+  Video,
+  Film,
+  Play
 } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -32,7 +35,7 @@ import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
-import { adminApi, AdminProduct, AdminCategory, AdminProductImage } from "@/lib/admin-api"
+import { adminApi, AdminProduct, AdminCategory, AdminProductImage, AdminProductVideo } from "@/lib/admin-api"
 import { cn } from "@/lib/utils"
 
 export default function AdminProductsPage() {
@@ -58,10 +61,13 @@ export default function AdminProductsPage() {
   const [deletingProduct, setDeletingProduct] = useState<AdminProduct | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
 
-  // Gallery Manager State for editing and new product creation
+  // Gallery & Media State for editing and new product creation
   const [galleryImages, setGalleryImages] = useState<AdminProductImage[]>([])
   const [isUploadingImage, setIsUploadingImage] = useState(false)
   const [pendingImages, setPendingImages] = useState<{ id: string; file: File; preview: string; isPrimary: boolean }[]>([])
+  const [galleryVideos, setGalleryVideos] = useState<AdminProductVideo[]>([])
+  const [isUploadingVideo, setIsUploadingVideo] = useState(false)
+  const [pendingVideo, setPendingVideo] = useState<{ file: File; preview: string; name: string } | null>(null)
   const [saveProgress, setSaveProgress] = useState<string>("")
 
   // Form Fields
@@ -119,14 +125,18 @@ export default function AdminProductsPage() {
     return () => clearTimeout(timer)
   }, [searchQuery, selectedCategory, selectedStockStatus, selectedBadge, isFeaturedFilter])
 
-  const cleanupPendingImages = () => {
+  const cleanupPendingMedia = () => {
     pendingImages.forEach((img) => URL.revokeObjectURL(img.preview))
     setPendingImages([])
+    if (pendingVideo) {
+      URL.revokeObjectURL(pendingVideo.preview)
+      setPendingVideo(null)
+    }
     setSaveProgress("")
   }
 
   const openAddModal = () => {
-    cleanupPendingImages()
+    cleanupPendingMedia()
     setEditingProduct(null)
     setFormName("")
     setFormSlug("")
@@ -144,12 +154,13 @@ export default function AdminProductsPage() {
     setFormIsActive(true)
     setFormIsFeatured(false)
     setGalleryImages([])
+    setGalleryVideos([])
     setModalError(null)
     setIsModalOpen(true)
   }
 
   const openEditModal = (p: AdminProduct) => {
-    cleanupPendingImages()
+    cleanupPendingMedia()
     setEditingProduct(p)
     setFormName(p.name)
     setFormSlug(p.slug)
@@ -167,12 +178,13 @@ export default function AdminProductsPage() {
     setFormIsActive(p.is_active)
     setFormIsFeatured(p.is_featured)
     setGalleryImages(p.images || [])
+    setGalleryVideos(p.videos || [])
     setModalError(null)
     setIsModalOpen(true)
   }
 
   const closeModal = () => {
-    cleanupPendingImages()
+    cleanupPendingMedia()
     setIsModalOpen(false)
   }
 
@@ -236,6 +248,17 @@ export default function AdminProductsPage() {
               i
             )
           }
+        }
+
+        // Upload queued drape video for the newly created product
+        if (pendingVideo) {
+          setSaveProgress("Uploading fabric drape video...")
+          await adminApi.uploadProductVideo(
+            createdProduct.id,
+            pendingVideo.file,
+            null,
+            `${createdProduct.name} Fabric Drape Video`
+          )
         }
       }
       closeModal()
@@ -370,6 +393,60 @@ export default function AdminProductsPage() {
       loadData()
     } catch (err: any) {
       alert(`Failed to set primary image: ${err.message}`)
+    }
+  }
+
+  const handleVideoSelection = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files || e.target.files.length === 0) return
+    const file = e.target.files[0]
+
+    if (editingProduct) {
+      setIsUploadingVideo(true)
+      try {
+        const newVid = await adminApi.uploadProductVideo(
+          editingProduct.id,
+          file,
+          null,
+          `${editingProduct.name} Fabric Drape Video`,
+          galleryVideos.length
+        )
+        setGalleryVideos((prev) => [...prev, newVid])
+        loadData()
+      } catch (err: any) {
+        alert(`Failed to upload video: ${err.message}`)
+      } finally {
+        setIsUploadingVideo(false)
+        e.target.value = ""
+      }
+    } else {
+      if (pendingVideo) {
+        URL.revokeObjectURL(pendingVideo.preview)
+      }
+      setPendingVideo({
+        file,
+        preview: URL.createObjectURL(file),
+        name: file.name,
+      })
+      e.target.value = ""
+    }
+  }
+
+  const handleRemovePendingVideo = () => {
+    if (pendingVideo) {
+      URL.revokeObjectURL(pendingVideo.preview)
+      setPendingVideo(null)
+    }
+  }
+
+  const handleDeleteVideo = async (videoId: number) => {
+    if (!editingProduct) return
+    if (!confirm("Are you sure you want to delete this fabric drape video?")) return
+    try {
+      await adminApi.deleteProductVideo(editingProduct.id, videoId)
+      setGalleryVideos((prev) => prev.filter((v) => v.id !== videoId))
+      loadData()
+    } catch (err: any) {
+      alert(`Failed to delete video: ${err.message}`)
     }
   }
 
@@ -550,8 +627,13 @@ export default function AdminProductsPage() {
                               >
                                 {p.name}
                               </Link>
-                              <div className="text-[11px] text-muted-foreground font-mono mt-0.5">
-                                SKU: {p.sku || "N/A"}
+                              <div className="text-[11px] text-muted-foreground font-mono mt-0.5 flex items-center gap-1.5 flex-wrap">
+                                <span>SKU: {p.sku || "N/A"}</span>
+                                {p.videos && p.videos.length > 0 && (
+                                  <span className="inline-flex items-center gap-1 text-[10px] text-primary font-sans font-medium bg-primary/10 border border-primary/20 px-1.5 py-0.5 rounded-md">
+                                    <Film className="w-2.5 h-2.5" /> Drape Video
+                                  </span>
+                                )}
                               </div>
                             </div>
                           </div>
@@ -1058,6 +1140,139 @@ export default function AdminProductsPage() {
               )}
             </div>
 
+            {/* FABRIC DRAPE VIDEO (REELS-STYLE) */}
+            <div className="pt-3 border-t border-border/60 space-y-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-foreground flex items-center gap-1.5">
+                    <Film className="w-3.5 h-3.5 text-primary" />
+                    Fabric Drape Video (Reels Showcase)
+                  </h4>
+                  <p className="text-[11px] text-muted-foreground">
+                    Short 5–15s clip showing silk pallu sheen, fluidity & weave texture in natural light.
+                  </p>
+                </div>
+
+                <label htmlFor="product-video-upload" className="cursor-pointer">
+                  <input
+                    id="product-video-upload"
+                    type="file"
+                    accept="video/mp4,video/webm,video/ogg,video/quicktime"
+                    onChange={handleVideoSelection}
+                    disabled={isUploadingVideo || isSaving}
+                    className="hidden"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={isUploadingVideo || isSaving}
+                    className="h-8 text-xs pointer-events-none gap-1.5 border-primary/30 text-primary hover:bg-primary/5"
+                  >
+                    <Video className="w-3.5 h-3.5" />
+                    {isUploadingVideo
+                      ? "Uploading Video..."
+                      : editingProduct
+                      ? "Upload Video"
+                      : "Attach Video Clip"}
+                  </Button>
+                </label>
+              </div>
+
+              {/* Existing Product: show galleryVideos */}
+              {editingProduct && (
+                galleryVideos.length === 0 ? (
+                  <div className="p-4 rounded-xl border border-dashed border-border/70 text-center text-xs text-muted-foreground">
+                    No fabric drape video added yet. Click &quot;Upload Video&quot; to show silk sheen in motion.
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {galleryVideos.map((vid) => (
+                      <div
+                        key={vid.id}
+                        className="relative rounded-xl border border-border/60 bg-card overflow-hidden p-2 flex flex-col gap-2"
+                      >
+                        <div className="relative aspect-[9/14] sm:aspect-video w-full rounded-lg overflow-hidden bg-black flex items-center justify-center">
+                          <video
+                            src={vid.video_url || vid.video}
+                            poster={vid.thumbnail_url || vid.thumbnail || undefined}
+                            controls
+                            playsInline
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                        <div className="flex items-center justify-between text-xs px-1">
+                          <span className="font-medium truncate max-w-[180px] text-foreground">
+                            {vid.title || "Drape Showcase Reel"}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteVideo(vid.id)}
+                            className="text-muted-foreground hover:text-destructive p-1 rounded transition-colors"
+                            title="Delete Video"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )
+              )}
+
+              {/* New Product: show pendingVideo */}
+              {!editingProduct && (
+                !pendingVideo ? (
+                  <label
+                    htmlFor="product-video-upload"
+                    className="p-4 rounded-xl border border-dashed border-border/70 hover:border-primary/50 bg-muted/10 hover:bg-muted/30 cursor-pointer flex items-center justify-center gap-2.5 text-center transition-all group"
+                  >
+                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
+                      <Film className="w-4 h-4" />
+                    </div>
+                    <div className="text-left">
+                      <span className="text-xs font-semibold text-foreground block">
+                        Optional: Attach Drape Video Reel
+                      </span>
+                      <span className="text-[10px] text-muted-foreground block">
+                        MP4/WebM/MOV (recommended: 5–15 seconds vertical/portrait video)
+                      </span>
+                    </div>
+                  </label>
+                ) : (
+                  <div className="p-3 rounded-xl border border-emerald-500/30 bg-emerald-500/5 flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="w-12 h-16 rounded-lg bg-black overflow-hidden shrink-0 flex items-center justify-center relative">
+                        <video
+                          src={pendingVideo.preview}
+                          muted
+                          playsInline
+                          className="w-full h-full object-cover"
+                        />
+                        <Play className="w-4 h-4 text-white/80 absolute pointer-events-none" fill="white" />
+                      </div>
+                      <div className="min-w-0">
+                        <span className="text-xs font-semibold text-foreground truncate block">
+                          {pendingVideo.name}
+                        </span>
+                        <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium flex items-center gap-1 mt-0.5">
+                          <Sparkles className="w-3 h-3" /> Ready to upload on product creation
+                        </span>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleRemovePendingVideo}
+                      className="text-muted-foreground hover:text-destructive p-1.5 rounded transition-colors"
+                      title="Remove video"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                )
+              )}
+            </div>
+
             <DialogFooter className="pt-4 border-t border-border/60 flex items-center justify-end gap-2">
               <Button
                 type="button"
@@ -1081,7 +1296,7 @@ export default function AdminProductsPage() {
                 ) : editingProduct ? (
                   "Update Product"
                 ) : (
-                  `Create Product ${pendingImages.length > 0 ? `(${pendingImages.length} photos)` : ""}`
+                  `Create Product ${pendingImages.length > 0 ? `(${pendingImages.length} photos${pendingVideo ? " + video" : ""})` : pendingVideo ? "(1 video)" : ""}`
                 )}
               </Button>
             </DialogFooter>

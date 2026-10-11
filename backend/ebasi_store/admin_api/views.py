@@ -450,6 +450,8 @@ class AdminProductViewSet(viewsets.ModelViewSet):
         'upload_image': 'products.update',
         'delete_image': 'products.update',
         'set_primary_image': 'products.update',
+        'upload_video': 'products.update',
+        'delete_video': 'products.update',
     }
 
     def get_queryset(self):
@@ -629,6 +631,59 @@ class AdminProductViewSet(viewsets.ModelViewSet):
             return Response({'status': 'success', 'primary_image_id': target_img.id})
         except ProductImage.DoesNotExist:
             return Response({'error': 'Image not found'}, status=status.HTTP_404_NOT_FOUND)
+
+    @action(detail=True, methods=['post'], url_path='upload-video', parser_classes=[MultiPartParser, FormParser])
+    def upload_video(self, request, pk=None):
+        product = self.get_object()
+        video_file = request.FILES.get('video')
+        if not video_file:
+            return Response({'error': 'No video file provided'}, status=status.HTTP_400_BAD_REQUEST)
+
+        thumbnail_file = request.FILES.get('thumbnail')
+        title = request.data.get('title', f"{product.name} Fabric Drape Video")
+        try:
+            order = int(request.data.get('order', 0))
+        except (ValueError, TypeError):
+            order = 0
+
+        video = ProductVideo.objects.create(
+            product=product,
+            video=video_file,
+            thumbnail=thumbnail_file,
+            title=title,
+            order=order
+        )
+
+        log_audit(
+            request,
+            action='product.upload_video',
+            target=product,
+            target_repr=product.name,
+            details={'video_id': video.id, 'title': title}
+        )
+
+        serializer = AdminProductVideoSerializer(video, context={'request': request})
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    @action(detail=True, methods=['delete'], url_path='delete-video/(?P<video_id>[^/.]+)')
+    def delete_video(self, request, pk=None, video_id=None):
+        product = self.get_object()
+        try:
+            video = ProductVideo.objects.get(id=video_id, product=product)
+            video_id_val = video.id
+            video.delete()
+
+            log_audit(
+                request,
+                action='product.delete_video',
+                target=product,
+                target_repr=product.name,
+                details={'video_id': video_id_val}
+            )
+
+            return Response({'status': 'success', 'message': 'Video deleted successfully'})
+        except ProductVideo.DoesNotExist:
+            return Response({'error': 'Video not found'}, status=status.HTTP_404_NOT_FOUND)
 
 
 class AdminCategoryViewSet(viewsets.ModelViewSet):

@@ -277,6 +277,16 @@ export interface AdminProductImage {
   order: number
 }
 
+export interface AdminProductVideo {
+  id: number
+  video?: string
+  video_url: string | null
+  thumbnail?: string | null
+  thumbnail_url?: string | null
+  title: string
+  order: number
+}
+
 export interface AdminProduct {
   id: number
   name: string
@@ -304,7 +314,7 @@ export interface AdminProduct {
   meta_title?: string
   meta_description?: string
   images: AdminProductImage[]
-  videos?: any[]
+  videos?: AdminProductVideo[]
   primary_image?: string | null
   average_rating: number
   review_count: number
@@ -734,6 +744,35 @@ class EbasiAdminAPI {
   async setPrimaryProductImage(productId: number | string, imageId: number | string): Promise<{ status: string; primary_image_id: number }> {
     return this.request<{ status: string; primary_image_id: number }>(`/admin/products/${productId}/set-primary-image/${imageId}/`, {
       method: "PATCH",
+    })
+  }
+
+  async uploadProductVideo(
+    productId: number | string,
+    file: File,
+    thumbnail?: File | null,
+    title: string = "",
+    order: number = 0
+  ): Promise<AdminProductVideo> {
+    const formData = new FormData()
+    formData.append("video", file)
+    if (thumbnail) {
+      formData.append("thumbnail", thumbnail)
+    }
+    if (title) {
+      formData.append("title", title)
+    }
+    formData.append("order", String(order))
+
+    return this.request<AdminProductVideo>(`/admin/products/${productId}/upload-video/`, {
+      method: "POST",
+      body: formData,
+    })
+  }
+
+  async deleteProductVideo(productId: number | string, videoId: number | string): Promise<void> {
+    return this.request<void>(`/admin/products/${productId}/delete-video/${videoId}/`, {
+      method: "DELETE",
     })
   }
 

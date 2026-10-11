@@ -112,9 +112,10 @@ export function ProductDetailClient({ slug, initialProduct }: ProductDetailClien
       url: getAbsoluteImageUrl(img.image),
     })),
     ...(product.videos || []).map((vid: any) => ({
-      type: "video",
-      url: getAbsoluteImageUrl(vid.video || vid.video_file),
-      thumbnail: vid.thumbnail ? getAbsoluteImageUrl(vid.thumbnail) : undefined,
+      type: "video" as const,
+      url: getAbsoluteImageUrl(vid.video_url || vid.video || vid.video_file),
+      thumbnail: vid.thumbnail_url ? getAbsoluteImageUrl(vid.thumbnail_url) : (vid.thumbnail ? getAbsoluteImageUrl(vid.thumbnail) : undefined),
+      title: vid.title || "Fabric Drape & Pallu Sheen",
     })),
   ] : []
 
