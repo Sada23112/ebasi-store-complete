@@ -58,9 +58,11 @@ export default function AdminProductsPage() {
   const [deletingProduct, setDeletingProduct] = useState<AdminProduct | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
 
-  // Gallery Manager State for editing
+  // Gallery Manager State for editing and new product creation
   const [galleryImages, setGalleryImages] = useState<AdminProductImage[]>([])
   const [isUploadingImage, setIsUploadingImage] = useState(false)
+  const [pendingImages, setPendingImages] = useState<{ id: string; file: File; preview: string; isPrimary: boolean }[]>([])
+  const [saveProgress, setSaveProgress] = useState<string>("")
 
   // Form Fields
   const [formName, setFormName] = useState("")
@@ -117,7 +119,14 @@ export default function AdminProductsPage() {
     return () => clearTimeout(timer)
   }, [searchQuery, selectedCategory, selectedStockStatus, selectedBadge, isFeaturedFilter])
 
+  const cleanupPendingImages = () => {
+    pendingImages.forEach((img) => URL.revokeObjectURL(img.preview))
+    setPendingImages([])
+    setSaveProgress("")
+  }
+
   const openAddModal = () => {
+    cleanupPendingImages()
     setEditingProduct(null)
     setFormName("")
     setFormSlug("")
@@ -140,6 +149,7 @@ export default function AdminProductsPage() {
   }
 
   const openEditModal = (p: AdminProduct) => {
+    cleanupPendingImages()
     setEditingProduct(p)
     setFormName(p.name)
     setFormSlug(p.slug)
@@ -159,6 +169,11 @@ export default function AdminProductsPage() {
     setGalleryImages(p.images || [])
     setModalError(null)
     setIsModalOpen(true)
+  }
+
+  const closeModal = () => {
+    cleanupPendingImages()
+    setIsModalOpen(false)
   }
 
   const handleNameChange = (val: string) => {
@@ -205,14 +220,31 @@ export default function AdminProductsPage() {
       if (editingProduct) {
         await adminApi.updateProduct(editingProduct.id, payload)
       } else {
-        await adminApi.createProduct(payload)
+        setSaveProgress("Creating product...")
+        const createdProduct = await adminApi.createProduct(payload)
+
+        // Upload queued photos for the newly created product
+        if (pendingImages.length > 0) {
+          for (let i = 0; i < pendingImages.length; i++) {
+            setSaveProgress(`Uploading photo ${i + 1} of ${pendingImages.length}...`)
+            const pImg = pendingImages[i]
+            await adminApi.uploadProductImage(
+              createdProduct.id,
+              pImg.file,
+              pImg.isPrimary,
+              createdProduct.name,
+              i
+            )
+          }
+        }
       }
-      setIsModalOpen(false)
+      closeModal()
       loadData()
     } catch (err: any) {
       setModalError(err.message || "Failed to save product.")
     } finally {
       setIsSaving(false)
+      setSaveProgress("")
     }
   }
 
@@ -252,26 +284,69 @@ export default function AdminProductsPage() {
     }
   }
 
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!editingProduct || !e.target.files || e.target.files.length === 0) return
-    const file = e.target.files[0]
-    setIsUploadingImage(true)
+  const handleImageSelection = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files || e.target.files.length === 0) return
+    const files = Array.from(e.target.files)
 
-    try {
-      const newImg = await adminApi.uploadProductImage(
-        editingProduct.id,
+    if (editingProduct) {
+      // Direct batch upload for existing product
+      setIsUploadingImage(true)
+      try {
+        for (let i = 0; i < files.length; i++) {
+          const file = files[i]
+          const isPrimary = galleryImages.length === 0 && i === 0
+          const newImg = await adminApi.uploadProductImage(
+            editingProduct.id,
+            file,
+            isPrimary,
+            editingProduct.name,
+            galleryImages.length + i
+          )
+          setGalleryImages((prev) => [...prev, newImg])
+        }
+        loadData()
+      } catch (err: any) {
+        alert(`Failed to upload image: ${err.message}`)
+      } finally {
+        setIsUploadingImage(false)
+        e.target.value = ""
+      }
+    } else {
+      // Queue images for newly added product with instant local previews
+      const newPending = files.map((file, idx) => ({
+        id: `${Date.now()}-${idx}-${file.name}`,
         file,
-        galleryImages.length === 0,
-        editingProduct.name,
-        galleryImages.length
-      )
-      setGalleryImages((prev) => [...prev, newImg])
-      loadData()
-    } catch (err: any) {
-      alert(`Failed to upload image: ${err.message}`)
-    } finally {
-      setIsUploadingImage(false)
+        preview: URL.createObjectURL(file),
+        isPrimary: pendingImages.length === 0 && idx === 0,
+      }))
+
+      setPendingImages((prev) => {
+        const combined = [...prev, ...newPending]
+        if (!combined.some((img) => img.isPrimary) && combined.length > 0) {
+          combined[0].isPrimary = true
+        }
+        return combined
+      })
+      e.target.value = ""
     }
+  }
+
+  const handleRemovePendingImage = (id: string) => {
+    setPendingImages((prev) => {
+      const target = prev.find((img) => img.id === id)
+      if (target) URL.revokeObjectURL(target.preview)
+      const remaining = prev.filter((img) => img.id !== id)
+      if (target?.isPrimary && remaining.length > 0) {
+        remaining[0].isPrimary = true
+      }
+      return remaining
+    })
+  }
+
+  const handleSetPrimaryPendingImage = (id: string) => {
+    setPendingImages((prev) =>
+      prev.map((img) => ({ ...img, isPrimary: img.id === id }))
+    )
   }
 
   const handleDeleteImage = async (imageId: number) => {
@@ -810,43 +885,53 @@ export default function AdminProductsPage() {
               </label>
             </div>
 
-            {/* GALLERY MANAGER (When editing existing product) */}
-            {editingProduct && (
-              <div className="pt-3 border-t border-border/60 space-y-3">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                      Product Gallery Photos
-                    </h4>
-                    <p className="text-[11px] text-muted-foreground">
-                      Upload high quality photographs. Select one as primary thumbnail.
-                    </p>
-                  </div>
-
-                  <label className="cursor-pointer">
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handleImageUpload}
-                      disabled={isUploadingImage}
-                      className="hidden"
-                    />
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      disabled={isUploadingImage}
-                      className="h-8 text-xs pointer-events-none"
-                    >
-                      <Upload className="w-3.5 h-3.5 mr-1.5" />
-                      {isUploadingImage ? "Uploading..." : "Upload Photo"}
-                    </Button>
-                  </label>
+            {/* GALLERY MANAGER (For both New Product and Existing Product) */}
+            <div className="pt-3 border-t border-border/60 space-y-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-foreground flex items-center gap-1.5">
+                    <ImageIcon className="w-3.5 h-3.5 text-primary" />
+                    Product Photos
+                  </h4>
+                  <p className="text-[11px] text-muted-foreground">
+                    {editingProduct
+                      ? "Manage gallery photos. Select one as primary thumbnail."
+                      : "Add photographs for this piece. Select one as primary cover photo."}
+                  </p>
                 </div>
 
-                {galleryImages.length === 0 ? (
+                <label htmlFor="product-photo-upload" className="cursor-pointer">
+                  <input
+                    id="product-photo-upload"
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    onChange={handleImageSelection}
+                    disabled={isUploadingImage || isSaving}
+                    className="hidden"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={isUploadingImage || isSaving}
+                    className="h-8 text-xs pointer-events-none gap-1.5 border-primary/30 text-primary hover:bg-primary/5"
+                  >
+                    <Upload className="w-3.5 h-3.5" />
+                    {isUploadingImage
+                      ? "Uploading..."
+                      : editingProduct
+                      ? "Upload Photo(s)"
+                      : "Select Photos"}
+                  </Button>
+                </label>
+              </div>
+
+              {/* Existing Product: show galleryImages */}
+              {editingProduct && (
+                galleryImages.length === 0 ? (
                   <div className="p-4 rounded-xl border border-dashed border-border/70 text-center text-xs text-muted-foreground">
-                    No images uploaded for this product yet.
+                    No images uploaded for this product yet. Click &quot;Upload Photo(s)&quot; above.
                   </div>
                 ) : (
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -893,15 +978,91 @@ export default function AdminProductsPage() {
                       </div>
                     ))}
                   </div>
-                )}
-              </div>
-            )}
+                )
+              )}
+
+              {/* New Product: show pendingImages queue */}
+              {!editingProduct && (
+                pendingImages.length === 0 ? (
+                  <label
+                    htmlFor="product-photo-upload"
+                    className="p-6 rounded-xl border-2 border-dashed border-border/80 hover:border-primary/50 bg-muted/20 hover:bg-muted/40 cursor-pointer flex flex-col items-center justify-center text-center transition-all group"
+                  >
+                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary group-hover:scale-110 transition-transform mb-2">
+                      <Upload className="w-5 h-5" />
+                    </div>
+                    <span className="text-xs font-semibold text-foreground">
+                      Click to choose photos from your device
+                    </span>
+                    <span className="text-[11px] text-muted-foreground mt-0.5">
+                      Select 1 or multiple photos. First selected becomes the primary cover.
+                    </span>
+                  </label>
+                ) : (
+                  <div className="space-y-2">
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                      {pendingImages.map((pImg) => (
+                        <div
+                          key={pImg.id}
+                          className={cn(
+                            "relative rounded-xl border p-1 group bg-card overflow-hidden",
+                            pImg.isPrimary ? "border-primary ring-2 ring-primary/20" : "border-border/60"
+                          )}
+                        >
+                          <div className="aspect-square rounded-lg overflow-hidden bg-muted/40 relative">
+                            <img
+                              src={pImg.preview}
+                              alt="Selected photo"
+                              className="w-full h-full object-cover"
+                            />
+                            {pImg.isPrimary && (
+                              <div className="absolute top-1 left-1 bg-primary text-primary-foreground text-[9px] font-bold px-1.5 py-0.5 rounded shadow-sm">
+                                Cover
+                              </div>
+                            )}
+                          </div>
+
+                          <div className="mt-1.5 flex items-center justify-between px-1">
+                            {pImg.isPrimary ? (
+                              <span className="text-[10px] font-bold text-primary flex items-center gap-0.5">
+                                <Check className="w-3 h-3" /> Primary
+                              </span>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={() => handleSetPrimaryPendingImage(pImg.id)}
+                                className="text-[10px] text-muted-foreground hover:text-foreground font-medium"
+                              >
+                                Make Primary
+                              </button>
+                            )}
+
+                            <button
+                              type="button"
+                              onClick={() => handleRemovePendingImage(pImg.id)}
+                              className="text-muted-foreground hover:text-destructive p-1 rounded transition-colors"
+                              title="Remove photo"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    <p className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium flex items-center gap-1">
+                      <Sparkles className="w-3 h-3" />
+                      {pendingImages.length} photo{pendingImages.length > 1 ? "s" : ""} selected — will be uploaded automatically when you save.
+                    </p>
+                  </div>
+                )
+              )}
+            </div>
 
             <DialogFooter className="pt-4 border-t border-border/60 flex items-center justify-end gap-2">
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => setIsModalOpen(false)}
+                onClick={closeModal}
                 disabled={isSaving}
                 className="h-9 rounded-xl text-xs"
               >
@@ -910,9 +1071,18 @@ export default function AdminProductsPage() {
               <Button
                 type="submit"
                 disabled={isSaving}
-                className="h-9 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground font-semibold text-xs shadow-sm shadow-primary/20"
+                className="h-9 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground font-semibold text-xs shadow-sm shadow-primary/20 gap-1.5"
               >
-                {isSaving ? "Saving..." : editingProduct ? "Update Product" : "Create Product"}
+                {isSaving ? (
+                  <>
+                    <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                    <span>{saveProgress || "Saving..."}</span>
+                  </>
+                ) : editingProduct ? (
+                  "Update Product"
+                ) : (
+                  `Create Product ${pendingImages.length > 0 ? `(${pendingImages.length} photos)` : ""}`
+                )}
               </Button>
             </DialogFooter>
           </form>

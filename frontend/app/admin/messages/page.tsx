@@ -121,6 +121,15 @@ export default function AdminMessagesPage() {
 
   const unreadCount = messages.filter((m) => !m.is_read).length
 
+  const getWhatsAppUrl = (phone?: string, name?: string, subject?: string) => {
+    if (!phone) return ""
+    let clean = phone.replace(/[^0-9]/g, "")
+    if (clean.startsWith("0")) clean = clean.substring(1)
+    if (clean.length === 10) clean = "91" + clean
+    const greeting = `Hello ${name ? name.trim() : "there"}! 👋\nThank you for reaching out to ${STORE_INFO.name}.\nRegarding your inquiry${subject ? ` about "${subject}"` : ""}: `
+    return `https://wa.me/${clean}?text=${encodeURIComponent(greeting)}`
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -290,7 +299,20 @@ export default function AdminMessagesPage() {
                       })}
                     </span>
 
-                    <div className="flex items-center gap-1">
+                    <div className="flex items-center gap-1.5">
+                      {msg.phone && (
+                        <a
+                          href={getWhatsAppUrl(msg.phone, msg.name, msg.subject)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={(e) => e.stopPropagation()}
+                          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-emerald-600/10 hover:bg-emerald-600 text-emerald-700 dark:text-emerald-400 hover:text-white transition-all text-[11px] font-semibold border border-emerald-600/20 shadow-xs"
+                          title={`Chat with ${msg.name} on WhatsApp`}
+                        >
+                          <MessageCircle className="w-3.5 h-3.5 fill-current" />
+                          <span className="hidden sm:inline">WhatsApp</span>
+                        </a>
+                      )}
                       {adminApi.hasPermission("messages.update") && (
                         <Button
                           variant="ghost"
@@ -397,9 +419,11 @@ export default function AdminMessagesPage() {
                 <div className="flex items-center gap-2 w-full sm:w-auto">
                   {selectedMessage.phone && (
                     <a
-                      href={`https://wa.me/${selectedMessage.phone.replace(/[^0-9]/g, "")}?text=${encodeURIComponent(
-                        `Hello ${selectedMessage.name}, thank you for contacting ${STORE_INFO.name}. Regarding your message "${selectedMessage.subject}":`
-                      )}`}
+                      href={getWhatsAppUrl(
+                        selectedMessage.phone,
+                        selectedMessage.name,
+                        selectedMessage.subject
+                      )}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="flex-1 sm:flex-initial"
