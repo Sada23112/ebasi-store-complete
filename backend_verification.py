@@ -1,8 +1,11 @@
 import requests
 import json
 import sys
+import os
 
-BASE_URL = "http://127.0.0.1:8000/api/v1"
+BASE_URL = os.environ.get("BASE_URL", "http://127.0.0.1:8000/api/v1")
+ADMIN_USERNAME = os.environ.get("ADMIN_USERNAME", "admin")
+ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD")
 
 def test_api():
     print("Starting Backend API Verification...")
@@ -35,21 +38,24 @@ def test_api():
     except Exception as e:
         errors.append(f"Contact API error: {e}")
 
-    # 3. Test Admin Login (SADA / 12345)
+    # 3. Test Admin Login (Configurable via env vars)
     token = None
-    try:
-        data = {
-            "username": "SADA",
-            "password": "12345"
-        }
-        response = requests.post(f"{BASE_URL}/accounts/admin/login/", json=data)
-        if response.status_code == 200:
-            print("✅ Admin Login successful")
-            token = response.json().get("token")
-        else:
-            errors.append(f"Admin Login failed: {response.status_code} - {response.text}")
-    except Exception as e:
-        errors.append(f"Admin Login error: {e}")
+    if ADMIN_PASSWORD:
+        try:
+            data = {
+                "username": ADMIN_USERNAME,
+                "password": ADMIN_PASSWORD
+            }
+            response = requests.post(f"{BASE_URL}/accounts/admin/login/", json=data)
+            if response.status_code == 200:
+                print(f"✅ Admin Login successful for '{ADMIN_USERNAME}'")
+                token = response.json().get("token")
+            else:
+                errors.append(f"Admin Login failed: {response.status_code} - {response.text}")
+        except Exception as e:
+            errors.append(f"Admin Login error: {e}")
+    else:
+        print("ℹ️ Skipping Admin Login verification: ADMIN_PASSWORD environment variable not provided.")
 
     # 4. Test Authenticated Endpoints (if login successful)
     if token:

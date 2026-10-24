@@ -127,25 +127,35 @@ class AdminProductSerializer(serializers.ModelSerializer):
         return None
 
     def get_average_rating(self, obj):
-        avg = getattr(obj, 'annotated_avg_rating', None)
-        if avg is None:
-            avg = obj.reviews.aggregate(Avg('rating'))['rating__avg']
+        if hasattr(obj, 'annotated_avg_rating'):
+            avg = obj.annotated_avg_rating
+            return round(avg, 1) if avg else 0
+        avg = obj.reviews.filter(is_approved=True).aggregate(Avg('rating'))['rating__avg']
         return round(avg, 1) if avg else 0
 
     def get_review_count(self, obj):
         count = getattr(obj, 'annotated_review_count', None)
         if count is None:
-            count = obj.reviews.count()
+            count = obj.reviews.filter(is_approved=True).count()
         return count
 
     def get_views_count(self, obj):
-        return getattr(obj, 'annotated_views_count', None) or obj.analytics_events.filter(event_type='product_view').count()
+        val = getattr(obj, 'annotated_views_count', None)
+        if val is not None:
+            return val
+        return obj.analytics_events.filter(event_type='product_view').count()
 
     def get_wishlist_count(self, obj):
-        return getattr(obj, 'annotated_wishlist_count', None) or obj.wishlisted_by.count()
+        val = getattr(obj, 'annotated_wishlist_count', None)
+        if val is not None:
+            return val
+        return obj.wishlisted_by.count()
 
     def get_whatsapp_clicks_count(self, obj):
-        return getattr(obj, 'annotated_whatsapp_count', None) or obj.analytics_events.filter(event_type='whatsapp_click').count()
+        val = getattr(obj, 'annotated_whatsapp_count', None)
+        if val is not None:
+            return val
+        return obj.analytics_events.filter(event_type='whatsapp_click').count()
 
     def validate(self, attrs):
         from django.utils.text import slugify
@@ -171,7 +181,7 @@ class AdminReviewSerializer(serializers.ModelSerializer):
         model = Review
         fields = [
             'id', 'product_id', 'product_name', 'product_slug',
-            'user_name', 'rating', 'comment', 'created_at'
+            'user_name', 'rating', 'comment', 'is_approved', 'created_at'
         ]
         read_only_fields = ['created_at']
 

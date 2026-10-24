@@ -74,6 +74,9 @@ class Product(models.Model):
 
     class Meta:
         ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['is_active', '-created_at']),
+        ]
 
     def __str__(self):
         return self.name
@@ -137,6 +140,7 @@ class Review(models.Model):
         ]
     )
     comment = models.TextField()
+    is_approved = models.BooleanField(default=False, db_index=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -212,6 +216,7 @@ class AnalyticsEvent(models.Model):
             models.Index(fields=['event_type', '-created_at']),
             models.Index(fields=['product', '-created_at']),
             models.Index(fields=['session_id', '-created_at']),
+            models.Index(fields=['product', 'event_type', '-created_at']),
         ]
 
     def __str__(self):
@@ -219,3 +224,17 @@ class AnalyticsEvent(models.Model):
         if self.search_query:
             target = f" - \"{self.search_query}\""
         return f"[{self.get_event_type_display()}] {self.path or self.source}{target} ({self.created_at.strftime('%Y-%m-%d %H:%M')})"
+
+
+# Signals for cache invalidation
+from django.db.models.signals import post_save, post_delete
+from django.dispatch import receiver
+from django.core.cache import cache
+
+PRODUCT_PRICE_CACHE_KEY = 'global_product_price_range'
+
+@receiver([post_save, post_delete], sender=Product)
+def invalidate_product_price_cache(sender, **kwargs):
+    if kwargs.get('raw', False):
+        return
+    cache.delete(PRODUCT_PRICE_CACHE_KEY)

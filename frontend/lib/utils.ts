@@ -5,7 +5,7 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
-import { API_BASE_URL } from "@/lib/constants"
+import { API_BASE_URL, STORE_INFO } from "@/lib/constants"
 
 export function getAbsoluteImageUrl(url: string | null | undefined): string {
   if (!url) return "/images/placeholders/placeholder.svg"
@@ -48,7 +48,7 @@ export function getBadgeInfo(badgeValue: string | null | undefined): BadgeInfo |
       return { label: 'New Arrival', className: 'bg-blue-600 hover:bg-blue-600 text-white font-medium' }
     case 'best_seller':
     case 'bestseller':
-      return { label: 'Best Seller', className: 'bg-amber-650 hover:bg-amber-650 text-white font-medium' }
+      return { label: 'Best Seller', className: 'bg-amber-600 hover:bg-amber-700 text-white font-medium' }
     case 'hot':
       return { label: 'Hot', className: 'bg-orange-600 hover:bg-orange-600 text-white font-medium' }
     case 'limited_edition':
@@ -61,3 +61,43 @@ export function getBadgeInfo(badgeValue: string | null | undefined): BadgeInfo |
       return { label, className: 'bg-primary text-primary-foreground font-medium' }
   }
 }
+
+/**
+ * Builds a valid WhatsApp wa.me base URL from a raw phone number or URL.
+ * Automatically handles standard 10-digit Indian numbers (prepends country code 91),
+ * leading zero prefixes, and existing wa.me links, while falling back to STORE_INFO.whatsappUrl.
+ */
+export function formatWhatsAppBaseUrl(phoneOrUrl?: string | null): string {
+  if (!phoneOrUrl || typeof phoneOrUrl !== "string") {
+    return STORE_INFO.whatsappUrl
+  }
+
+  const trimmed = phoneOrUrl.trim()
+  if (!trimmed) {
+    return STORE_INFO.whatsappUrl
+  }
+
+  // If already a full WhatsApp URL, extract base URL without query parameters
+  if (trimmed.includes("wa.me") || trimmed.includes("api.whatsapp.com")) {
+    const baseUrl = trimmed.split("?")[0].replace(/\/+$/, "")
+    return baseUrl || STORE_INFO.whatsappUrl
+  }
+
+  const digits = trimmed.replace(/\D/g, "")
+  if (!digits) {
+    return STORE_INFO.whatsappUrl
+  }
+
+  // 10 digits (standard Indian mobile without country code) -> prepend 91
+  if (digits.length === 10) {
+    return `https://wa.me/91${digits}`
+  }
+
+  // 11 digits starting with 0 (e.g. 07399291242) -> strip 0 and prepend 91
+  if (digits.length === 11 && digits.startsWith("0")) {
+    return `https://wa.me/91${digits.slice(1)}`
+  }
+
+  return `https://wa.me/${digits}`
+}
+

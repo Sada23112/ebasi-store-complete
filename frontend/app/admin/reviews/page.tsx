@@ -15,7 +15,9 @@ import {
   Sparkles,
   Plus,
   MessageCircle,
-  Heart
+  Heart,
+  Clock,
+  XCircle
 } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -34,6 +36,7 @@ export default function AdminReviewsPage() {
   const [error, setError] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState("")
   const [ratingFilter, setRatingFilter] = useState<string>("all")
+  const [statusFilter, setStatusFilter] = useState<string>("all")
   const [deletingReview, setDeletingReview] = useState<AdminReview | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
 
@@ -59,6 +62,7 @@ export default function AdminReviewsPage() {
         adminApi.getReviews({
           search: searchQuery,
           rating: ratingFilter !== "all" ? ratingFilter : undefined,
+          is_approved: statusFilter === "approved" ? "true" : statusFilter === "pending" ? "false" : undefined,
         }),
         adminApi.getProducts({ page_size: 100 }),
       ])
@@ -85,7 +89,20 @@ export default function AdminReviewsPage() {
       loadReviews()
     }, 200)
     return () => clearTimeout(timer)
-  }, [searchQuery, ratingFilter])
+  }, [searchQuery, ratingFilter, statusFilter])
+
+  const handleToggleApproval = async (review: AdminReview) => {
+    try {
+      if (review.is_approved) {
+        await adminApi.rejectReview(review.id)
+      } else {
+        await adminApi.approveReview(review.id)
+      }
+      loadReviews()
+    } catch (err: any) {
+      alert(`Failed to update review status: ${err.message}`)
+    }
+  }
 
   const handleDeleteReview = async () => {
     if (!deletingReview) return
@@ -244,7 +261,7 @@ export default function AdminReviewsPage() {
 
       {/* Search & Filter Toolbar */}
       <Card className="rounded-2xl border-border/70 shadow-sm bg-card p-4">
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
           <div className="relative sm:col-span-2">
             <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
@@ -268,6 +285,16 @@ export default function AdminReviewsPage() {
             <option value="2">2 Stars ★★☆☆☆</option>
             <option value="1">1 Star ★☆☆☆☆</option>
           </select>
+
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="h-9 px-3 rounded-xl border border-border bg-background text-xs text-foreground font-medium focus:outline-none cursor-pointer"
+          >
+            <option value="all">All Statuses</option>
+            <option value="approved">Approved</option>
+            <option value="pending">Pending Moderation</option>
+          </select>
         </div>
       </Card>
 
@@ -281,6 +308,7 @@ export default function AdminReviewsPage() {
                   <th className="py-3.5 px-4 font-semibold">Product</th>
                   <th className="py-3.5 px-4 font-semibold">Customer</th>
                   <th className="py-3.5 px-4 font-semibold">Rating</th>
+                  <th className="py-3.5 px-4 font-semibold">Status</th>
                   <th className="py-3.5 px-4 font-semibold">Review / Testimonial</th>
                   <th className="py-3.5 px-4 font-semibold">Date</th>
                   <th className="py-3.5 px-4 font-semibold text-right">Actions</th>
@@ -293,6 +321,7 @@ export default function AdminReviewsPage() {
                       <td className="py-3.5 px-4"><Skeleton className="h-4 w-32 rounded" /></td>
                       <td className="py-3.5 px-4"><Skeleton className="h-4 w-24 rounded" /></td>
                       <td className="py-3.5 px-4"><Skeleton className="h-4 w-16 rounded" /></td>
+                      <td className="py-3.5 px-4"><Skeleton className="h-4 w-20 rounded" /></td>
                       <td className="py-3.5 px-4"><Skeleton className="h-4 w-52 rounded" /></td>
                       <td className="py-3.5 px-4"><Skeleton className="h-4 w-20 rounded" /></td>
                       <td className="py-3.5 px-4 text-right"><Skeleton className="h-8 w-16 rounded-lg ml-auto" /></td>
@@ -300,7 +329,7 @@ export default function AdminReviewsPage() {
                   ))
                 ) : reviews.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="p-12 text-center text-xs text-muted-foreground space-y-3">
+                    <td colSpan={7} className="p-12 text-center text-xs text-muted-foreground space-y-3">
                       <Star className="w-8 h-8 mx-auto text-muted-foreground/40" />
                       <p className="font-semibold text-foreground">No customer testimonials match your filters.</p>
                       {canModerate && (
@@ -353,6 +382,18 @@ export default function AdminReviewsPage() {
                           </div>
                         </td>
 
+                        <td className="py-3.5 px-4">
+                          {r.is_approved ? (
+                            <span className="inline-flex items-center gap-1 text-[11px] font-medium text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full">
+                              <CheckCircle2 className="w-3 h-3" /> Approved
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 text-[11px] font-medium text-amber-600 dark:text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded-full">
+                              <Clock className="w-3 h-3" /> Pending
+                            </span>
+                          )}
+                        </td>
+
                         <td className="py-3.5 px-4 text-muted-foreground max-w-sm text-xs leading-relaxed">
                           &quot;{r.comment}&quot;
                         </td>
@@ -367,15 +408,35 @@ export default function AdminReviewsPage() {
 
                         <td className="py-3.5 px-4 text-right">
                           {canModerate ? (
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => setDeletingReview(r)}
-                              className="h-8 w-8 rounded-lg text-destructive hover:bg-destructive/10"
-                              title="Delete / Dismiss Review"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </Button>
+                            <div className="flex items-center justify-end gap-1">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => handleToggleApproval(r)}
+                                className={cn(
+                                  "h-8 w-8 rounded-lg",
+                                  r.is_approved
+                                    ? "text-amber-600 hover:bg-amber-500/10 hover:text-amber-700"
+                                    : "text-emerald-600 hover:bg-emerald-500/10 hover:text-emerald-700"
+                                )}
+                                title={r.is_approved ? "Unapprove Review" : "Approve Review"}
+                              >
+                                {r.is_approved ? (
+                                  <XCircle className="w-3.5 h-3.5" />
+                                ) : (
+                                  <CheckCircle2 className="w-3.5 h-3.5" />
+                                )}
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => setDeletingReview(r)}
+                                className="h-8 w-8 rounded-lg text-destructive hover:bg-destructive/10"
+                                title="Delete / Dismiss Review"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </Button>
+                            </div>
                           ) : (
                             <span className="text-[10px] text-muted-foreground italic">Read-only</span>
                           )}

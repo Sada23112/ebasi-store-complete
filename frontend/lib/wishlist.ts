@@ -69,7 +69,7 @@ export async function toggleWishlistItem(product: WishlistItem): Promise<boolean
   saveLocalWishlist(updated)
 
   // Try backend sync if token exists
-  if (typeof window !== 'undefined' && localStorage.getItem('authToken')) {
+  if (typeof window !== 'undefined' && api.getToken()) {
     try {
       await api.toggleWishlist(product.id)
     } catch (err) {

@@ -59,6 +59,7 @@ export function Navigation() {
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (searchQuery.trim()) {
+      trackSearch(searchQuery.trim(), { source: "navbar" })
       triggerNavigationStart()
       router.push(`/shop?search=${encodeURIComponent(searchQuery.trim())}`)
       setIsSearchExpanded(false)

@@ -12,6 +12,7 @@ import { ScrollReveal } from "@/components/scroll-reveal"
 import { STORE_INFO } from "@/lib/constants"
 import { trackWhatsAppConversion, trackContactSubmit } from "@/lib/analytics"
 import { useStore } from "@/lib/store-context"
+import { StoreLocation } from "@/components/store-location"
 
 export default function ContactPage() {
   const { store, getSocialUrl } = useStore()
@@ -395,9 +396,8 @@ export default function ContactPage() {
             </div>
           </div>
         </section>
+        <StoreLocation />
       </main>
-
-      
     </div>
   )
 }

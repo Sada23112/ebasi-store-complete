@@ -44,23 +44,28 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     },
   ]
 
-  // Dynamic product routes from real database
+  // Dynamic product routes from real database (paginates automatically if catalog exceeds page size)
   let productRoutes: MetadataRoute.Sitemap = []
   try {
-    const res = await fetch(`${API_BASE_URL}/products/?page_size=100`, {
-      next: { revalidate: 3600 },
-    })
-    if (res.ok) {
-      const data = await res.json()
+    let nextUrl: string | null = `${API_BASE_URL}/products/?page_size=1000`
+    while (nextUrl) {
+      const res: Response = await fetch(nextUrl, {
+        next: { revalidate: 3600 },
+      })
+      if (!res.ok) break
+      const data: any = await res.json()
       const products = Array.isArray(data) ? data : (data.results || [])
-      productRoutes = products
-        .filter((p: any) => p.slug)
-        .map((p: any) => ({
-          url: `${baseUrl}/product/${p.slug}`,
-          lastModified: p.updated_at ? new Date(p.updated_at) : new Date(),
-          changeFrequency: "weekly" as const,
-          priority: 0.8,
-        }))
+      for (const p of products) {
+        if (p.slug) {
+          productRoutes.push({
+            url: `${baseUrl}/product/${p.slug}`,
+            lastModified: p.updated_at ? new Date(p.updated_at) : new Date(),
+            changeFrequency: "weekly" as const,
+            priority: 0.8,
+          })
+        }
+      }
+      nextUrl = Array.isArray(data) ? null : data.next
     }
   } catch (error) {
     console.error("Failed to generate dynamic product sitemap entries:", error)
@@ -79,7 +84,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         .filter((c: any) => c.slug && c.slug !== "All")
         .map((c: any) => ({
           url: `${baseUrl}/shop?category=${c.slug}`,
-          lastModified: new Date(),
+          lastModified: c.updated_at ? new Date(c.updated_at) : new Date(),
           changeFrequency: "weekly" as const,
           priority: 0.8,
         }))

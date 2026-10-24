@@ -32,11 +32,11 @@ export function Promotions() {
                   <Clock className="h-4 w-4" aria-hidden="true" />
                   <span className="text-sm">Available while stocks last</span>
                 </div>
-                <Link href="/shop">
-                  <Button variant="secondary" size="lg" className="font-bold transition-all duration-300 active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-white">
+                <Button asChild variant="secondary" size="lg" className="font-bold transition-all duration-300 active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-white">
+                  <Link href="/shop">
                     Browse Collection
-                  </Button>
-                </Link>
+                  </Link>
+                </Button>
               </div>
               <div className="absolute -right-8 -bottom-8 opacity-20 pointer-events-none transition-transform duration-700 group-hover:scale-110" aria-hidden="true">
                 <Gift className="h-40 w-40" />
@@ -56,11 +56,11 @@ export function Promotions() {
                 </p>
               </div>
               <div>
-                <Link href="/shop">
-                  <Button variant="outline" size="lg" className="bg-transparent font-semibold transition-all duration-300 active:scale-[0.98] hover:bg-primary hover:text-white focus-visible:ring-2 focus-visible:ring-primary">
+                <Button asChild variant="outline" size="lg" className="bg-transparent font-semibold transition-all duration-300 active:scale-[0.98] hover:bg-primary hover:text-white focus-visible:ring-2 focus-visible:ring-primary">
+                  <Link href="/shop">
                     Explore Collection
-                  </Button>
-                </Link>
+                  </Link>
+                </Button>
               </div>
             </div>
           </ScrollReveal>

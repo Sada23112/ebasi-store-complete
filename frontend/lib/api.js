@@ -19,20 +19,22 @@ function removeCookie(name) {
   document.cookie = `${name}=; path=/; max-age=0; SameSite=Lax`;
 }
 
+const TOKEN_KEY = 'ebasi_admin_token';
+
 class EbasiAPI {
   // Token management
   getToken() {
     if (typeof window === 'undefined') return null;
     let token = null;
     try {
-      token = localStorage.getItem('authToken');
+      token = localStorage.getItem(TOKEN_KEY) || localStorage.getItem('authToken');
     } catch (e) {}
 
     if (!token) {
-      token = getCookie('authToken');
+      token = getCookie(TOKEN_KEY) || getCookie('authToken');
       if (token) {
         try {
-          localStorage.setItem('authToken', token);
+          localStorage.setItem(TOKEN_KEY, token);
         } catch (e) {}
       }
     }
@@ -42,16 +44,18 @@ class EbasiAPI {
   setToken(token) {
     if (typeof window === 'undefined') return;
     try {
-      localStorage.setItem('authToken', token);
+      localStorage.setItem(TOKEN_KEY, token);
     } catch (e) {}
-    setCookie('authToken', token, 30);
+    setCookie(TOKEN_KEY, token, 30);
   }
 
   removeToken() {
     if (typeof window === 'undefined') return;
     try {
+      localStorage.removeItem(TOKEN_KEY);
       localStorage.removeItem('authToken');
     } catch (e) {}
+    removeCookie(TOKEN_KEY);
     removeCookie('authToken');
   }
 
@@ -92,114 +96,6 @@ class EbasiAPI {
       return await response.json();
     } catch (error) {
       console.error('Request Error:', error);
-      throw error;
-    }
-  }
-
-  // Authentication
-  async register(username, email, password, firstName, lastName) {
-    try {
-      const response = await fetch(`${API_BASE_URL}/accounts/register/`, {
-        method: 'POST',
-        headers: this.getHeaders(false),
-        body: JSON.stringify({
-          username,
-          email,
-          password,
-          first_name: firstName,
-          last_name: lastName,
-        }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        // Parse Django validation errors
-        let message = 'Registration failed';
-        if (errorData.username) {
-          message = 'ACCOUNT_EXISTS';
-        } else if (errorData.email) {
-          message = 'ACCOUNT_EXISTS';
-        } else if (errorData.password) {
-          message = Array.isArray(errorData.password) ? errorData.password.join(' ') : errorData.password;
-        } else if (errorData.non_field_errors) {
-          message = Array.isArray(errorData.non_field_errors) ? errorData.non_field_errors.join(' ') : errorData.non_field_errors;
-        }
-        throw new Error(message);
-      }
-
-      return await response.json();
-    } catch (error) {
-      console.error('Registration Error:', error);
-      throw error;
-    }
-  }
-
-  async login(usernameOrEmail, password) {
-    try {
-      const response = await fetch(`${API_BASE_URL}/accounts/login/`, {
-        method: 'POST',
-        headers: this.getHeaders(false),
-        body: JSON.stringify({
-          username: usernameOrEmail,
-          email: usernameOrEmail,
-          password
-        }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || 'NO_ACCOUNT');
-      }
-
-      const data = await response.json();
-      this.setToken(data.token);
-      return data;
-    } catch (error) {
-      console.error('Login Error:', error);
-      throw error;
-    }
-  }
-
-  // Google OAuth Login
-  async googleLogin(code) {
-    try {
-      const redirectUri = `${window.location.origin}/auth/google/callback`;
-      const response = await fetch(`${API_BASE_URL}/accounts/google/`, {
-        method: 'POST',
-        headers: this.getHeaders(false),
-        body: JSON.stringify({ code, redirect_uri: redirectUri }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || 'Google login failed');
-      }
-
-      const data = await response.json();
-      const token = data.token;
-      if (token) {
-        this.setToken(token);
-      }
-      return data;
-    } catch (error) {
-      console.error('Google Login Error:', error);
-      throw error;
-    }
-  }
-
-  async getProfile() {
-    try {
-      const response = await fetch(`${API_BASE_URL}/accounts/profile/`, {
-        headers: this.getHeaders(),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch profile');
-      }
-
-      return await response.json();
-    } catch (error) {
-      console.error('Profile Error:', error);
       throw error;
     }
   }
@@ -369,7 +265,19 @@ class EbasiAPI {
       body: JSON.stringify(data)
     });
 
-    if (!response.ok) throw new Error('Failed to submit message');
+    if (!response.ok) {
+      const err = await response.json().catch(() => null);
+      let errorMsg = 'Failed to submit message';
+      if (err?.error) {
+        errorMsg = err.error;
+      } else if (err?.details) {
+        const fieldErrors = Object.entries(err.details)
+          .map(([field, msgs]) => `${field}: ${Array.isArray(msgs) ? msgs.join(', ') : msgs}`)
+          .join('; ');
+        if (fieldErrors) errorMsg = fieldErrors;
+      }
+      throw new Error(errorMsg);
+    }
     return response.json();
   }
 

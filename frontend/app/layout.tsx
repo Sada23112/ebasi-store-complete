@@ -96,7 +96,6 @@ import { Navigation } from "@/components/navigation"
 import { Footer } from "@/components/footer"
 import { Toaster } from "@/components/ui/toaster"
 import { NavigationProgressBar } from "@/components/navigation-progress-bar"
-import { StoreLocation } from "@/components/store-location"
 import { StoreProvider } from "@/lib/store-context"
 
 export default function RootLayout({
@@ -163,7 +162,6 @@ export default function RootLayout({
               {children}
             </div>
           </Suspense>
-          <StoreLocation />
           <Footer />
           <Toaster />
           <Analytics />

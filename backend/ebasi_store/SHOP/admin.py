@@ -35,6 +35,7 @@ class ProductVideoInline(admin.TabularInline):
 class ReviewInline(admin.TabularInline):
     model = Review
     extra = 0
+    fields = ['user_name', 'rating', 'comment', 'is_approved', 'created_at']
     readonly_fields = ['user_name', 'rating', 'comment', 'created_at']
     can_delete = True
 
@@ -126,10 +127,20 @@ class ProductVideoAdmin(admin.ModelAdmin):
 
 @admin.register(Review)
 class ReviewAdmin(admin.ModelAdmin):
-    list_display = ['display_name', 'product', 'rating', 'created_at']
-    list_filter = ['rating', 'created_at']
+    list_display = ['display_name', 'product', 'rating', 'is_approved', 'created_at']
+    list_filter = ['is_approved', 'rating', 'created_at']
+    list_editable = ['is_approved']
     search_fields = ['user_name', 'comment', 'product__name']
     readonly_fields = ['created_at']
+    actions = ['approve_reviews', 'disapprove_reviews']
+
+    def approve_reviews(self, request, queryset):
+        queryset.update(is_approved=True)
+    approve_reviews.short_description = "Approve selected reviews"
+
+    def disapprove_reviews(self, request, queryset):
+        queryset.update(is_approved=False)
+    disapprove_reviews.short_description = "Reject/Unapprove selected reviews"
 
     def display_name(self, obj):
         return obj.user_name or 'Anonymous'
@@ -221,12 +232,21 @@ class AnalyticsEventAdmin(admin.ModelAdmin):
 from django.contrib.auth.models import Group
 from django.contrib.sites.models import Site
 from rest_framework.authtoken.models import TokenProxy
-from allauth.account.models import EmailAddress
-from allauth.socialaccount.models import SocialApp, SocialToken, SocialAccount
 
-for technical_model in [Group, Site, TokenProxy, EmailAddress, SocialApp, SocialToken, SocialAccount]:
+for technical_model in [Group, Site, TokenProxy]:
     try:
         admin.site.unregister(technical_model)
-    except admin.sites.NotRegistered:
+    except (admin.sites.NotRegistered, Exception):
         pass
+
+try:
+    from allauth.account.models import EmailAddress
+    from allauth.socialaccount.models import SocialApp, SocialToken, SocialAccount
+    for technical_model in [EmailAddress, SocialApp, SocialToken, SocialAccount]:
+        try:
+            admin.site.unregister(technical_model)
+        except (admin.sites.NotRegistered, Exception):
+            pass
+except (ImportError, RuntimeError, Exception):
+    pass
 

@@ -5,7 +5,7 @@ import { API_BASE_URL } from "@/lib/constants"
 import { getAbsoluteImageUrl } from "@/lib/utils"
 
 interface PageProps {
-  params: Promise<{ slug: string }>
+  params: { slug: string } | Promise<{ slug: string }>
 }
 
 async function getProduct(slug: string) {
@@ -23,7 +23,8 @@ async function getProduct(slug: string) {
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
-  const { slug } = await params
+  const resolvedParams = await Promise.resolve(params)
+  const slug = resolvedParams.slug
   const product = await getProduct(slug)
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://ebasistore.com"
 
@@ -77,9 +78,14 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 }
 
 export default async function ProductDetailPage({ params }: PageProps) {
-  const { slug } = await params
+  const resolvedParams = await Promise.resolve(params)
+  const slug = resolvedParams.slug
   const product = await getProduct(slug)
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://ebasistore.com"
+
+  if (!product || product.detail || !product.id) {
+    notFound()
+  }
 
   // Generate Schema.org Product Structured Data
   let productJsonLd: any = null
@@ -181,7 +187,7 @@ export default async function ProductDetailPage({ params }: PageProps) {
           dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
         />
       )}
-      <ProductDetailClient slug={slug} initialProduct={product} />
+      <ProductDetailClient key={slug} slug={slug} initialProduct={product} />
     </>
   )
 }

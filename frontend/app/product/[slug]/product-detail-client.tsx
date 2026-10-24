@@ -28,9 +28,10 @@ import { ProductDetailSkeleton } from "@/components/skeletons"
 import { ScrollReveal } from "@/components/scroll-reveal"
 import { useWishlist } from "@/lib/wishlist"
 import api from "@/lib/api"
-import { getAbsoluteImageUrl, getBadgeInfo, cn } from "@/lib/utils"
+import { getAbsoluteImageUrl, getBadgeInfo, cn, formatWhatsAppBaseUrl } from "@/lib/utils"
 import { ProductGallery } from "@/components/product-gallery"
 import { STORE_INFO } from "@/lib/constants"
+import { useStore } from "@/lib/store-context"
 import { trackWhatsAppConversion, trackProductView } from "@/lib/analytics"
 
 const SIZES = ["Free Size / Standard", "Unstitched", "S", "M", "L", "XL", "XXL"]
@@ -41,6 +42,7 @@ interface ProductDetailClientProps {
 }
 
 export function ProductDetailClient({ slug, initialProduct }: ProductDetailClientProps) {
+  const { store, getSocialUrl } = useStore()
   const [product, setProduct] = useState<any>(initialProduct || null)
   const [reviews, setReviews] = useState<any[]>(initialProduct?.reviews || [])
   const [loading, setLoading] = useState(!initialProduct)
@@ -172,16 +174,20 @@ export function ProductDetailClient({ slug, initialProduct }: ProductDetailClien
     const getWhatsAppUrl = () => {
     if (!product) return "#"
     const currentUrl = typeof window !== "undefined" ? window.location.href : ""
+    const storeName = store?.name || STORE_INFO.name
+    const targetWhatsappUrl = formatWhatsAppBaseUrl(
+      store?.whatsapp_number || (getSocialUrl ? getSocialUrl("whatsapp") : null)
+    )
 
     if (isOutOfStock) {
-      const message = `Hi ${STORE_INFO.name}! 👋\n\nI'm interested in knowing when this product will be back in stock:\n\n*Product:* ${product.name}\n*SKU:* ${product.sku || 'N/A'}\n\n*Product Link:* ${currentUrl}`
-      return `${STORE_INFO.whatsappUrl}?text=${encodeURIComponent(message)}`
+      const message = `Hi ${storeName}! 👋\n\nI'm interested in knowing when this product will be back in stock:\n\n*Product:* ${product.name}\n*SKU:* ${product.sku || 'N/A'}\n\n*Product Link:* ${currentUrl}`
+      return `${targetWhatsappUrl}?text=${encodeURIComponent(message)}`
     }
 
     const parsedPrice = parseFloat(String(product.price || 0))
     const validPrice = !isNaN(parsedPrice) ? parsedPrice : 0
     const totalPrice = (validPrice * quantity).toLocaleString('en-IN')
-    let message = `Hi ${STORE_INFO.name}! 👋\n\nI would like to order:\n\n*Product:* ${product.name || 'Product'}\n*Price:* ₹${validPrice} each\n*Size:* ${selectedSize}\n`
+    let message = `Hi ${storeName}! 👋\n\nI would like to order:\n\n*Product:* ${product.name || 'Product'}\n*Price:* ₹${validPrice} each\n*Size:* ${selectedSize}\n`
 
     if (customNote.trim()) {
       message += `*Note/Color:* ${customNote.trim()}\n`
@@ -193,7 +199,7 @@ export function ProductDetailClient({ slug, initialProduct }: ProductDetailClien
     }
     message += `\n*Product Link:* ${currentUrl}`
 
-    return `${STORE_INFO.whatsappUrl}?text=${encodeURIComponent(message)}`
+    return `${targetWhatsappUrl}?text=${encodeURIComponent(message)}`
   }
 
   const handleSubmitReview = async (e: React.FormEvent) => {
@@ -208,12 +214,14 @@ export function ProductDetailClient({ slug, initialProduct }: ProductDetailClien
         rating: reviewRating,
         comment: reviewComment.trim(),
       })
-      setReviews((prev) => [newReview, ...(Array.isArray(prev) ? prev : [])])
+      if (newReview && newReview.is_approved) {
+        setReviews((prev) => [newReview, ...(Array.isArray(prev) ? prev : [])])
+      }
       setReviewName("")
       setReviewRating(5)
       setReviewComment("")
       setReviewSuccess(true)
-      setTimeout(() => setReviewSuccess(false), 4000)
+      setTimeout(() => setReviewSuccess(false), 5000)
     } catch (error) {
       console.error("Failed to submit review:", error)
       setReviewError("Unable to submit review right now. Please check your connection and try again.")
@@ -681,7 +689,7 @@ export function ProductDetailClient({ slug, initialProduct }: ProductDetailClien
                           </Button>
                           {reviewSuccess && (
                             <span role="status" aria-live="polite" className="text-sm text-green-600 font-medium flex items-center gap-1 animate-fade-up">
-                              <Check className="h-4 w-4" aria-hidden="true" /> Review submitted successfully!
+                              <Check className="h-4 w-4" aria-hidden="true" /> Thank you! Your review has been submitted for moderation and will appear once approved.
                             </span>
                           )}
                           {reviewError && (

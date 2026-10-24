@@ -2,10 +2,15 @@ from rest_framework import generics, filters, permissions, status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
-from .models import Category, Product, Review, ProductImage, AnalyticsEvent
+from django.core.cache import cache
+from .models import Category, Product, Review, ProductImage, AnalyticsEvent, PRODUCT_PRICE_CACHE_KEY
+from .pagination import StandardResultsSetPagination
 from .serializers import CategorySerializer, ProductListSerializer, ProductDetailSerializer, ReviewSerializer, AnalyticsEventSerializer
 from django.db.models import Q, Count, Avg, Prefetch
+from rest_framework.throttling import AnonRateThrottle, UserRateThrottle
 from accounts.views import SensitiveAnonThrottle, SensitiveUserThrottle
+
+MAX_ANALYTICS_BATCH_SIZE = 25
 
 
 class CategoryListView(generics.ListAPIView):
@@ -15,6 +20,7 @@ class CategoryListView(generics.ListAPIView):
 
 class ProductListView(generics.ListAPIView):
     serializer_class = ProductListSerializer
+    pagination_class = StandardResultsSetPagination
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['name', 'description', 'short_description', 'sku']
     ordering_fields = ['price', 'created_at', 'name', 'annotated_avg_rating']
@@ -22,8 +28,8 @@ class ProductListView(generics.ListAPIView):
 
     def get_queryset(self):
         queryset = Product.objects.filter(is_active=True).select_related('category').annotate(
-            annotated_review_count=Count('reviews', distinct=True),
-            annotated_avg_rating=Avg('reviews__rating')
+            annotated_review_count=Count('reviews', filter=Q(reviews__is_approved=True), distinct=True),
+            annotated_avg_rating=Avg('reviews__rating', filter=Q(reviews__is_approved=True))
         ).prefetch_related(
             Prefetch('images', queryset=ProductImage.objects.order_by('-is_primary', 'order'))
         )
@@ -63,15 +69,26 @@ class ProductListView(generics.ListAPIView):
     def list(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())
 
-        # Calculate min and max price of all active products
-        from django.db.models import Max, Min
-        active_products = Product.objects.filter(is_active=True)
-        price_stats = active_products.aggregate(
-            min_price=Min('price'),
-            max_price=Max('price')
-        )
-        min_price = price_stats['min_price'] or 0
-        max_price = price_stats['max_price'] or 100000
+        # Get cached min and max price of all active products
+        def _compute_price_stats():
+            from django.db.models import Max, Min
+            stats = Product.objects.filter(is_active=True).aggregate(
+                min_price=Min('price'),
+                max_price=Max('price')
+            )
+            min_val = stats['min_price']
+            max_val = stats['max_price']
+            return {
+                'min_price': float(min_val) if min_val is not None else 0.0,
+                'max_price': float(max_val) if max_val is not None else 100000.0
+            }
+
+        price_stats = cache.get_or_set(PRODUCT_PRICE_CACHE_KEY, _compute_price_stats, timeout=300)
+        if not isinstance(price_stats, dict):
+            price_stats = _compute_price_stats()
+
+        min_price = price_stats.get('min_price', 0.0)
+        max_price = price_stats.get('max_price', 100000.0)
 
         page = self.paginate_queryset(queryset)
         if page is not None:
@@ -95,12 +112,12 @@ class ProductDetailView(generics.RetrieveAPIView):
 
     def get_queryset(self):
         return Product.objects.filter(is_active=True).select_related('category').annotate(
-            annotated_review_count=Count('reviews', distinct=True),
-            annotated_avg_rating=Avg('reviews__rating')
+            annotated_review_count=Count('reviews', filter=Q(reviews__is_approved=True), distinct=True),
+            annotated_avg_rating=Avg('reviews__rating', filter=Q(reviews__is_approved=True))
         ).prefetch_related(
             Prefetch('images', queryset=ProductImage.objects.order_by('-is_primary', 'order')),
             'videos',
-            'reviews'
+            Prefetch('reviews', queryset=Review.objects.filter(is_approved=True))
         )
 
 
@@ -109,8 +126,8 @@ class FeaturedProductsView(generics.ListAPIView):
 
     def get_queryset(self):
         return Product.objects.filter(is_active=True, is_featured=True).select_related('category').annotate(
-            annotated_review_count=Count('reviews', distinct=True),
-            annotated_avg_rating=Avg('reviews__rating')
+            annotated_review_count=Count('reviews', filter=Q(reviews__is_approved=True), distinct=True),
+            annotated_avg_rating=Avg('reviews__rating', filter=Q(reviews__is_approved=True))
         ).prefetch_related(
             Prefetch('images', queryset=ProductImage.objects.order_by('-is_primary', 'order'))
         ).order_by('-created_at')
@@ -126,8 +143,8 @@ class CategoryProductsView(generics.ListAPIView):
             category__slug=category_slug,
             category__is_active=True
         ).select_related('category').annotate(
-            annotated_review_count=Count('reviews', distinct=True),
-            annotated_avg_rating=Avg('reviews__rating')
+            annotated_review_count=Count('reviews', filter=Q(reviews__is_approved=True), distinct=True),
+            annotated_avg_rating=Avg('reviews__rating', filter=Q(reviews__is_approved=True))
         ).prefetch_related(
             Prefetch('images', queryset=ProductImage.objects.order_by('-is_primary', 'order'))
         ).order_by('-created_at')
@@ -135,8 +152,8 @@ class CategoryProductsView(generics.ListAPIView):
 
 class ReviewListCreateView(generics.ListCreateAPIView):
     """
-    GET: List all reviews for a product (public).
-    POST: Create a new review for a product (public — no login required).
+    GET: List all approved reviews for a product (public).
+    POST: Create a new review for a product (public — defaults to is_approved=False).
     """
     serializer_class = ReviewSerializer
     permission_classes = [permissions.AllowAny]
@@ -144,26 +161,38 @@ class ReviewListCreateView(generics.ListCreateAPIView):
 
     def get_queryset(self):
         slug = self.kwargs['slug']
-        return Review.objects.filter(product__slug=slug)
+        return Review.objects.filter(product__slug=slug, is_approved=True)
 
     def perform_create(self, serializer):
         slug = self.kwargs['slug']
         product = get_object_or_404(Product, slug=slug, is_active=True)
-        serializer.save(product=product)
+        serializer.save(product=product, is_approved=False)
 
 
 class TrackAnalyticsEventView(generics.CreateAPIView):
     """
     Records customer-behavior analytics events (page_view, product_view, search,
     wishlist_add, whatsapp_click, contact_submit) for store insights in Django Admin.
+    Enforces batch limits (max 25 events per request) and throttling.
     """
     queryset = AnalyticsEvent.objects.all()
     serializer_class = AnalyticsEventSerializer
     permission_classes = [permissions.AllowAny]
+    throttle_classes = [AnonRateThrottle, UserRateThrottle]
 
     def create(self, request, *args, **kwargs):
         data = request.data
         if isinstance(data, list):
+            if len(data) > MAX_ANALYTICS_BATCH_SIZE:
+                return Response(
+                    {'error': f'Batch size exceeds maximum allowed limit of {MAX_ANALYTICS_BATCH_SIZE} events.'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            if not data:
+                return Response(
+                    {'status': 'recorded', 'count': 0},
+                    status=status.HTTP_200_OK
+                )
             serializer = self.get_serializer(data=data, many=True)
             serializer.is_valid(raise_exception=True)
             self.perform_create(serializer)

@@ -373,3 +373,195 @@ class RBACAndStaffManagementTestCase(APITestCase):
         })
 
         self.assertTrue(AuditLog.objects.filter(action="product.create", actor=self.owner).exists())
+
+
+class AdminProductAndAnalyticsOptimizationTestCase(APITestCase):
+    def setUp(self):
+        self.owner = User.objects.create_superuser(
+            username="admin_opt_owner",
+            email="opt_owner@ebasistore.com",
+            password="OptPassword123!"
+        )
+        self.token = Token.objects.create(user=self.owner)
+        self.client.credentials(HTTP_AUTHORIZATION=f"Token {self.token.key}")
+
+        self.category = Category.objects.create(name="Egu Jokasiba", slug="egu-jokasiba")
+        self.product = Product.objects.create(
+            name="Deori Traditional Egu",
+            slug="deori-traditional-egu",
+            category=self.category,
+            price=3200,
+            sku="EBA-OPT01"
+        )
+
+    def test_admin_product_list_annotated_counts_with_zero(self):
+        """Zero counts should return 0 directly without executing fallback queries."""
+        from SHOP.models import AnalyticsEvent
+        from admin_api.serializers import AdminProductSerializer
+
+        # Create multiple products to verify constant query count (no N+1 per product)
+        for i in range(5):
+            Product.objects.create(
+                name=f"Deori Egu {i}",
+                slug=f"deori-egu-{i}",
+                category=self.category,
+                price=2000 + i * 100,
+                sku=f"EBA-OPT-{i}"
+            )
+
+        # Ensure that list queries do not trigger N+1 queries per product for counts or avg rating
+        with self.assertNumQueries(7):
+            res = self.client.get("/api/v1/admin/products/")
+            self.assertEqual(res.status_code, status.HTTP_200_OK)
+            results = res.data.get('results', res.data)
+            self.assertEqual(len(results), 6)
+            for prod in results:
+                self.assertEqual(prod['views_count'], 0)
+                self.assertEqual(prod['wishlist_count'], 0)
+                self.assertEqual(prod['whatsapp_clicks_count'], 0)
+                self.assertEqual(prod['average_rating'], 0)
+                self.assertEqual(prod['review_count'], 0)
+
+        # Directly test serializer method with annotated 0 and None avg rating
+        setattr(self.product, 'annotated_views_count', 0)
+        setattr(self.product, 'annotated_wishlist_count', 0)
+        setattr(self.product, 'annotated_whatsapp_count', 0)
+        setattr(self.product, 'annotated_avg_rating', None)
+        serializer = AdminProductSerializer(self.product)
+        self.assertEqual(serializer.data['views_count'], 0)
+        self.assertEqual(serializer.data['wishlist_count'], 0)
+        self.assertEqual(serializer.data['whatsapp_clicks_count'], 0)
+        self.assertEqual(serializer.data['average_rating'], 0)
+
+    def test_admin_analytics_view_aggregations(self):
+        """AdminAnalyticsView uses single TruncDate query, handles time windows, and avoids N+1 queries."""
+        from SHOP.models import AnalyticsEvent
+        from django.utils import timezone
+        from datetime import timedelta
+
+        now = timezone.now()
+        # Event within 7 days
+        e1 = AnalyticsEvent.objects.create(
+            event_type='product_view',
+            product=self.product,
+            product_name=self.product.name
+        )
+        e2 = AnalyticsEvent.objects.create(
+            event_type='whatsapp_click',
+            product=self.product,
+            product_name=self.product.name
+        )
+        # Event older than 7 days (created 12 days ago)
+        e3 = AnalyticsEvent.objects.create(
+            event_type='product_view',
+            product=self.product,
+            product_name=self.product.name
+        )
+        AnalyticsEvent.objects.filter(id=e3.id).update(created_at=now - timedelta(days=12))
+
+        # Query count must remain O(1) regardless of days range (auth + daily + products + images + searches + funnel)
+        with self.assertNumQueries(6):
+            res = self.client.get("/api/v1/admin/analytics/?days=7")
+            self.assertEqual(res.status_code, status.HTTP_200_OK)
+
+        self.assertEqual(res.data['timeframe_days'], 7)
+        self.assertEqual(len(res.data['daily_series']), 7)
+
+        # Funnel counts: period views = 1 (e3 excluded), wa = 1
+        self.assertEqual(res.data['funnel']['product_views'], 1)
+        self.assertEqual(res.data['funnel']['whatsapp_inquiries'], 1)
+
+        # Product performance breakdown: period_views = 1, total_views = 2
+        perf = res.data['product_performance']
+        prod_perf = next((p for p in perf if p['id'] == self.product.id), None)
+        self.assertIsNotNone(prod_perf)
+        self.assertEqual(prod_perf['period_views'], 1)
+        self.assertEqual(prod_perf['total_views'], 2)
+        self.assertEqual(prod_perf['period_whatsapp_clicks'], 1)
+        self.assertEqual(prod_perf['total_whatsapp_clicks'], 1)
+
+
+class AdminReviewModerationTestCase(APITestCase):
+    def setUp(self):
+        self.category = Category.objects.create(name="Silk", slug="silk")
+        self.product = Product.objects.create(
+            name="Assam Silk Mekhela",
+            slug="assam-silk-mekhela",
+            category=self.category,
+            price=3500.00,
+            sku="EBA-MEKHELA-01",
+            is_active=True
+        )
+        self.review = Review.objects.create(
+            product=self.product,
+            user_name="Anita",
+            rating=5,
+            comment="Gorgeous!",
+            is_approved=False
+        )
+        self.staff_user = User.objects.create_user(
+            username="staff_mod",
+            email="staff_mod@ebasistore.com",
+            password="ModPassword123!",
+            is_staff=True
+        )
+        StaffProfile.objects.create(user=self.staff_user, role=Roles.STAFF)
+        self.token = Token.objects.create(user=self.staff_user)
+        self.client.credentials(HTTP_AUTHORIZATION=f"Token {self.token.key}")
+
+    def test_filter_reviews_by_approval_status(self):
+        res = self.client.get("/api/v1/admin/reviews/?is_approved=false")
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        results = res.data.get('results', res.data)
+        self.assertEqual(len(results), 1)
+
+        res_approved = self.client.get("/api/v1/admin/reviews/?is_approved=true")
+        self.assertEqual(res_approved.status_code, status.HTTP_200_OK)
+        results_approved = res_approved.data.get('results', res_approved.data)
+        self.assertEqual(len(results_approved), 0)
+
+    def test_approve_and_reject_review_endpoints(self):
+        # Approve
+        approve_res = self.client.post(f"/api/v1/admin/reviews/{self.review.id}/approve/")
+        self.assertEqual(approve_res.status_code, status.HTTP_200_OK)
+        self.review.refresh_from_db()
+        self.assertTrue(self.review.is_approved)
+
+        # Audit log logged
+        self.assertTrue(AuditLog.objects.filter(action='review.moderate').exists())
+
+        # Reject
+        reject_res = self.client.post(f"/api/v1/admin/reviews/{self.review.id}/reject/")
+        self.assertEqual(reject_res.status_code, status.HTTP_200_OK)
+        self.review.refresh_from_db()
+        self.assertFalse(self.review.is_approved)
+
+    def test_admin_patch_review_and_audit_log(self):
+        patch_res = self.client.patch(
+            f"/api/v1/admin/reviews/{self.review.id}/",
+            data={"comment": "Updated by staff", "is_approved": True},
+            format='json'
+        )
+        self.assertEqual(patch_res.status_code, status.HTTP_200_OK)
+        self.review.refresh_from_db()
+        self.assertEqual(self.review.comment, "Updated by staff")
+        self.assertTrue(self.review.is_approved)
+        self.assertTrue(AuditLog.objects.filter(action='review.update').exists())
+
+    def test_admin_product_rating_excludes_unapproved_review(self):
+        # Product detail in admin API must not count unapproved review
+        res = self.client.get(f"/api/v1/admin/products/{self.product.id}/")
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertEqual(res.data.get('review_count'), 0)
+        self.assertEqual(res.data.get('average_rating'), 0)
+
+        # Now approve review
+        self.review.is_approved = True
+        self.review.save()
+
+        res_approved = self.client.get(f"/api/v1/admin/products/{self.product.id}/")
+        self.assertEqual(res_approved.status_code, status.HTTP_200_OK)
+        self.assertEqual(res_approved.data.get('review_count'), 1)
+        self.assertEqual(res_approved.data.get('average_rating'), 5.0)
+
+

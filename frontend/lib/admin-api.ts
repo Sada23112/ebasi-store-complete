@@ -347,6 +347,7 @@ export interface AdminReview {
   user_name: string
   rating: number
   comment: string
+  is_approved?: boolean
   created_at: string
 }
 
@@ -391,11 +392,11 @@ class EbasiAdminAPI {
     if (typeof window === "undefined") return null
     let token: string | null = null
     try {
-      token = localStorage.getItem(TOKEN_KEY)
+      token = localStorage.getItem(TOKEN_KEY) || localStorage.getItem("authToken")
     } catch {}
 
     if (!token) {
-      token = getCookie(TOKEN_KEY)
+      token = getCookie(TOKEN_KEY) || getCookie("authToken")
       if (token) {
         try {
           localStorage.setItem(TOKEN_KEY, token)
@@ -444,9 +445,11 @@ class EbasiAdminAPI {
     try {
       localStorage.removeItem(TOKEN_KEY)
       localStorage.removeItem(USER_KEY)
+      localStorage.removeItem("authToken")
     } catch {}
     removeCookie(TOKEN_KEY)
     removeCookie(USER_KEY)
+    removeCookie("authToken")
   }
 
   isAuthenticated(): boolean {
@@ -840,11 +843,24 @@ class EbasiAdminAPI {
     })
   }
 
+  async approveReview(id: number | string): Promise<{ status: string; is_approved: boolean }> {
+    return this.request<{ status: string; is_approved: boolean }>(`/admin/reviews/${id}/approve/`, {
+      method: "POST",
+    })
+  }
+
+  async rejectReview(id: number | string): Promise<{ status: string; is_approved: boolean }> {
+    return this.request<{ status: string; is_approved: boolean }>(`/admin/reviews/${id}/reject/`, {
+      method: "POST",
+    })
+  }
+
   async createReview(data: {
     product_id: number | string
     user_name: string
     rating: number
     comment: string
+    is_approved?: boolean
   }): Promise<AdminReview> {
     return this.request<AdminReview>("/admin/reviews/", {
       method: "POST",

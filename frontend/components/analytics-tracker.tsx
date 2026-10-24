@@ -11,12 +11,17 @@ export function AnalyticsTracker() {
 
   useEffect(() => {
     if (!pathname || pathname.startsWith('/admin')) return
-    const queryString = searchParams?.toString()
-    const fullPath = queryString ? `${pathname}?${queryString}` : pathname
 
-    if (fullPath !== lastTrackedPath.current) {
-      lastTrackedPath.current = fullPath
-      trackPageView(fullPath)
+    // Decouple search query parameters from page view tracking so keystrokes do not re-trigger trackPageView
+    const params = new URLSearchParams(searchParams?.toString() || "")
+    params.delete("search")
+    params.delete("q")
+    const queryString = params.toString()
+    const trackedPath = queryString ? `${pathname}?${queryString}` : pathname
+
+    if (trackedPath !== lastTrackedPath.current) {
+      lastTrackedPath.current = trackedPath
+      trackPageView(trackedPath)
     }
   }, [pathname, searchParams])
 

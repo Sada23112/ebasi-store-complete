@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, Suspense } from "react"
+import { useState, useEffect, useRef, Suspense } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 import { Button, buttonVariants } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -202,7 +202,8 @@ function ShopContent() {
 
   const [products, setProducts] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
-  const [searchQuery, setSearchQuery] = useState("")
+  const [searchInput, setSearchInput] = useState("")
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("")
   const [selectedCategory, setSelectedCategory] = useState("All")
   const [selectedBadge, setSelectedBadge] = useState("All")
   const [priceRange, setPriceRange] = useState<number[]>([0, 1000000])
@@ -224,18 +225,10 @@ function ShopContent() {
 
   const { toggle, isSaved } = useWishlist()
 
+  const isInternalUrlUpdate = useRef(false)
+  const lastSyncedSearchRef = useRef<string | null>(null)
+
   useEffect(() => {
-    const qParam = searchParams.get("q") || searchParams.get("search") || ""
-    const catParam = searchParams.get("category") || "All"
-    const badgeParam = searchParams.get("badge") || "All"
-
-    if (qParam) {
-      setSearchQuery(qParam)
-      trackSearch(qParam, { source: "shop_query" })
-    }
-    if (catParam) setSelectedCategory(catParam)
-    if (badgeParam) setSelectedBadge(badgeParam)
-
     async function fetchCategories() {
       try {
         const data = await api.getCategories()
@@ -248,11 +241,51 @@ function ShopContent() {
     }
     fetchCategories()
     setMounted(true)
+  }, [])
+
+  useEffect(() => {
+    const qParam = searchParams.get("q") || searchParams.get("search") || ""
+    const catParam = searchParams.get("category") || "All"
+    const badgeParam = searchParams.get("badge") || "All"
+
+    if (isInternalUrlUpdate.current) {
+      isInternalUrlUpdate.current = false
+      lastSyncedSearchRef.current = qParam
+      return
+    }
+
+    if (lastSyncedSearchRef.current === null || lastSyncedSearchRef.current !== qParam) {
+      setSearchInput(qParam)
+      setDebouncedSearchQuery(qParam)
+      lastSyncedSearchRef.current = qParam
+    }
+
+    if (catParam) setSelectedCategory(catParam)
+    if (badgeParam) setSelectedBadge(badgeParam)
   }, [searchParams])
 
+  // 350ms debounce before updating URL, firing analytics trackSearch, and querying products
+  useEffect(() => {
+    if (searchInput === debouncedSearchQuery) return
+
+    const timer = setTimeout(() => {
+      setDebouncedSearchQuery(searchInput)
+      setCurrentPage(1)
+      updateQueryParams(searchInput, selectedCategory, selectedBadge)
+      if (searchInput.trim()) {
+        trackSearch(searchInput.trim(), { source: "shop_query" })
+      }
+    }, 350)
+
+    return () => clearTimeout(timer)
+  }, [searchInput, debouncedSearchQuery, selectedCategory, selectedBadge])
+
   const updateQueryParams = (newSearch: string, newCat: string, newBadge: string) => {
+    isInternalUrlUpdate.current = true
+    lastSyncedSearchRef.current = newSearch.trim()
+
     const params = new URLSearchParams()
-    if (newSearch) params.set("search", newSearch)
+    if (newSearch.trim()) params.set("search", newSearch.trim())
     if (newCat && newCat !== "All") params.set("category", newCat)
     if (newBadge && newBadge !== "All") params.set("badge", newBadge)
 
@@ -283,7 +316,7 @@ function ShopContent() {
           params.is_featured = "true"
         }
 
-        if (searchQuery) params.search = searchQuery
+        if (debouncedSearchQuery) params.search = debouncedSearchQuery
         if (selectedCategory && selectedCategory !== "All") params.category = selectedCategory
         if (selectedBadge && selectedBadge !== "All") params.badge = selectedBadge
 
@@ -327,22 +360,20 @@ function ShopContent() {
       }
     }
     loadProducts()
-  }, [currentPage, searchQuery, selectedCategory, selectedBadge, priceRange[0], priceRange[1], sortBy, showInStockOnly, showOnSaleOnly, dbMinPrice, dbMaxPrice])
+  }, [currentPage, debouncedSearchQuery, selectedCategory, selectedBadge, priceRange[0], priceRange[1], sortBy, showInStockOnly, showOnSaleOnly, dbMinPrice, dbMaxPrice])
 
-  const handleSetSearchQuery = (val: string) => {
-    setSearchQuery(val)
-    setCurrentPage(1)
-    updateQueryParams(val, selectedCategory, selectedBadge)
+  const handleSetSearchInput = (val: string) => {
+    setSearchInput(val)
   }
   const handleSetSelectedCategory = (val: string) => {
     setSelectedCategory(val)
     setCurrentPage(1)
-    updateQueryParams(searchQuery, val, selectedBadge)
+    updateQueryParams(debouncedSearchQuery, val, selectedBadge)
   }
   const handleSetSelectedBadge = (val: string) => {
     setSelectedBadge(val)
     setCurrentPage(1)
-    updateQueryParams(searchQuery, selectedCategory, val)
+    updateQueryParams(debouncedSearchQuery, selectedCategory, val)
   }
   const handleSetPriceRange = (val: number[]) => {
     setPriceRange(val)
@@ -362,7 +393,10 @@ function ShopContent() {
   }
 
   const clearAllFilters = () => {
-    setSearchQuery("")
+    isInternalUrlUpdate.current = true
+    lastSyncedSearchRef.current = ""
+    setSearchInput("")
+    setDebouncedSearchQuery("")
     setSelectedCategory("All")
     setSelectedBadge("All")
     setPriceRange([dbMinPrice, dbMaxPrice])
@@ -392,8 +426,8 @@ function ShopContent() {
   const filteredProducts = products
 
   const filtersProps = {
-    searchQuery,
-    setSearchQuery: handleSetSearchQuery,
+    searchQuery: searchInput,
+    setSearchQuery: handleSetSearchInput,
     categories,
     selectedCategory,
     setSelectedCategory: handleSetSelectedCategory,
@@ -538,18 +572,18 @@ function ShopContent() {
 
                     return (
                       <div key={product.id} className="relative group flex flex-col">
-                        <Link href={`/product/${product.slug || product.id}`} className="block h-full cursor-pointer focus-visible:ring-2 focus-visible:ring-primary rounded-2xl">
-                          <Card
-                            className={cn(
-                              "overflow-hidden border border-transparent hover:border-primary/20 premium-shadow hover:premium-shadow-hover hover:-translate-y-1 transition-all duration-300 h-full flex flex-col justify-between bg-card/60 backdrop-blur-xs",
-                              viewMode === "list" ? "flex-col sm:flex-row sm:items-stretch" : ""
-                            )}
-                          >
-                            {/* Image */}
-                            <div className={cn(
-                              "relative overflow-hidden shrink-0 bg-muted hover-scale-img",
-                              viewMode === "list" ? "w-full sm:w-56 md:w-64 h-48 sm:h-auto rounded-t-2xl sm:rounded-l-2xl sm:rounded-tr-none" : "h-48 sm:h-80 rounded-t-2xl"
-                            )}>
+                        <Card
+                          className={cn(
+                            "overflow-hidden border border-transparent hover:border-primary/20 premium-shadow hover:premium-shadow-hover hover:-translate-y-1 transition-all duration-300 h-full flex flex-col justify-between bg-card/60 backdrop-blur-xs",
+                            viewMode === "list" ? "flex-col sm:flex-row sm:items-stretch" : ""
+                          )}
+                        >
+                          {/* Image Container */}
+                          <div className={cn(
+                            "relative overflow-hidden shrink-0 bg-muted hover-scale-img",
+                            viewMode === "list" ? "w-full sm:w-56 md:w-64 h-48 sm:h-auto rounded-t-2xl sm:rounded-l-2xl sm:rounded-tr-none" : "h-48 sm:h-80 rounded-t-2xl"
+                          )}>
+                            <Link href={`/product/${product.slug || product.id}`} className="block w-full h-full cursor-pointer focus-visible:ring-2 focus-visible:ring-primary rounded-t-2xl sm:rounded-l-2xl">
                               <Image
                                 src={getAbsoluteImageUrl(product.primary_image || null)}
                                 alt={product.name}
@@ -561,108 +595,113 @@ function ShopContent() {
                                   viewMode === "list" ? "rounded-t-2xl sm:rounded-l-2xl sm:rounded-tr-none" : "rounded-t-2xl"
                                 )}
                               />
+                            </Link>
 
-                              {/* Wishlist Button */}
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                aria-label={saved ? `Remove ${product.name} from wishlist` : `Add ${product.name} to wishlist`}
-                                className={cn(
-                                  "absolute top-2 right-2 sm:top-3 sm:right-3 z-20 h-8 w-8 rounded-full bg-background/80 backdrop-blur-sm shadow-md transition-all active:scale-90 focus-visible:ring-2 focus-visible:ring-primary",
-                                  saved ? "text-red-500 hover:text-red-600" : "text-muted-foreground hover:text-foreground",
-                                  poppingId === product.id && "animate-heart-pop"
-                                )}
-                                onClick={(e) => handleWishlistToggle(e, product)}
-                                title={saved ? "Remove from wishlist" : "Save to wishlist"}
-                              >
-                                <Heart className={`h-4 w-4 ${saved ? "fill-current" : ""}`} aria-hidden="true" />
-                              </Button>
+                            {/* Wishlist Button - sibling to Link, avoiding button in link nesting */}
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              aria-label={saved ? `Remove ${product.name} from wishlist` : `Add ${product.name} to wishlist`}
+                              className={cn(
+                                "absolute top-2 right-2 sm:top-3 sm:right-3 z-20 h-8 w-8 rounded-full bg-background/80 backdrop-blur-sm shadow-md transition-all active:scale-90 focus-visible:ring-2 focus-visible:ring-primary",
+                                saved ? "text-red-500 hover:text-red-600" : "text-muted-foreground hover:text-foreground",
+                                poppingId === product.id && "animate-heart-pop"
+                              )}
+                              onClick={(e) => handleWishlistToggle(e, product)}
+                              title={saved ? "Remove from wishlist" : "Save to wishlist"}
+                            >
+                              <Heart className={`h-4 w-4 ${saved ? "fill-current" : ""}`} aria-hidden="true" />
+                            </Button>
 
-                              <div className="absolute top-2 left-2 sm:top-3 sm:left-3 flex flex-col gap-1 z-10 pointer-events-none">
-                                {isOutOfStock && <Badge variant="secondary" className="bg-red-600 text-white text-[10px] sm:text-xs px-1.5 py-0 h-4 sm:h-5 shadow-sm">Out of Stock</Badge>}
-                                {product.compare_price && parseFloat(product.compare_price) > parseFloat(product.price) && (
-                                  <Badge className={getBadgeInfo('sale')?.className + " text-[10px] sm:text-xs px-1.5 py-0 h-4 sm:h-5 shadow-sm"}>
-                                    Sale
+                            <div className="absolute top-2 left-2 sm:top-3 sm:left-3 flex flex-col gap-1 z-10 pointer-events-none">
+                              {isOutOfStock && <Badge variant="secondary" className="bg-red-600 text-white text-[10px] sm:text-xs px-1.5 py-0 h-4 sm:h-5 shadow-sm">Out of Stock</Badge>}
+                              {product.compare_price && parseFloat(product.compare_price) > parseFloat(product.price) && (
+                                <Badge className={getBadgeInfo('sale')?.className + " text-[10px] sm:text-xs px-1.5 py-0 h-4 sm:h-5 shadow-sm"}>
+                                  Sale
+                                </Badge>
+                              )}
+                              {product.badge ? (
+                                getBadgeInfo(product.badge) && (
+                                  <Badge className={getBadgeInfo(product.badge)?.className + " text-[10px] sm:text-xs px-1.5 py-0 h-4 sm:h-5 shadow-sm"}>
+                                    {getBadgeInfo(product.badge)?.label}
                                   </Badge>
-                                )}
-                                {product.badge ? (
-                                  getBadgeInfo(product.badge) && (
-                                    <Badge className={getBadgeInfo(product.badge)?.className + " text-[10px] sm:text-xs px-1.5 py-0 h-4 sm:h-5 shadow-sm"}>
-                                      {getBadgeInfo(product.badge)?.label}
-                                    </Badge>
-                                  )
-                                ) : (
-                                  product.is_featured && (
-                                    <Badge className={getBadgeInfo('trending')?.className + " text-[10px] sm:text-xs px-1.5 py-0 h-4 sm:h-5 shadow-sm"}>
-                                      Trending
-                                    </Badge>
-                                  )
-                                )}
-                              </div>
+                                )
+                              ) : (
+                                product.is_featured && (
+                                  <Badge className={getBadgeInfo('trending')?.className + " text-[10px] sm:text-xs px-1.5 py-0 h-4 sm:h-5 shadow-sm"}>
+                                    Trending
+                                  </Badge>
+                                )
+                              )}
                             </div>
+                          </div>
 
-                            {/* Content */}
-                            <CardContent className={cn(
-                              "p-3 sm:p-4 flex flex-1 flex-col justify-between",
-                              viewMode === "list" ? "sm:flex-row sm:items-center sm:justify-between gap-4" : ""
-                            )}>
-                              {/* Product Info */}
-                              <div className="space-y-1.5 flex-1 min-w-0">
-                                <div className="flex items-center gap-1.5 mb-1">
-                                  <div className="flex items-center">
-                                    {[...Array(5)].map((_, i) => (
-                                      <Star
-                                        key={i}
-                                        className={`h-3 w-3 ${i < Math.floor(product.average_rating || 0) ? "fill-yellow-400 text-yellow-400" : "text-gray-300"
-                                          }`}
-                                      />
-                                    ))}
-                                  </div>
-                                  <span className="text-xs text-muted-foreground">({product.review_count || 0})</span>
+                          {/* Content */}
+                          <CardContent className={cn(
+                            "p-3 sm:p-4 flex flex-1 flex-col justify-between",
+                            viewMode === "list" ? "sm:flex-row sm:items-center sm:justify-between gap-4" : ""
+                          )}>
+                            {/* Product Info */}
+                            <div className="space-y-1.5 flex-1 min-w-0">
+                              <div className="flex items-center gap-1.5 mb-1">
+                                <div className="flex items-center">
+                                  {[...Array(5)].map((_, i) => (
+                                    <Star
+                                      key={i}
+                                      className={`h-3 w-3 ${i < Math.floor(product.average_rating || 0) ? "fill-yellow-400 text-yellow-400" : "text-gray-300"
+                                        }`}
+                                    />
+                                  ))}
                                 </div>
+                                <span className="text-xs text-muted-foreground">({product.review_count || 0})</span>
+                              </div>
 
-                                <h3 className="font-sans font-semibold text-foreground group-hover:text-primary transition-colors line-clamp-2 text-sm sm:text-base leading-snug tracking-tight">
+                              <Link href={`/product/${product.slug || product.id}`} className="block group/title">
+                                <h3 className="font-sans font-semibold text-foreground group-hover/title:text-primary transition-colors line-clamp-2 text-sm sm:text-base leading-snug tracking-tight">
                                   {product.name}
                                 </h3>
+                              </Link>
 
-                                <p className="text-[10px] sm:text-xs text-muted-foreground font-medium uppercase tracking-wider">
-                                  {product.category?.name || "Uncategorized"}
+                              <p className="text-[10px] sm:text-xs text-muted-foreground font-medium uppercase tracking-wider">
+                                {product.category?.name || "Uncategorized"}
+                              </p>
+
+                              {viewMode === "list" && (
+                                <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2 mt-2 hidden md:block max-w-xl">
+                                  {product.short_description || product.description}
                                 </p>
+                              )}
+                            </div>
 
-                                {viewMode === "list" && (
-                                  <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2 mt-2 hidden md:block max-w-xl">
-                                    {product.short_description || product.description}
-                                  </p>
+                            {/* Price & Action */}
+                            <div className={cn(
+                              "flex shrink-0",
+                              viewMode === "list" ? "flex-col sm:w-44 md:w-52 sm:border-l sm:pl-4 md:pl-6 sm:py-2 gap-3 justify-center" : "flex-col gap-2 mt-3"
+                            )}>
+                              <div className="flex flex-col">
+                                <span className="text-base sm:text-lg font-bold text-foreground">₹{product.price}</span>
+                                {product.compare_price && parseFloat(product.compare_price) > parseFloat(product.price) && (
+                                  <span className="text-xs sm:text-sm text-muted-foreground line-through">₹{product.compare_price}</span>
                                 )}
                               </div>
 
-                              {/* Price & Action */}
-                              <div className={cn(
-                                "flex shrink-0",
-                                viewMode === "list" ? "flex-col sm:w-44 md:w-52 sm:border-l sm:pl-4 md:pl-6 sm:py-2 gap-3 justify-center" : "flex-col gap-2 mt-3"
-                              )}>
-                                <div className="flex flex-col">
-                                  <span className="text-base sm:text-lg font-bold text-foreground">₹{product.price}</span>
-                                  {product.compare_price && parseFloat(product.compare_price) > parseFloat(product.price) && (
-                                    <span className="text-xs sm:text-sm text-muted-foreground line-through">₹{product.compare_price}</span>
+                              <div className="w-full">
+                                <Button
+                                  asChild
+                                  size="sm"
+                                  className={cn(
+                                    "w-full text-center font-medium transition-all duration-300 active:scale-[0.98]",
+                                    isOutOfStock ? "bg-amber-600 hover:bg-amber-700 text-white" : ""
                                   )}
-                                </div>
-
-                                <div className="w-full">
-                                  <div 
-                                    className={cn(
-                                      buttonVariants({ size: "sm" }), 
-                                      "w-full text-center font-medium transition-all duration-300 active:scale-[0.98]",
-                                      isOutOfStock ? "bg-amber-600 hover:bg-amber-700 text-white" : ""
-                                    )}
-                                  >
+                                >
+                                  <Link href={`/product/${product.slug || product.id}`}>
                                     {isOutOfStock ? "Inquire Restock" : "View Details"}
-                                  </div>
-                                </div>
+                                  </Link>
+                                </Button>
                               </div>
-                            </CardContent>
-                          </Card>
-                        </Link>
+                            </div>
+                          </CardContent>
+                        </Card>
                       </div>
                     )
                   })}

@@ -1,10 +1,10 @@
-from rest_framework import generics, permissions, viewsets, serializers as drf_serializers
+from rest_framework import generics, permissions, viewsets, serializers as drf_serializers, status
 from rest_framework.response import Response
 from rest_framework.authtoken.models import Token
 from rest_framework.views import APIView
 from django.contrib.auth import authenticate
 from django.contrib.auth.models import User
-from .serializers import UserSerializer, RegisterSerializer, ContactMessageSerializer
+from .serializers import UserSerializer, ContactMessageSerializer
 import logging
 from rest_framework.throttling import AnonRateThrottle, UserRateThrottle
 
@@ -118,6 +118,60 @@ class ContactMessageView(generics.CreateAPIView):
     serializer_class = ContactMessageSerializer
     permission_classes = (permissions.AllowAny,)
     throttle_classes = [SensitiveAnonThrottle, SensitiveUserThrottle]
+
+    def create(self, request, *args, **kwargs):
+        x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+        if x_forwarded_for:
+            client_ip = x_forwarded_for.split(',')[0].strip()
+        else:
+            client_ip = request.META.get('REMOTE_ADDR') or 'unknown'
+
+        serializer = self.get_serializer(data=request.data)
+        if not serializer.is_valid():
+            logger.warning(
+                "Contact message submission validation failed: %s (IP: %s)",
+                serializer.errors,
+                client_ip
+            )
+            return Response(
+                {
+                    'error': 'Invalid contact message data.',
+                    'details': serializer.errors
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            instance = serializer.save()
+            logger.info(
+                "Contact message #%s received from %s <%s> subject: '%s' (IP: %s)",
+                instance.id,
+                instance.name,
+                instance.email,
+                instance.subject,
+                client_ip
+            )
+            headers = self.get_success_headers(serializer.data)
+            return Response(
+                {
+                    'message': 'Thank you for reaching out! Your message has been received.',
+                    'id': instance.id,
+                    'created_at': instance.created_at
+                },
+                status=status.HTTP_201_CREATED,
+                headers=headers
+            )
+        except Exception as e:
+            logger.exception(
+                "Failed to save contact message from %s (IP: %s): %s",
+                request.data.get('email', 'unknown'),
+                client_ip,
+                str(e)
+            )
+            return Response(
+                {'error': 'A server error occurred while sending your message. Please try again later.'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 
 

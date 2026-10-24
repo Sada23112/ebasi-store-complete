@@ -68,7 +68,7 @@ class CategorySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Category
-        fields = ['id', 'name', 'slug', 'description', 'image', 'is_active']
+        fields = ['id', 'name', 'slug', 'description', 'image', 'is_active', 'updated_at']
 
     def get_image(self, obj):
         return get_complete_url(obj.image, self.context.get('request'))
@@ -77,8 +77,8 @@ class CategorySerializer(serializers.ModelSerializer):
 class ReviewSerializer(serializers.ModelSerializer):
     class Meta:
         model = Review
-        fields = ['id', 'product', 'user_name', 'rating', 'comment', 'created_at']
-        read_only_fields = ['id', 'product', 'created_at']
+        fields = ['id', 'product', 'user_name', 'rating', 'comment', 'is_approved', 'created_at']
+        read_only_fields = ['id', 'product', 'is_approved', 'created_at']
 
 
 class ProductListSerializer(serializers.ModelSerializer):
@@ -93,7 +93,7 @@ class ProductListSerializer(serializers.ModelSerializer):
             'id', 'name', 'slug', 'short_description', 'category',
             'price', 'compare_price', 'is_on_sale', 'discount_percentage',
             'stock_status', 'is_featured', 'badge', 'primary_image',
-            'average_rating', 'review_count'
+            'average_rating', 'review_count', 'updated_at'
         ]
 
     def get_primary_image(self, obj):
@@ -111,14 +111,14 @@ class ProductListSerializer(serializers.ModelSerializer):
         # Use annotated rating if available
         avg = getattr(obj, 'annotated_avg_rating', None)
         if avg is None:
-            avg = obj.reviews.aggregate(Avg('rating'))['rating__avg']
+            avg = obj.reviews.filter(is_approved=True).aggregate(Avg('rating'))['rating__avg']
         return round(avg, 1) if avg else 0
 
     def get_review_count(self, obj):
         # Use annotated count if available
         count = getattr(obj, 'annotated_review_count', None)
         if count is None:
-            count = obj.reviews.count()
+            count = obj.reviews.filter(is_approved=True).count()
         return count
 
 
@@ -126,7 +126,7 @@ class ProductDetailSerializer(serializers.ModelSerializer):
     category = CategorySerializer(read_only=True)
     images = ProductImageSerializer(many=True, read_only=True)
     videos = ProductVideoSerializer(many=True, read_only=True)
-    reviews = ReviewSerializer(many=True, read_only=True)
+    reviews = serializers.SerializerMethodField()
     average_rating = serializers.SerializerMethodField()
     review_count = serializers.SerializerMethodField()
 
@@ -141,16 +141,23 @@ class ProductDetailSerializer(serializers.ModelSerializer):
             'review_count', 'created_at', 'updated_at'
         ]
 
+    def get_reviews(self, obj):
+        if hasattr(obj, '_prefetched_objects_cache') and 'reviews' in obj._prefetched_objects_cache:
+            reviews = [r for r in obj.reviews.all() if getattr(r, 'is_approved', False)]
+        else:
+            reviews = obj.reviews.filter(is_approved=True)
+        return ReviewSerializer(reviews, many=True, context=self.context).data
+
     def get_average_rating(self, obj):
         avg = getattr(obj, 'annotated_avg_rating', None)
         if avg is None:
-            avg = obj.reviews.aggregate(Avg('rating'))['rating__avg']
+            avg = obj.reviews.filter(is_approved=True).aggregate(Avg('rating'))['rating__avg']
         return round(avg, 1) if avg else 0
 
     def get_review_count(self, obj):
         count = getattr(obj, 'annotated_review_count', None)
         if count is None:
-            count = obj.reviews.count()
+            count = obj.reviews.filter(is_approved=True).count()
         return count
 
 

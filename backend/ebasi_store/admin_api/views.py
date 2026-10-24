@@ -7,6 +7,7 @@ from rest_framework.authtoken.models import Token
 from django.contrib.auth.models import User
 from django.utils import timezone
 from django.db.models import Count, Avg, Q, F, Max, Min, Prefetch
+from django.db.models.functions import TruncDate
 from django.db import transaction
 from datetime import timedelta, datetime
 
@@ -241,40 +242,59 @@ class AdminAnalyticsView(APIView):
 
         now = timezone.now()
         start_date = now - timedelta(days=days)
+        start_day = (now - timedelta(days=(days - 1))).replace(hour=0, minute=0, second=0, microsecond=0)
 
-        # 1. Daily Aggregations (Time Series)
+        # 1. Daily Aggregations (Time Series) via single TruncDate DB query
+        daily_records = AnalyticsEvent.objects.filter(
+            created_at__gte=start_day
+        ).annotate(
+            day=TruncDate('created_at')
+        ).values('day').annotate(
+            page_views=Count('id', filter=Q(event_type='page_view')),
+            product_views=Count('id', filter=Q(event_type='product_view')),
+            whatsapp_clicks=Count('id', filter=Q(event_type='whatsapp_click')),
+            wishlist_adds=Count('id', filter=Q(event_type='wishlist_add'))
+        ).order_by('day')
+
+        daily_map = {
+            r['day'].strftime('%Y-%m-%d') if hasattr(r['day'], 'strftime') else str(r['day']): r
+            for r in daily_records
+        }
+
         daily_series = []
         for i in range(days):
-            day_start = (now - timedelta(days=(days - 1 - i))).replace(hour=0, minute=0, second=0, microsecond=0)
-            day_end = day_start + timedelta(days=1)
-            day_label = day_start.strftime('%b %d')
-
-            events_in_day = AnalyticsEvent.objects.filter(created_at__gte=day_start, created_at__lt=day_end)
-            
-            pviews = events_in_day.filter(event_type='page_view').count()
-            prod_views = events_in_day.filter(event_type='product_view').count()
-            wa_clicks = events_in_day.filter(event_type='whatsapp_click').count()
-            wl_adds = events_in_day.filter(event_type='wishlist_add').count()
+            day_dt = start_day + timedelta(days=i)
+            date_key = day_dt.strftime('%Y-%m-%d')
+            day_label = day_dt.strftime('%b %d')
+            day_data = daily_map.get(date_key, {})
 
             daily_series.append({
-                'date': day_start.strftime('%Y-%m-%d'),
+                'date': date_key,
                 'label': day_label,
-                'page_views': pviews,
-                'product_views': prod_views,
-                'whatsapp_clicks': wa_clicks,
-                'wishlist_adds': wl_adds
+                'page_views': day_data.get('page_views', 0),
+                'product_views': day_data.get('product_views', 0),
+                'whatsapp_clicks': day_data.get('whatsapp_clicks', 0),
+                'wishlist_adds': day_data.get('wishlist_adds', 0)
             })
 
-        # 2. Product Performance Breakdown
-        all_products = Product.objects.all()
-        product_performance = []
+        # 2. Product Performance Breakdown via single annotated DB query
+        annotated_products = Product.objects.select_related('category').prefetch_related(
+            Prefetch('images', queryset=ProductImage.objects.order_by('-is_primary', 'order'))
+        ).annotate(
+            period_views=Count('analytics_events', filter=Q(analytics_events__event_type='product_view', analytics_events__created_at__gte=start_date), distinct=True),
+            total_views=Count('analytics_events', filter=Q(analytics_events__event_type='product_view'), distinct=True),
+            period_wa=Count('analytics_events', filter=Q(analytics_events__event_type='whatsapp_click', analytics_events__created_at__gte=start_date), distinct=True),
+            total_wa=Count('analytics_events', filter=Q(analytics_events__event_type='whatsapp_click'), distinct=True),
+            wishlist_count=Count('wishlisted_by', distinct=True)
+        )
 
-        for prod in all_products:
-            p_views = AnalyticsEvent.objects.filter(product=prod, event_type='product_view', created_at__gte=start_date).count()
-            total_p_views = AnalyticsEvent.objects.filter(product=prod, event_type='product_view').count()
-            p_wa = AnalyticsEvent.objects.filter(product=prod, event_type='whatsapp_click', created_at__gte=start_date).count()
-            total_p_wa = AnalyticsEvent.objects.filter(product=prod, event_type='whatsapp_click').count()
-            p_wl = prod.wishlisted_by.count()
+        product_performance = []
+        for prod in annotated_products:
+            p_views = prod.period_views
+            total_p_views = prod.total_views
+            p_wa = prod.period_wa
+            total_p_wa = prod.total_wa
+            p_wl = prod.wishlist_count
 
             conv_pct = round((p_wa / p_views * 100), 1) if p_views > 0 else 0.0
 
@@ -321,10 +341,15 @@ class AdminAnalyticsView(APIView):
             for s in top_searches_query
         ]
 
-        # 4. Conversion Intent Funnel
-        total_period_views = AnalyticsEvent.objects.filter(event_type='product_view', created_at__gte=start_date).count()
-        total_period_wl = AnalyticsEvent.objects.filter(event_type='wishlist_add', created_at__gte=start_date).count()
-        total_period_wa = AnalyticsEvent.objects.filter(event_type='whatsapp_click', created_at__gte=start_date).count()
+        # 4. Conversion Intent Funnel via aggregate
+        funnel_counts = AnalyticsEvent.objects.filter(created_at__gte=start_date).aggregate(
+            views=Count('id', filter=Q(event_type='product_view')),
+            wl=Count('id', filter=Q(event_type='wishlist_add')),
+            wa=Count('id', filter=Q(event_type='whatsapp_click'))
+        )
+        total_period_views = funnel_counts['views'] or 0
+        total_period_wl = funnel_counts['wl'] or 0
+        total_period_wa = funnel_counts['wa'] or 0
 
         funnel = {
             'product_views': total_period_views,
@@ -461,8 +486,11 @@ class AdminProductViewSet(viewsets.ModelViewSet):
             'reviews',
             'wishlisted_by'
         ).annotate(
-            annotated_review_count=Count('reviews', distinct=True),
-            annotated_avg_rating=Avg('reviews__rating')
+            annotated_review_count=Count('reviews', filter=Q(reviews__is_approved=True), distinct=True),
+            annotated_avg_rating=Avg('reviews__rating', filter=Q(reviews__is_approved=True)),
+            annotated_views_count=Count('analytics_events', filter=Q(analytics_events__event_type='product_view'), distinct=True),
+            annotated_wishlist_count=Count('wishlisted_by', distinct=True),
+            annotated_whatsapp_count=Count('analytics_events', filter=Q(analytics_events__event_type='whatsapp_click'), distinct=True)
         )
 
         category_id = self.request.query_params.get('category', None)
@@ -766,7 +794,7 @@ class AdminReviewViewSet(viewsets.ModelViewSet):
     serializer_class = AdminReviewSerializer
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['product__name', 'user_name', 'comment']
-    ordering_fields = ['created_at', 'rating']
+    ordering_fields = ['created_at', 'rating', 'is_approved']
     ordering = ['-created_at']
 
     action_permissions = {
@@ -776,6 +804,8 @@ class AdminReviewViewSet(viewsets.ModelViewSet):
         'update': 'reviews.moderate',
         'partial_update': 'reviews.moderate',
         'destroy': 'reviews.moderate',
+        'approve': 'reviews.moderate',
+        'reject': 'reviews.moderate',
     }
 
     def get_queryset(self):
@@ -786,16 +816,33 @@ class AdminReviewViewSet(viewsets.ModelViewSet):
         product_id = self.request.query_params.get('product', None)
         if product_id:
             queryset = queryset.filter(product_id=product_id)
+        is_approved = self.request.query_params.get('is_approved', None)
+        if is_approved is not None:
+            if is_approved.lower() in ['true', '1']:
+                queryset = queryset.filter(is_approved=True)
+            elif is_approved.lower() in ['false', '0']:
+                queryset = queryset.filter(is_approved=False)
         return queryset
 
     def perform_create(self, serializer):
-        review = serializer.save()
+        is_approved = serializer.validated_data.get('is_approved', True)
+        review = serializer.save(is_approved=is_approved)
         log_audit(
             self.request,
             action='review.create',
             target=review,
             target_repr=f"Testimonial by {review.user_name} ({review.rating}★)",
-            details={'product_id': review.product_id, 'rating': review.rating}
+            details={'product_id': review.product_id, 'rating': review.rating, 'is_approved': review.is_approved}
+        )
+
+    def perform_update(self, serializer):
+        review = serializer.save()
+        log_audit(
+            self.request,
+            action='review.update',
+            target=review,
+            target_repr=f"Updated review by {review.user_name} ({review.rating}★)",
+            details={'product_id': review.product_id, 'rating': review.rating, 'is_approved': review.is_approved}
         )
 
     def perform_destroy(self, instance):
@@ -807,6 +854,34 @@ class AdminReviewViewSet(viewsets.ModelViewSet):
             target_repr=repr_str
         )
         instance.delete()
+
+    @action(detail=True, methods=['post'], url_path='approve')
+    def approve(self, request, pk=None):
+        review = self.get_object()
+        review.is_approved = True
+        review.save(update_fields=['is_approved'])
+        log_audit(
+            self.request,
+            action='review.moderate',
+            target=review,
+            target_repr=f"Approved review by {review.user_name} ({review.rating}★)",
+            details={'product_id': review.product_id, 'is_approved': True}
+        )
+        return Response({'status': 'approved', 'is_approved': True})
+
+    @action(detail=True, methods=['post'], url_path='reject')
+    def reject(self, request, pk=None):
+        review = self.get_object()
+        review.is_approved = False
+        review.save(update_fields=['is_approved'])
+        log_audit(
+            self.request,
+            action='review.moderate',
+            target=review,
+            target_repr=f"Rejected review by {review.user_name} ({review.rating}★)",
+            details={'product_id': review.product_id, 'is_approved': False}
+        )
+        return Response({'status': 'rejected', 'is_approved': False})
 
 
 class AdminContactMessageViewSet(viewsets.ModelViewSet):
